@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model leaderboard {
+  wallet            String? @db.Text
+  token_count       Float?
+  date              String? @db.Text
+  sales             Float?
+  purchases         Float?
+  net_trade_balance Float?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model mints {
+  id        BigInt?
+  user      String? @db.Text
+  timestamp String? @db.Text
+  token_id  BigInt?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model mints_daily {
+  date    DateTime @db.Date
+  wallets Int
+  items   Int
+
+  @@ignore
+}
+
+model tmp_comic_errors {
+  token_id Int     @id @unique(map: "token_id")
+  name     String? @db.Text
+  edition  Int?
+}
+
+model token_data {
+  token_id        Int      @id
+  name            String   @db.Text
+  edition         Int
+  mint_date       DateTime @default(now()) @db.Timestamp(0)
+  rarity          String?  @db.Text
+  collectibleId   String?  @db.Text
+  uniqueCoverId   String?  @db.Text
+  type            String   @db.Text
+  last_updated    DateTime @default(now()) @db.Timestamp(0)
+  edition_type    String?  @db.Text
+  drop_date       DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
+  store_price     Decimal  @db.Decimal(10, 0)
+  total_issued    Int
+  market_fee      Decimal? @db.Decimal(10, 0)
+  brand_name      String   @db.Text
+  brand_id        String?  @db.Text
+  licensor_name   String   @db.Text
+  licensor_id     String?  @db.Text
+  series_name     String   @db.Text
+  series_id       String   @db.Text
+  image_thumbnail String   @db.Text
+  image_url       String   @db.Text
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model transfers {
+  id        BigInt?
+  from_user String? @db.Text
+  to_user   String? @db.Text
+  timestamp String? @db.Text
+  token_id  BigInt?
+
+  @@index([token_id], map: "token_id")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model transfers_daily {
+  date      DateTime @db.Date
+  transfers Int
+  sellers   Int
+  buyers    Int
+  items     Int
+  wallets   Int
+
+  @@ignore
+}
+
+model users {
+    id          Int         @id @default(autoincrement())
+    email       String      @unique
+    name        String?
+    password    String
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+    profile     profile?
+
+    @@index([email], map: "email")
+}
+
+model profile {
+    id          Int         @id @default(autoincrement())
+    user_id     Int         @unique
+    user        users       @relation(fields: [user_id], references: [id])
+    bio         String
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+}
+
+model collectibles {
+    id                      Int         @id @default(autoincrement())
+    collectible_id          String      @unique
+    name                    String
+    rarity                  String?
+    description             String?
+    edition_type            String?
+    total_editions          Int?
+    store_price             Decimal?
+    drop_date               DateTime?
+    image_thumbnail         String?
+    image_full              String?
+    series_name             String?
+    series_id               String?
+    brand_name              String?
+    brand_id                String?
+    licensor_name           String?
+    licensor_id             String?
+    market_fee              Decimal?
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+
+    @@index([collectible_id], map: "collectible_id")
+}
+
+model comics {
+    id                      Int         @id @default(autoincrement())
+    uniqueCoverId           String      @unique
+    name                    String
+    rarity                  String?
+    description             String?
+    comicNumber             Int?
+    comic_series_id         String?
+    comic_series_name       String?
+    cover_image_thumbnail   String?
+    cover_image_full        String?
+    drop_date               DateTime?
+    pageCount               Int?
+    store_price             Decimal?
+    total_editions          Int?
+    publisher_id            String?
+    publisher_name          String?
+    market_fee              Decimal?
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+
+    @@index([uniqueCoverId], map: "uniqueCoverId")
+}
+
+model licensors {
+    id                      Int         @id @default(autoincrement())
+    licensor_id             String              @unique
+    name                    String?
+    description             String?
+    image_landscape         String?
+    image_square            String?
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+
+    @@index([licensor_id], map: "licensor_id")
+}
+
+model publishers {
+    id                      Int         @id @default(autoincrement())
+    publisher_id            String              @unique
+    publisher_name          String
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+
+    @@index([publisher_id], map: "publisher_id")
+}
