@@ -1,5 +1,5 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add dataloader
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js
 
 PATH: 
   C:\Program Files (x86)\Common Files\Intel\Shared Libraries\redist\intel64\compiler;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files (x86)\Yarn\bin\;C:\Users\liamk\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Program Files\Amazon\AWSCLIV2\;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files\PuTTY\;C:\Users\liamk\AppData\Local\Microsoft\WindowsApps;C:\Users\liamk\AppData\Roaming\npm;C:\Users\liamk\AppData\Local\Yarn\bin;C:\Users\liamk\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\_lab\mongosh\mongosh-1.5.4-win32-x64\mongosh-1.5.4-win32-x64\bin;;C:\_lab\mintalysis\mintalysis_backend\node_modules\.bin
@@ -14,7 +14,7 @@ Platform:
   win32 x64
 
 Trace: 
-  Error: EPERM: operation not permitted, unlink 'C:\_lab\mintalysis\mintalysis_backend\node_modules\prisma\engines\0362da9eebca54d94c8ef5edd3b2e90af99ba452\query_engine-windows.dll.node'
+  Error: EPERM: operation not permitted, unlink 'C:\_lab\mintalysis\mintalysis_backend\node_modules\@prisma\engines\query_engine-windows.dll.node'
 
 npm manifest: 
   {

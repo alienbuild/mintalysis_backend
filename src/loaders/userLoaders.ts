@@ -1,7 +1,6 @@
-import Dataloader from 'dataloader'
+import Dataloader from "dataloader"
 import { users } from ".prisma/client"
 import { prisma } from '..'
-
 
 type BatchUser = (ids: number[]) => Promise<users[]>
 
