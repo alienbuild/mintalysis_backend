@@ -6,7 +6,8 @@ export const typeDefs = gql`
     }
     
     type Mutation {
-        signup(email: String, password: String) : AuthPayload
+        signup(credentials: CredentialsInput!) : AuthPayload!
+        signin(credentials: CredentialsInput!) : AuthPayload
         postCreate(post: PostInput!): PostPayload!
         postUpdate(postId: ID!, post: PostInput!): PostPayload!
         postDelete(postId: ID!): PostPayload! 
@@ -52,6 +53,11 @@ export const typeDefs = gql`
     input PostInput {
         title: String
         content: String
+    }
+    
+    input CredentialsInput {
+        email: String!
+        password: String!
     }
 
 `

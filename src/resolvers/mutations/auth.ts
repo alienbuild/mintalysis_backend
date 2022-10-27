@@ -2,11 +2,20 @@ import validator from 'validator'
 import { Context } from "../../index"
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import {JSON_SIGNATURE} from "../../keys";
+import {JSON_SIGNATURE} from "../../keys"
 
 interface SignupArgs {
-    email: string
-    password: string
+    credentials: {
+        email: string
+        password: string
+    }
+}
+
+interface SigninArgs {
+    credentials: {
+        email: string
+        password: string
+    }
 }
 
 interface UserPayload {
@@ -17,7 +26,9 @@ interface UserPayload {
 }
 
 export const authResolvers = {
-    signup: async (_: any, {email, password}: SignupArgs, { prisma }: Context ): Promise<UserPayload> => {
+    signup: async (_: any, { credentials }: SignupArgs, { prisma }: Context ): Promise<UserPayload> => {
+
+        const { email, password } = credentials
 
         const isEmail = validator.isEmail(email)
 
@@ -51,15 +62,39 @@ export const authResolvers = {
             }
         })
 
-        const token = jwt.sign({
-            userId: user.id,
-        }, JSON_SIGNATURE, {
-            expiresIn: "3d"
+        return {
+            userErrors: [],
+            token: jwt.sign({ userId: user.id }, JSON_SIGNATURE, { expiresIn: "3d" })
+        }
+
+    },
+    signin: async (_: any, { credentials }: SigninArgs, { prisma }: Context): Promise<UserPayload> => {
+        const { email, password } = credentials
+
+        const user = await prisma.users.findUnique({
+            where: {
+                email
+            }
         })
+
+        if (!user) {
+            return {
+                userErrors: [{message: "Invalid credentials."}],
+                token: null
+            }
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) {
+            return {
+                userErrors: [{message: "Invalid credentials."}],
+                token: null
+            }
+        }
 
         return {
             userErrors: [],
-            token: token
+            token: jwt.sign({ userId: user.id }, JSON_SIGNATURE, { expiresIn: '3d' })
         }
 
     }
