@@ -9,7 +9,7 @@ export const User = {
         const isOwnAccount = parent.id === userInfo?.userId
 
         if (isOwnAccount){
-            return prisma.post.findMany({
+            return prisma.posts.findMany({
                 where: {
                     author_id: parent.id
                 },
@@ -20,7 +20,7 @@ export const User = {
                 ]
             })
         } else {
-            return prisma.post.findMany({
+            return prisma.posts.findMany({
                 where: {
                     author_id: parent.id,
                     published: true

@@ -1,4 +1,4 @@
-import {post, Prisma} from ".prisma/client"
+import {posts, Prisma} from ".prisma/client"
 import {Context} from "../../index"
 import {canUserMutatePost} from "../../utils/canUserMutatePost"
 
@@ -13,7 +13,7 @@ interface PostPayloadType {
     userErrors: {
         message: String
     }[],
-    post: post | Prisma.Prisma__postClient<post> | null
+    post: posts | Prisma.Prisma__postsClient<posts> | null
 }
 
 export const postResolvers = {
@@ -36,7 +36,7 @@ export const postResolvers = {
 
         return {
             userErrors: [],
-            post: prisma.post.create({
+            post: prisma.posts.create({
                 data: {
                     title,
                     content,
@@ -56,7 +56,7 @@ export const postResolvers = {
             }
         }
 
-        const exisitingPost = await prisma.post.findUnique({
+        const exisitingPost = await prisma.posts.findUnique({
             where: {
                 id: Number(postId)
             }
@@ -79,7 +79,7 @@ export const postResolvers = {
 
         return {
             userErrors: [{ message: "Please provide a field to update." }],
-            post: prisma.post.update({
+            post: prisma.posts.update({
                 data: {
                     ...payloadToUpdate
                 },
@@ -103,7 +103,7 @@ export const postResolvers = {
 
         if (error) return error
 
-        const post = await prisma.post.findUnique({
+        const post = await prisma.posts.findUnique({
             where: {
                 id: Number(postId)
             }
@@ -116,7 +116,7 @@ export const postResolvers = {
             }
         }
 
-        await prisma.post.delete({
+        await prisma.posts.delete({
             where: {
                 id: Number(postId)
             }
@@ -142,7 +142,7 @@ export const postResolvers = {
 
         return {
             userErrors: [],
-            post: prisma.post.update({
+            post: prisma.posts.update({
                 where: {
                     id: Number(postId)
                 },
@@ -168,7 +168,7 @@ export const postResolvers = {
 
         return {
             userErrors: [],
-            post: prisma.post.update({
+            post: prisma.posts.update({
                 where: {
                     id: Number(postId)
                 },

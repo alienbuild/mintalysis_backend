@@ -9,6 +9,15 @@ export const Query ={
             }
         })
     },
+    collectibles: async (_:any, __:any, { prisma }: Context) => {
+      return prisma.posts.findMany({
+          orderBy: [
+              {
+                  createdAt: "desc"
+              }
+          ]
+      })
+    },
     profile: async (_: any, {userId}: { userId: String }, {prisma, userInfo}: Context) => {
 
         const isMyProfile = Number(userId) === userInfo?.userId
@@ -27,7 +36,7 @@ export const Query ={
         }
     },
     posts: async (_: any, __: any, { prisma }: Context) => {
-        return prisma.post.findMany({
+        return prisma.posts.findMany({
             where: {
                 published: true
             },
@@ -37,6 +46,5 @@ export const Query ={
                 }
             ]
         })
-
-    }
+    },
 }

@@ -94,106 +94,117 @@ model transfers_daily {
 }
 
 model users {
-    id          Int         @id @default(autoincrement())
-    email       String      @unique
-    username    String?
-    password    String
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    profile     profile?
-    posts       post[]
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
+  username  String?
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  profile   profile?
+  posts     posts[]
+  comments  comments[]
 
-    @@index([email], map: "email")
+  @@index([email], map: "email")
 }
 
 model profile {
-    id          Int         @id @default(autoincrement())
-    user_id     Int         @unique
-    user        users       @relation(fields: [user_id], references: [id])
-    bio         String?
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+  id        Int      @id @default(autoincrement())
+  user_id   Int      @unique
+  user      users    @relation(fields: [user_id], references: [id])
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model post {
-    id          Int         @id @default(autoincrement())
-    title       String
-    content     String
-    published   Boolean     @default(false)
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
-    author_id   Int
-    author      users       @relation(fields: [author_id], references: [id])
+model posts {
+  id        Int        @id @default(autoincrement())
+  title     String
+  content   String
+  published Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  author_id Int
+  author    users      @relation(fields: [author_id], references: [id])
+  comments  comments[]
+}
+
+model comments {
+  id        Int    @id @default(autoincrement())
+  comment   String
+  post_id   Int
+  post      posts  @relation(fields: [post_id], references: [id])
+  author_id Int
+  author    users  @relation(fields: [author_id], references: [id])
 }
 
 model collectibles {
-    id                      Int         @id @default(autoincrement())
-    collectible_id          String      @unique
-    name                    String
-    rarity                  String?
-    description             String?
-    edition_type            String?
-    total_editions          Int?
-    store_price             Decimal?
-    drop_date               DateTime?
-    image_thumbnail         String?
-    image_full              String?
-    series_name             String?
-    series_id               String?
-    brand_name              String?
-    brand_id                String?
-    licensor_name           String?
-    licensor_id             String?
-    market_fee              Decimal?
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+  id              Int       @id @default(autoincrement())
+  collectible_id  String    @unique
+  name            String
+  rarity          String?
+  description     String?
+  edition_type    String?
+  total_editions  Int?
+  store_price     Decimal?
+  drop_date       DateTime?
+  image_thumbnail String?
+  image_full      String?
+  series_name     String?
+  series_id       String?
+  brand_name      String?
+  brand_id        String?
+  licensor_name   String?
+  licensor_id     String?
+  market_fee      Decimal?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-    @@index([collectible_id], map: "collectible_id")
+  @@index([collectible_id], map: "collectible_id")
 }
 
 model comics {
-    id                      Int         @id @default(autoincrement())
-    uniqueCoverId           String      @unique
-    name                    String
-    rarity                  String?
-    description             String?
-    comicNumber             Int?
-    comic_series_id         String?
-    comic_series_name       String?
-    cover_image_thumbnail   String?
-    cover_image_full        String?
-    drop_date               DateTime?
-    pageCount               Int?
-    store_price             Decimal?
-    total_editions          Int?
-    publisher_id            String?
-    publisher_name          String?
-    market_fee              Decimal?
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+  id                    Int       @id @default(autoincrement())
+  uniqueCoverId         String    @unique
+  name                  String
+  rarity                String?
+  description           String?
+  comicNumber           Int?
+  comic_series_id       String?
+  comic_series_name     String?
+  cover_image_thumbnail String?
+  cover_image_full      String?
+  drop_date             DateTime?
+  pageCount             Int?
+  store_price           Decimal?
+  total_editions        Int?
+  publisher_id          String?
+  publisher_name        String?
+  market_fee            Decimal?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-    @@index([uniqueCoverId], map: "uniqueCoverId")
+  @@index([uniqueCoverId], map: "uniqueCoverId")
 }
 
 model licensors {
-    id                      Int         @id @default(autoincrement())
-    licensor_id             String              @unique
-    name                    String?
-    description             String?
-    image_landscape         String?
-    image_square            String?
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+  id              Int      @id @default(autoincrement())
+  licensor_id     String   @unique
+  name            String?
+  description     String?
+  image_landscape String?
+  image_square    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-    @@index([licensor_id], map: "licensor_id")
+  @@index([licensor_id], map: "licensor_id")
 }
 
 model publishers {
-    id                      Int         @id @default(autoincrement())
-    publisher_id            String              @unique
-    publisher_name          String
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+  id             Int      @id @default(autoincrement())
+  publisher_id   String   @unique
+  publisher_name String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-    @@index([publisher_id], map: "publisher_id")
+  @@index([publisher_id], map: "publisher_id")
 }

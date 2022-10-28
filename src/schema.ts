@@ -3,6 +3,7 @@ import {gql} from "apollo-server"
 export const typeDefs = gql`
     type Query {
         me: User
+        collectibles: [Collectible!]!
         posts: [Post!]!
         profile(userId: ID!): Profile
     }
@@ -17,6 +18,41 @@ export const typeDefs = gql`
         postUnpublish(postId: ID!) : PostPayload!
     }
     
+    type Subscription {
+        count: Int!
+    }
+
+    input PostInput {
+        title: String
+        content: String
+    }
+
+    input CredentialsInput {
+        email: String!
+        password: String!
+    }
+
+    type Collectible {
+        id: ID!
+        collectible_id: String!
+        name: String!
+        rarity: String
+        description: String!
+        edition_type: String
+        total_editions: Int!
+        store_price: Float!
+        drop_date: String!
+        image_thumbnail: String
+        image_full: String
+        series_name: String
+        series_id: String
+        brand_name: String
+        brand_id: String
+        licensor_name: String
+        licensor_id: String
+        market_fee: Float
+    }
+    
     type Post {
         id: ID!
         title: String!
@@ -24,6 +60,14 @@ export const typeDefs = gql`
         createdAt: String!
         published: Boolean!
         user: User!
+        comments: [Comment!]!
+    }
+
+    type Comment {
+        id: ID!
+        comment: String!
+        author: User!
+        post: Post!
     }
     
     type User {
@@ -52,16 +96,6 @@ export const typeDefs = gql`
     type AuthPayload {
         userErrors: [UserError!]!
         token: String
-    }
-    
-    input PostInput {
-        title: String
-        content: String
-    }
-    
-    input CredentialsInput {
-        email: String!
-        password: String!
     }
 
 `

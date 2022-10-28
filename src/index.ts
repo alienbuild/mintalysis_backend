@@ -5,7 +5,8 @@ import {
     Mutation,
     Profile,
     Post,
-    User
+    User,
+    Subscription
 } from "./resolvers"
 import { PrismaClient, Prisma } from '@prisma/client'
 import { getUserFromToken } from "./utils/getUserFromToken"
@@ -26,7 +27,8 @@ const server = new ApolloServer({
         Mutation,
         Profile,
         Post,
-        User
+        User,
+        Subscription
     },
     context: async ({req}: any): Promise<Context> => {
 
