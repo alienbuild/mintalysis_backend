@@ -208,3 +208,9 @@ model publishers {
 
   @@index([publisher_id], map: "publisher_id")
 }
+
+model messages {
+    id             Int      @id @default(autoincrement())
+    text           String
+    createdBy      String
+}

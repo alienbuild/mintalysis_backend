@@ -1,29 +1,32 @@
 {
-  "name": "mintalysis_backend",
+  "name": "graphql",
   "version": "1.0.0",
-  "main": "index.js",
-  "repository": "git@github.com:alienbuild/mintalysis_backend.git",
-  "author": "LK <lk@alienbuild.uk>",
-  "license": "MIT",
+  "description": "",
+  "main": "src/index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "start": "babel-node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
   "dependencies": {
+    "@graphql-tools/schema": "^9.0.5",
     "@prisma/client": "^4.5.0",
-    "@types/bcryptjs": "^2.4.2",
-    "@types/jsonwebtoken": "^8.5.9",
-    "@types/validator": "^13.7.9",
     "apollo-server": "^3.10.3",
+    "apollo-server-express": "^3.10.4",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
     "bcryptjs": "^2.4.3",
     "dataloader": "^2.1.0",
+    "express": "^4.18.2",
     "graphql": "^16.6.0",
+    "graphql-subscriptions": "^2.0.0",
     "jsonwebtoken": "^8.5.1",
     "nodemon": "^2.0.20",
     "prisma": "^4.5.0",
+    "subscriptions-transport-ws": "^0.11.0",
     "validator": "^13.7.0"
-  },
-  "scripts": {
-    "dev": "nodemon --watch \"./**/*.ts\" --exec npx ts-node \"./src/index.ts\""
-  },
-  "devDependencies": {
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^4.8.4"
   }
 }

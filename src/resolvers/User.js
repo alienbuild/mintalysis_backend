@@ -1,11 +1,5 @@
-import { Context } from '../index'
-
-interface UserParentType {
-    id: number
-}
-
-export const User = {
-    posts: (parent: UserParentType, __: any, { userInfo, prisma }: Context) => {
+const User = {
+    posts: (parent, __, { userInfo, prisma }) => {
         const isOwnAccount = parent.id === userInfo?.userId
 
         if (isOwnAccount){
@@ -34,3 +28,5 @@ export const User = {
         }
     },
 }
+
+export { User }

@@ -1,7 +1,5 @@
-import { Context } from '../index'
-
-export const Query ={
-    me: (_: any, __: any, { userInfo, prisma }: Context) => {
+const Query = {
+    me: (_, __, { userInfo, prisma }) => {
         if (!userInfo) return null
         return prisma.users.findUnique({
             where: {
@@ -9,16 +7,16 @@ export const Query ={
             }
         })
     },
-    collectibles: async (_:any, __:any, { prisma }: Context) => {
-      return prisma.posts.findMany({
-          orderBy: [
-              {
-                  createdAt: "desc"
-              }
-          ]
-      })
+    collectibles: async (_, __, { prisma }) => {
+        return prisma.posts.findMany({
+            orderBy: [
+                {
+                    createdAt: "desc"
+                }
+            ]
+        })
     },
-    profile: async (_: any, {userId}: { userId: String }, {prisma, userInfo}: Context) => {
+    profile: async (_, {userId}, {prisma, userInfo}) => {
 
         const isMyProfile = Number(userId) === userInfo?.userId
 
@@ -35,7 +33,7 @@ export const Query ={
             isMyProfile
         }
     },
-    posts: async (_: any, __: any, { prisma }: Context) => {
+    posts: async (_, __, { prisma }) => {
         return prisma.posts.findMany({
             where: {
                 published: true
@@ -47,4 +45,7 @@ export const Query ={
             ]
         })
     },
+    message: (_, {ID}) => prisma.messages.findUnique({ where: { id: ID} })
 }
+
+export { Query }

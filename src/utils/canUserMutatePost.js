@@ -1,12 +1,4 @@
-import {Context} from "../index";
-
-interface canUserMutatePostParams {
-    userId: number,
-    postId: number,
-    prisma: Context["prisma"]
-}
-
-export const canUserMutatePost = async ({ userId, postId, prisma }: canUserMutatePostParams) => {
+export const canUserMutatePost = async ({ userId, postId, prisma }) => {
     const user = await prisma.users.findUnique({
         where: {
             id: userId

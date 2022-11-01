@@ -1,4 +1,4 @@
-import {gql} from "apollo-server"
+import {gql} from "apollo-server-express"
 
 export const typeDefs = gql`
     type Query {
@@ -6,21 +6,37 @@ export const typeDefs = gql`
         collectibles: [Collectible!]!
         posts: [Post!]!
         profile(userId: ID!): Profile
+        message(id: ID!): Message
     }
-    
+
     type Mutation {
         signup(credentials: CredentialsInput!) : AuthPayload!
         signin(credentials: CredentialsInput!) : AuthPayload
         postCreate(post: PostInput!): PostPayload!
         postUpdate(postId: ID!, post: PostInput!): PostPayload!
-        postDelete(postId: ID!): PostPayload! 
+        postDelete(postId: ID!): PostPayload!
         postPublish(postId: ID!) : PostPayload!
         postUnpublish(postId: ID!) : PostPayload!
+        createComment(comment: CreateCommentInput!): Comment!
+        deleteComment(id: ID!): Comment!
+        updateComment(id: ID!, data: UpdateCommentInput!): Comment! 
+        createMessage(messageInput: MessageInput) : Message!
     }
-    
+
     type Subscription {
-        count: Int!
+        messageCreated: Message
     }
+
+    type Message {
+        text: String
+        createdBy: String
+    }
+
+    input MessageInput {
+        text: String
+        username: String
+    }
+
 
     input PostInput {
         title: String
@@ -31,7 +47,17 @@ export const typeDefs = gql`
         email: String!
         password: String!
     }
+    
+    input CreateCommentInput {
+        text: String!
+        author: ID!
+        post: ID!
+    }
 
+    input UpdateCommentInput {
+        text: String
+    }
+    
     type Collectible {
         id: ID!
         collectible_id: String!
@@ -52,7 +78,7 @@ export const typeDefs = gql`
         licensor_id: String
         market_fee: Float
     }
-    
+
     type Post {
         id: ID!
         title: String!
@@ -69,7 +95,7 @@ export const typeDefs = gql`
         author: User!
         post: Post!
     }
-    
+
     type User {
         id: ID!
         name: String
@@ -83,16 +109,16 @@ export const typeDefs = gql`
         isMyProfile: Boolean!
         user: User!
     }
-    
+
     type UserError {
         message: String!
     }
-    
+
     type PostPayload {
         userErrors: [UserError!]!
         post: Post
     }
-    
+
     type AuthPayload {
         userErrors: [UserError!]!
         token: String
