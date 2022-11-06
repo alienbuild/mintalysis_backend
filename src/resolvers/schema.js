@@ -37,7 +37,6 @@ export const typeDefs = gql`
         username: String
     }
 
-
     input PostInput {
         title: String
         content: String
@@ -98,8 +97,9 @@ export const typeDefs = gql`
 
     type User {
         id: ID!
-        name: String
+        username: String
         email: String!
+        stripe_customer_id: String,
         posts: [Post!]!
     }
 
@@ -121,7 +121,8 @@ export const typeDefs = gql`
 
     type AuthPayload {
         userErrors: [UserError!]!
-        token: String
+        token: String,
+        user: User
     }
 
 `

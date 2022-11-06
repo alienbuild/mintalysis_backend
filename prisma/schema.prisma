@@ -94,10 +94,11 @@ model transfers_daily {
 }
 
 model users {
-  id        Int        @id @default(autoincrement())
+  id        String     @id @default(uuid())
   email     String     @unique
   username  String?
   password  String
+  role      Role       @default(BASIC)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   profile   profile?
@@ -109,7 +110,7 @@ model users {
 
 model profile {
   id        Int      @id @default(autoincrement())
-  user_id   Int      @unique
+  user_id   String      @unique
   user      users    @relation(fields: [user_id], references: [id])
   bio       String?
   createdAt DateTime @default(now())
@@ -123,7 +124,7 @@ model posts {
   published Boolean    @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  author_id Int
+  author_id String
   author    users      @relation(fields: [author_id], references: [id])
   comments  comments[]
 }
@@ -133,7 +134,7 @@ model comments {
   comment   String
   post_id   Int
   post      posts  @relation(fields: [post_id], references: [id])
-  author_id Int
+  author_id String
   author    users  @relation(fields: [author_id], references: [id])
 }
 
@@ -210,7 +211,18 @@ model publishers {
 }
 
 model messages {
-    id             Int      @id @default(autoincrement())
-    text           String
-    createdBy      String
+  id            String   @id @default(uuid())
+  text          String
+  fromUser_id   String
+  fromUser      users    @relation(fields: [fromUser], references: [id])
+  toUser_id     String
+  toUser        users    @relation(fields: [toUser_id], references: [id])
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Role {
+  BASIC
+  ADMIN
 }
