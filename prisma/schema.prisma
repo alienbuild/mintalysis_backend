@@ -96,7 +96,7 @@ model transfers_daily {
 model users {
   id        String     @id @default(uuid())
   email     String     @unique
-  username  String?
+  username  String?    @unique
   password  String
   role      Role       @default(BASIC)
   createdAt DateTime   @default(now())
@@ -109,12 +109,15 @@ model users {
 }
 
 model profile {
-  id        Int      @id @default(autoincrement())
-  user_id   String      @unique
-  user      users    @relation(fields: [user_id], references: [id])
-  bio       String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  user_id        String   @unique
+  user           users    @relation(fields: [user_id], references: [id])
+  complete       Boolean  @default(false)
+  avatar         String?
+  wallet_address String?
+  bio            String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model posts {
@@ -211,15 +214,11 @@ model publishers {
 }
 
 model messages {
-  id            String   @id @default(uuid())
-  text          String
-  fromUser_id   String
-  fromUser      users    @relation(fields: [fromUser], references: [id])
-  toUser_id     String
-  toUser        users    @relation(fields: [toUser_id], references: [id])
-  read          Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(uuid())
+  text      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {

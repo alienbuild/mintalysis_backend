@@ -1,6 +1,7 @@
 import {gql} from "apollo-server-express"
 
 export const typeDefs = gql`
+    
     type Query {
         me: User
         collectibles: [Collectible!]!
@@ -12,6 +13,7 @@ export const typeDefs = gql`
     type Mutation {
         signup(credentials: CredentialsInput!) : AuthPayload!
         signin(credentials: CredentialsInput!) : AuthPayload
+        fileUpload(file: Upload) : FileUploadResponse
         postCreate(post: PostInput!): PostPayload!
         postUpdate(postId: ID!, post: PostInput!): PostPayload!
         postDelete(postId: ID!): PostPayload!
@@ -26,6 +28,16 @@ export const typeDefs = gql`
     type Subscription {
         messageCreated: Message
     }
+    
+    type FileUploadResponse {
+        success: Boolean!
+        message: String
+        errorStatus: Boolean
+        error: String
+        token: String
+    }
+    
+    scalar Upload
 
     type Message {
         text: String
@@ -99,8 +111,10 @@ export const typeDefs = gql`
         id: ID!
         username: String
         email: String!
-        stripe_customer_id: String,
+        wallet_address: String
+        stripe_customer_id: String
         posts: [Post!]!
+        profile: Profile
     }
 
     type Profile {
@@ -108,6 +122,9 @@ export const typeDefs = gql`
         bio: String
         isMyProfile: Boolean!
         user: User!
+        complete: Boolean!
+        avatar: String
+        wallet_address: String
     }
 
     type UserError {

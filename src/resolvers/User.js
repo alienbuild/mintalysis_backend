@@ -27,6 +27,13 @@ const User = {
             })
         }
     },
+    profile: (parent, __, { prisma }) => {
+        return prisma.profile.findUnique({
+            where: {
+                user_id: parent.id
+            }
+        })
+    }
 }
 
 export { User }

@@ -95,10 +95,7 @@ export const authResolvers = {
         return {
             userErrors: [],
             token: jwt.sign({ userId: user.id }, process.env.JSON_SIGNATURE, { expiresIn: '3d' }),
-            user: {
-                id: user.id,
-                username: user.username
-            }
+            user: user
         }
     }
 }
