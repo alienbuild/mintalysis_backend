@@ -1,14 +1,10 @@
-import * as path from "path"
-import * as fs from "fs"
 import * as cloudinary from 'cloudinary'
-import {ApolloError, AuthenticationError} from "apollo-server-express";
+import { ApolloError } from "apollo-server-express"
 
 export const fileUploadResolvers = {
-    fileUpload: async (_, { file }, { userInfo, prisma }) => {
+    avatarUpload: async (_, { file }, { userInfo, prisma }) => {
 
-        console.log('userInfo is: ', userInfo)
-
-        const { createReadStream, filename } = await file.file
+        const { createReadStream } = await file.file
 
         cloudinary.v2.config({
             cloud_name: process.env.CLOUDINARY_NAME,
@@ -17,40 +13,45 @@ export const fileUploadResolvers = {
         })
 
         try{
-            // const result = await new Promise((resolve, reject) => {
-            //     createReadStream().pipe(cloudinary.v2.uploader.upload_stream((error, result) => {
-            //         if (error) {
-            //             reject(error)
-            //         }
-            //
-            //         resolve(result)
-            //     }))
-            // })
+            const result = await new Promise((resolve, reject) => {
+                createReadStream().pipe(cloudinary.v2.uploader.upload_stream((error, result) => {
+                    if (error) {
+                        reject(error)
+                    }
 
-            // console.log('result is: ', result)
-            // console.log('secure url is: ', result.secure_url)
+                    resolve(result)
+                }))
+            })
 
-            console.log('userInfo is: ', userInfo)
+            // TODO: Remove users old image from cloudinary to free up space.
+            // TODO: Add Amazons Image Rekognition to cloudinary for image moderation (nudity prevention etc)
+            // https://cloudinary.com/documentation/aws_rekognition_ai_moderation_addon
+            const user = await prisma.profile.update({
+                data: {
+                    avatar: result.secure_url
+                },
+                where: {
+                    user_id: userInfo.userId
+                }
+            })
 
-            // const user = await prisma.users.findUnique({
-            //     where: {
-            //         id: userInfo.user_id
-            //     }
-            // })
+            if (!user){
+                return {
+                    success: false,
+                    message: 'File upload failed as the user was not found.',
+                }
+            } else {
+                return {
+                    success: true,
+                    message: 'File upload success.',
+                    token: result.secure_url
+                }
+            }
+
         } catch (e) {
             throw new ApolloError('There was an issue uploading your avatar.')
         }
 
 
-        // const stream = createReadStream()
-        // const uniqueName = filename // TODO: Sanitise the name
-        // const __dirname = path.resolve(path.dirname(''))
-        // const pathName = path.join(__dirname, `./uploads/avatars/1/${uniqueName}`)
-        // await stream.pipe(fs.createWriteStream(pathName))
-
-        return {
-            success: true,
-            message: 'This mutation works.'
-        }
     }
 }

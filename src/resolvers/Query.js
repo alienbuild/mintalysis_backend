@@ -1,3 +1,5 @@
+import {checkVeveUsername} from "../utils/checkVeveUsername.js";
+
 const Query = {
     me: (_, __, { userInfo, prisma }) => {
         if (!userInfo) return null
@@ -6,6 +8,19 @@ const Query = {
                 id: userInfo.userId
             }
         })
+    },
+    veveUser: async (_, {username}, ___) => {
+        let returnArr = []
+        try {
+            const userList = await checkVeveUsername(username)
+            userList.edges.map((user) => {
+                returnArr.push(user.node.username)
+            })
+        } catch (err) {
+            console.log('[ERROR] Fetching user list from VEVE api: ', err)
+        }
+
+        return returnArr
     },
     collectibles: async (_, __, { prisma }) => {
         return prisma.posts.findMany({

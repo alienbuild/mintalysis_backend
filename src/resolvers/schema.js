@@ -4,6 +4,7 @@ export const typeDefs = gql`
     
     type Query {
         me: User
+        veveUser(username: String!): [String!]!
         collectibles: [Collectible!]!
         posts: [Post!]!
         profile(userId: ID!): Profile
@@ -13,7 +14,7 @@ export const typeDefs = gql`
     type Mutation {
         signup(credentials: CredentialsInput!) : AuthPayload!
         signin(credentials: CredentialsInput!) : AuthPayload
-        fileUpload(file: Upload) : FileUploadResponse
+        avatarUpload(file: Upload) : AvatarUploadResponse
         postCreate(post: PostInput!): PostPayload!
         postUpdate(postId: ID!, post: PostInput!): PostPayload!
         postDelete(postId: ID!): PostPayload!
@@ -29,7 +30,7 @@ export const typeDefs = gql`
         messageCreated: Message
     }
     
-    type FileUploadResponse {
+    type AvatarUploadResponse {
         success: Boolean!
         message: String
         errorStatus: Boolean

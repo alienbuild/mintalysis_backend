@@ -5,7 +5,7 @@ import { SubscriptionServer } from "subscriptions-transport-ws"
 import { execute, subscribe } from "graphql"
 import { ApolloServer } from "apollo-server-express"
 // import { shield } from "graphql-shield"
-import { applyMiddleware } from "graphql-middleware"
+// import { applyMiddleware } from "graphql-middleware"
 import { PrismaClient } from "@prisma/client"
 import { typeDefs } from './resolvers/schema.js'
 import { getUserFromToken } from './utils/getUserFromToken.js'
@@ -22,7 +22,6 @@ import cors from "cors"
 import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
 
-
 const prisma = new PrismaClient();
 export const pubsub = new PubSub();
 
@@ -35,7 +34,10 @@ export const pubsub = new PubSub();
     app.use(express
         .urlencoded({extended:true}))
     app.use(cors())
-    app.use(helmet({ contentSecurityPolicy:(process.env.NODE_ENV === 'production' ? undefined:false) }))
+    app.use(helmet({
+        crossOriginEmbedderPolicy: false,
+        contentSecurityPolicy:(process.env.NODE_ENV === 'production' ? undefined:false)
+    }))
     app.use(graphqlUploadExpress({ maxFieldSize: 100000, maxFiles: 10 }))
 
     const schema = makeExecutableSchema({
@@ -76,8 +78,9 @@ export const pubsub = new PubSub();
                 userInfo,
             }
         },
+        instrospection: true,
         plugins: [
-            {
+        {
                 async serverWillStart(){
                     return {
                         async drainServer(){
