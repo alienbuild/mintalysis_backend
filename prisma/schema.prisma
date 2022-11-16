@@ -44,31 +44,6 @@ model tmp_comic_errors {
   edition  Int?
 }
 
-model token_data {
-  token_id        Int      @id
-  name            String   @db.Text
-  edition         Int
-  mint_date       DateTime @default(now()) @db.Timestamp(0)
-  rarity          String?  @db.Text
-  collectibleId   String?  @db.Text
-  uniqueCoverId   String?  @db.Text
-  type            String   @db.Text
-  last_updated    DateTime @default(now()) @db.Timestamp(0)
-  edition_type    String?  @db.Text
-  drop_date       DateTime @default(dbgenerated("('0000-00-00 00:00:00')")) @db.Timestamp(0)
-  store_price     Decimal  @db.Decimal(10, 0)
-  total_issued    Int
-  market_fee      Decimal? @db.Decimal(10, 0)
-  brand_name      String   @db.Text
-  brand_id        String?  @db.Text
-  licensor_name   String   @db.Text
-  licensor_id     String?  @db.Text
-  series_name     String   @db.Text
-  series_id       String   @db.Text
-  image_thumbnail String   @db.Text
-  image_url       String   @db.Text
-}
-
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model transfers {
   id        BigInt?
@@ -141,49 +116,49 @@ model comments {
 model licensors {
   licensor_id                                String   @id
   name                                       String?
-  description                                String?
-  market_fee                                 Decimal?
-  theme_logo_image_url                       String?
-  theme_logo_image_thumbnail_url             String?
-  theme_logo_image_low_resolution_url        String?
-  theme_logo_image_med_resolution_url        String?
-  theme_logo_image_full_resolution_url       String?
-  theme_logo_image_high_resolution_url       String?
-  theme_logo_image_direction                 String?
-  theme_background_image_url                 String?
-  theme_background_image_thumbnail_url       String?
-  theme_background_image_low_resolution_url  String?
-  theme_background_image_med_resolution_url  String?
-  theme_background_image_full_resolution_url String?
-  theme_background_image_high_resolution_url String?
-  theme_background_image_direction           String?
-  theme_footer_image_url                     String?
-  theme_footer_image_thumbnail_url           String?
-  theme_footer_image_low_resolution_url      String?
-  theme_footer_image_med_resolution_url      String?
-  theme_footer_image_full_resolution_url     String?
-  theme_footer_image_high_resolution_url     String?
-  theme_footer_image_direction               String?
-  landscape_image_url                        String?
-  landscape_image_thumbnail_url              String?
-  landscape_image_low_resolution_url         String?
-  landscape_image_med_resolution_url         String?
+  description                                String?  @db.Text
+  landscape_image_direction                  String?
   landscape_image_full_resolution_url        String?
   landscape_image_high_resolution_url        String?
-  landscape_image_direction                  String?
-  square_image_url                           String?
-  square_image_thumbnail_url                 String?
-  square_image_low_resolution_url            String?
-  square_image_med_resolution_url            String?
+  landscape_image_low_resolution_url         String?
+  landscape_image_med_resolution_url         String?
+  landscape_image_thumbnail_url              String?
+  landscape_image_url                        String?
+  market_fee                                 Decimal?
+  square_image_direction                     String?
   square_image_full_resolution_url           String?
   square_image_high_resolution_url           String?
-  square_image_direction                     String?
+  square_image_low_resolution_url            String?
+  square_image_med_resolution_url            String?
+  square_image_thumbnail_url                 String?
+  square_image_url                           String?
+  theme_background_image_direction           String?
+  theme_background_image_full_resolution_url String?
+  theme_background_image_high_resolution_url String?
+  theme_background_image_low_resolution_url  String?
+  theme_background_image_med_resolution_url  String?
+  theme_background_image_thumbnail_url       String?
+  theme_background_image_url                 String?
+  theme_footer_image_direction               String?
+  theme_footer_image_full_resolution_url     String?
+  theme_footer_image_high_resolution_url     String?
+  theme_footer_image_low_resolution_url      String?
+  theme_footer_image_med_resolution_url      String?
+  theme_footer_image_thumbnail_url           String?
+  theme_footer_image_url                     String?
+  theme_logo_image_direction                 String?
+  theme_logo_image_full_resolution_url       String?
+  theme_logo_image_high_resolution_url       String?
+  theme_logo_image_low_resolution_url        String?
+  theme_logo_image_med_resolution_url        String?
+  theme_logo_image_thumbnail_url             String?
+  theme_logo_image_url                       String?
 }
 
 model brands {
   brand_id                                   String  @id
   name                                       String?
-  description                                String?
+  description                                String? @db.Text
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_low_resolution_url        String?
@@ -219,13 +194,16 @@ model brands {
   square_image_full_resolution_url           String?
   square_image_high_resolution_url           String?
   square_image_direction                     String?
+  licensor_id                                String
+
+  @@index([licensor_id], map: "brands_licensor_id_fkey")
 }
 
 model series {
   series_id                                  String   @id
   name                                       String?
-  description                                String?
-  season                                     String?
+  description                                String?  @db.Text
+  season                                     Int?
   is_blindbox                                Boolean? @default(false)
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
@@ -262,41 +240,53 @@ model series {
   square_image_full_resolution_url           String?
   square_image_high_resolution_url           String?
   square_image_direction                     String?
+  licensor_id                                String
+  brand_id                                   String
 
+  @@index([brand_id], map: "series_brand_id_fkey")
+  @@index([licensor_id], map: "series_licensor_id_fkey")
 }
 
 model collectibles {
   collectible_id                       String    @id
   name                                 String
-  total_likes                          Int?
-  isFree                               Boolean?  @default(false)
-  store_price                          Decimal?
-  is_unlimited                         Boolean?  @default(false)
-  total_issued                         Int?
-  total_available                      Int?
-  description                          String?
   rarity                               String?
-  variety                              String?
+  description                          String?   @db.Text
   edition_type                         String?
-  dropMethod                           String?
+  store_price                          Decimal?
   drop_date                            DateTime?
   market_fee                           Decimal?
-  background_image_url                 String?
-  background_image_thumbnail_url       String?
-  background_image_low_resolution_url  String?
-  background_image_med_resolution_url  String?
-  background_image_full_resolution_url String?
-  background_image_high_resolution_url String?
-  background_image_direction           String?
-  image_url                            String?
-  image_thumbnail_url                  String?
-  image_low_resolution_url             String?
-  image_med_resolution_url             String?
-  image_full_resolution_url            String?
-  image_high_resolution_url            String?
-  image_direction                      String?
   createdAt                            DateTime  @default(now())
   updatedAt                            DateTime  @updatedAt
+  background_image_direction           String?
+  background_image_full_resolution_url String?
+  background_image_high_resolution_url String?
+  background_image_low_resolution_url  String?
+  background_image_med_resolution_url  String?
+  background_image_thumbnail_url       String?
+  background_image_url                 String?
+  image_direction                      String?
+  image_full_resolution_url            String?
+  image_high_resolution_url            String?
+  image_low_resolution_url             String?
+  image_med_resolution_url             String?
+  image_thumbnail_url                  String?
+  image_url                            String?
+  is_unlimited                         Boolean?  @default(false)
+  total_available                      Int?
+  total_issued                         Int?
+  total_likes                          Int?
+  variety                              String?
+  brand_id                             String
+  licensor_id                          String
+  series_id                            String
+  drop_method                          String?
+  is_free                              Boolean?  @default(false)
+  total_store_allocation               Int?
+
+  @@index([brand_id], map: "collectibles_brand_id_fkey")
+  @@index([licensor_id], map: "collectibles_licensor_id_fkey")
+  @@index([series_id], map: "collectibles_series_id_fkey")
 }
 
 model comics {
@@ -339,6 +329,21 @@ model messages {
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
   updatedAt DateTime @updatedAt
+}
+
+model tokens {
+  token_id      Int      @id
+  name          String   @db.Text
+  edition       Int
+  mint_date     DateTime @default(now()) @db.Timestamp(0)
+  rarity        String?  @db.Text
+  collectibleId String?  @db.Text
+  uniqueCoverId String?  @db.Text
+  type          String   @db.Text
+  last_updated  DateTime @default(now()) @db.Timestamp(0)
+  brand_id      String?  @db.Text
+  licensor_id   String?  @db.Text
+  series_id     String   @db.Text
 }
 
 enum Role {
