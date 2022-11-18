@@ -287,6 +287,7 @@ model collectibles {
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
   @@index([series_id], map: "collectibles_series_id_fkey")
+  @@index([name])
 }
 
 model comics {

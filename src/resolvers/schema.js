@@ -5,15 +5,26 @@ export const typeDefs = gql`
     type Query {
         me: User
         veveUser(username: String!): [String!]!
-        collectibles: [Collectible!]!
+        collectibles(search: String, limit: Int, after: String): CollectiblesConnection
         posts: [Post!]!
         profile(userId: ID!): Profile
         message(id: ID!): Message
+    }
+    
+    type CollectiblesConnection {
+        edges: [Collectible!]!
+        pageInfo: PageInfo!
+    }
+    
+    type PageInfo {
+        endCursor: String
+        hasMore: Boolean!
     }
 
     type Mutation {
         signup(credentials: CredentialsInput!) : AuthPayload!
         signin(credentials: CredentialsInput!) : AuthPayload
+        veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload!
         avatarUpload(file: Upload) : AvatarUploadResponse
         postCreate(post: PostInput!): PostPayload!
         postUpdate(postId: ID!, post: PostInput!): PostPayload!
@@ -36,13 +47,19 @@ export const typeDefs = gql`
         errorStatus: Boolean
         error: String
         token: String
-    }
+    } 
     
     scalar Upload
 
     type Message {
         text: String
         createdBy: String
+    }
+
+    input VaultImportInput {
+        username: String
+        edition: Int
+        collectible_id: String
     }
 
     input MessageInput {
@@ -71,24 +88,40 @@ export const typeDefs = gql`
     }
     
     type Collectible {
-        id: ID!
         collectible_id: String!
         name: String!
         rarity: String
         description: String!
         edition_type: String
-        total_editions: Int!
         store_price: Float!
         drop_date: String!
-        image_thumbnail: String
-        image_full: String
-        series_name: String
-        series_id: String
-        brand_name: String
-        brand_id: String
-        licensor_name: String
-        licensor_id: String
         market_fee: Float
+        createdAt: String
+        updatedAt: String
+        background_image_direction: String
+        background_image_full_resolution_url: String
+        background_image_high_resolution_url: String
+        background_image_low_resolution_url: String
+        background_image_med_resolution_url: String
+        background_image_thumbnail_url: String
+        background_image_url: String
+        image_direction: String
+        image_full_resolution_url: String
+        image_high_resolution_url: String
+        image_low_resolution_url: String
+        image_med_resolution_url: String
+        image_thumbnail_url: String
+        image_url: String
+        is_unlimited: Boolean
+        total_available: Int
+        total_issued: Int
+        total_likes: Int
+        variety: String
+        brand_id: String
+        licensor_id: String
+        series_id: String
+        drop_method: String
+        is_free: String
     }
 
     type Post {
@@ -141,6 +174,11 @@ export const typeDefs = gql`
         userErrors: [UserError!]!
         token: String,
         user: User
+    }
+    
+    type VeveVaultImportPayload {
+        wallet_address: String!
+        token_count: Int!
     }
 
 `

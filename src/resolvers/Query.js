@@ -1,4 +1,5 @@
 import {checkVeveUsername} from "../utils/checkVeveUsername.js";
+import {decodeCursor, encodeCursor} from "../utils/index.js";
 
 const Query = {
     me: (_, __, { userInfo, prisma }) => {
@@ -22,14 +23,43 @@ const Query = {
 
         return returnArr
     },
-    collectibles: async (_, __, { prisma }) => {
-        return prisma.posts.findMany({
-            orderBy: [
-                {
-                    createdAt: "desc"
+    collectibles: async (_, { search, limit = 5, after }, { prisma }) => {
+
+        if (limit > 100) return null
+
+        let queryParams = {
+            take: limit,
+            orderBy: [{ createdAt: 'desc' }]
+        }
+
+        if (after){
+            queryParams = {
+                ...queryParams,
+                skip: 1,
+                cursor: { collectible_id: decodeCursor(after) }
+            }
+        }
+
+        if (search){
+            queryParams = {
+                ...queryParams,
+                where: {
+                    name: {
+                        contains: search
+                    }
                 }
-            ]
-        })
+            }
+        }
+
+        const collectibles = await prisma.collectibles.findMany(queryParams)
+
+        return {
+            edges: collectibles,
+            pageInfo: {
+                endCursor: collectibles.length > 1 ? encodeCursor(collectibles[collectibles.length - 1].collectible_id) : null,
+            }
+        }
+
     },
     profile: async (_, {userId}, {prisma, userInfo}) => {
 
