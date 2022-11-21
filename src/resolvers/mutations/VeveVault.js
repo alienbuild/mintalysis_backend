@@ -21,7 +21,6 @@ const fetchInitialData = async (tokenCount, wallet_address, userId, username) =>
 }
 
 const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
-    console.log('Fetching more data.')
     if (tokenCount <= 200) pageSize = tokenCount
     const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&sell_orders=true&order_by=name&direction=asc&status=imx&cursor=${cursor}`)
     const walletItems = await getWalletItems.json()
@@ -39,7 +38,6 @@ export const veveVaultResolvers = {
         const { userId } = userInfo
         const { username, edition, collectible_id } = payload
 
-        // Get token id
         const token = await prisma.tokens.findFirst({
             where: {
                 collectibleId: collectible_id,
@@ -53,10 +51,13 @@ export const veveVaultResolvers = {
         })
         const { token_id } = token
 
-        // Get wallet address of owner
         const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
         const imxOwner = await getImxOwner.json()
         const wallet_address = imxOwner.user
+
+        // TODO: Check if the wallet address is already assigned to a user
+        // If the wallet is already assigned throw new error
+        // Prompt user to use extension to validate their ownership
 
         // Get token count
         const getTokenCount = await fetch(`https://3vkyshzozjep5ciwsh2fvgdxwy.appsync-api.us-west-2.amazonaws.com/graphql`, {
@@ -70,18 +71,16 @@ export const veveVaultResolvers = {
 
         await fetchInitialData(tokenCount, wallet_address, userId, username, prisma)
 
-        console.log(`[FINISHED] Found ${tokenItems.length} tokens in wallet ${wallet_address}`)
-
         await prisma.profile.update({
             data: {
                 wallet_address: wallet_address,
-                veve_username: username
+                veve_username: username,
+                complete: true
             },
             where: {
                 user_id: userId
             }
         })
-        console.log('Updated the users wallet address in their profile.')
 
         await prisma.tokens.updateMany({
             data: {
@@ -91,8 +90,6 @@ export const veveVaultResolvers = {
                 token_id: { in: tokenItems }
             }
         })
-
-        console.log('Assigned tokens to user.')
 
         return {
             "wallet_address": wallet_address,
