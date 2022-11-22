@@ -4,8 +4,8 @@ import { makeExecutableSchema } from "@graphql-tools/schema"
 import { SubscriptionServer } from "subscriptions-transport-ws"
 import { execute, subscribe } from "graphql"
 import { ApolloServer } from "apollo-server-express"
-// import { shield } from "graphql-shield"
-// import { applyMiddleware } from "graphql-middleware"
+import { shield } from "graphql-shield"
+import { applyMiddleware } from "graphql-middleware"
 import { PrismaClient } from "@prisma/client"
 import { typeDefs } from './resolvers/schema.js'
 import { getUserFromToken } from './utils/getUserFromToken.js'
@@ -15,18 +15,20 @@ import {
     Subscription,
     Post,
     Profile,
-    User
+    User,
+    Collectible,
+    Token
 } from "./resolvers/index.js"
 import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
 
+
 const prisma = new PrismaClient();
 export const pubsub = new PubSub();
 
 (async function() {
-
     const app = express();
     const httpServer = createServer(app);
 
@@ -38,19 +40,28 @@ export const pubsub = new PubSub();
         crossOriginEmbedderPolicy: false,
         contentSecurityPolicy:(process.env.NODE_ENV === 'production' ? undefined:false)
     }))
+
     app.use(graphqlUploadExpress({ maxFieldSize: 100000, maxFiles: 10 }))
 
-    const schema = makeExecutableSchema({
-        typeDefs,
-        resolvers: {
-            Query,
-            Mutation,
-            Subscription,
-            Profile,
-            Post,
-            User,
-        },
-    });
+    let schema
+    try {
+        schema = makeExecutableSchema({
+            typeDefs,
+            resolvers: {
+                Query,
+                Mutation,
+                Subscription,
+                Profile,
+                Post,
+                User,
+                Collectible,
+                Token
+            },
+        })
+    } catch (e){
+        console.log('Nah : ', e)
+    }
+
 
     // const permissions = shield({
     //     Query: {},

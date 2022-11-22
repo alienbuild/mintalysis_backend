@@ -1,5 +1,5 @@
-import {checkVeveUsername} from "../utils/checkVeveUsername.js";
-import {decodeCursor, encodeCursor} from "../utils/index.js";
+import {checkVeveUsername} from "../utils/checkVeveUsername.js"
+import {decodeCursor, encodeCursor} from "../utils/index.js"
 
 const Query = {
     me: (_, __, { userInfo, prisma }) => {
@@ -9,6 +9,30 @@ const Query = {
                 id: userInfo.userId
             }
         })
+    },
+    tokens: async (_, { type, search, limit = 15, after, userId, editionNumber, collectibleId, uniqueCoverId }, { prisma }) => {
+        let queryParams = { take: limit, orderBy: [{ mint_date: 'desc' }] }
+        let whereParams = {}
+
+        if (after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: decodeCursor(Number(after)) } }
+        if (search) whereParams = { ...whereParams, name: { contains: search } }
+        if (type) whereParams = { ...whereParams, type: type }
+        if (userId) whereParams = { ...whereParams, user_id: userId }
+        if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
+        if (collectibleId) whereParams = { ...whereParams, collectibleId: collectibleId }
+        if (uniqueCoverId) whereParams = { ...whereParams, uniqueCoverId: uniqueCoverId }
+
+        queryParams = { ...queryParams, where: { ...whereParams } }
+
+        const tokens = await prisma.tokens.findMany(queryParams)
+
+        return {
+            edges: tokens,
+            pageInfo: {
+                endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
+            }
+        }
+
     },
     veveUser: async (_, {username}, ___) => {
         let returnArr = []
@@ -27,29 +51,10 @@ const Query = {
 
         if (limit > 100) return null
 
-        let queryParams = {
-            take: limit,
-            orderBy: [{ createdAt: 'desc' }]
-        }
+        let queryParams = { take: limit, orderBy: [{ createdAt: 'desc' }] }
 
-        if (after){
-            queryParams = {
-                ...queryParams,
-                skip: 1,
-                cursor: { collectible_id: decodeCursor(after) }
-            }
-        }
-
-        if (search){
-            queryParams = {
-                ...queryParams,
-                where: {
-                    name: {
-                        contains: search
-                    }
-                }
-            }
-        }
+        if (after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(after) } }
+        if (search) { queryParams = { ...queryParams, where: { name: { contains: search } }} }
 
         const collectibles = await prisma.collectibles.findMany(queryParams)
 

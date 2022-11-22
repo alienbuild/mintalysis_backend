@@ -6,6 +6,7 @@ export const typeDefs = gql`
         me: User
         veveUser(username: String!): [String!]!
         collectibles(search: String, limit: Int, after: String): CollectiblesConnection
+        tokens(editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String) : TokensConnection
         posts: [Post!]!
         profile(userId: ID!): Profile
         message(id: ID!): Message
@@ -16,9 +17,13 @@ export const typeDefs = gql`
         pageInfo: PageInfo!
     }
     
+    type TokensConnection {
+        edges: [Token]!
+        pageInfo: PageInfo!
+    }
+    
     type PageInfo {
         endCursor: String
-        hasMore: Boolean!
     }
 
     type Mutation {
@@ -86,6 +91,16 @@ export const typeDefs = gql`
     input UpdateCommentInput {
         text: String
     }
+
+    input sortOptions {
+        sortDirection: String!
+        sortField: String!
+    }
+    
+    input pagingOptions {
+        limit: Int
+        after: String
+    }
     
     type Collectible {
         collectible_id: String!
@@ -122,6 +137,7 @@ export const typeDefs = gql`
         series_id: String
         drop_method: String
         is_free: String
+        tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
     }
 
     type Post {
@@ -149,6 +165,23 @@ export const typeDefs = gql`
         stripe_customer_id: String
         posts: [Post!]!
         profile: Profile
+        tokens: [Token]!
+    }
+    
+    type Token {
+        token_id: ID!
+        name: String!
+        edition: Int!
+        mint_date: String
+        rarity: String
+        collectibleId: String
+        uniqueCoverId: String
+        type: String!
+        last_updated: String!
+        brand_id: String
+        licensor_id: String
+        series_id: String
+        collectible: Collectible
     }
 
     type Profile {
