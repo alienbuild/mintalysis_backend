@@ -10,7 +10,7 @@ const Query = {
             }
         })
     },
-    tokens: async (_, { type, search, limit = 15, after, userId, editionNumber, collectibleId, uniqueCoverId }, { prisma }) => {
+    tokens: async (_, { type, search, limit = 15, after, userId, editionNumber, collectibleId, uniqueCoverId, kraken }, { prisma }) => {
         let queryParams = { take: limit, orderBy: [{ mint_date: 'desc' }] }
         let whereParams = {}
 
@@ -21,6 +21,7 @@ const Query = {
         if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
         if (collectibleId) whereParams = { ...whereParams, collectibleId: collectibleId }
         if (uniqueCoverId) whereParams = { ...whereParams, uniqueCoverId: uniqueCoverId }
+        if (kraken) whereParams = {...whereParams, tmp_unregistered_user: 'KRAKEN'}
 
         queryParams = { ...queryParams, where: { ...whereParams } }
 

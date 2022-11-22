@@ -5,7 +5,7 @@ let fullCapture = false
 let i = 0
 let pageSize = 200
 
-const fetchInitialData = async (tokenCount, wallet_address, userId, username) => {
+const fetchInitialData = async (tokenCount, wallet_address) => {
     const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&sell_orders=true&order_by=name&direction=asc&status=imx&cursor=eyJpZCI6IjB4YmFlNGNjNWM2ZDA4NDIxZGQ2OTdkZjQwYzQzYjQ1OTVmMTNkMTY2NjMzNjQzNWM5ZmJkODVjMmNkNjFiN2IxYyIsIm5hbWUiOiIjMDEgRWR1YXJkbyBSaXNzbyBCYXRtYW4iLCJ1cGRhdGVkX2F0IjoiMjAyMi0xMS0xMVQwOTowMDo1My4yNzE1OTdaIn0`)
     const walletItems = await getWalletItems.json()
 
@@ -35,8 +35,18 @@ const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
 
 export const veveVaultResolvers = {
     veveVaultImport: async (_, { payload }, { userInfo, prisma }) => {
+
         const { userId } = userInfo
-        const { username, edition, collectible_id } = payload
+        const user = await prisma.users.findUnique({
+            where: {
+                id: userInfo.userId
+            },
+            select: {
+                role: true
+            }
+        })
+
+        const { username, edition, collectible_id, kraken } = payload
 
         const token = await prisma.tokens.findFirst({
             where: {
@@ -71,25 +81,47 @@ export const veveVaultResolvers = {
 
         await fetchInitialData(tokenCount, wallet_address, userId, username, prisma)
 
-        await prisma.profile.update({
-            data: {
-                wallet_address: wallet_address,
-                veve_username: username,
-                complete: true
-            },
-            where: {
-                user_id: userId
-            }
-        })
+        if (user.role === 'ADMIN' && kraken){
+            console.log('IS ADMIN AND KRAKEN')
+            await prisma.tokens.updateMany({
+                data: {
+                    tmp_unregistered_user: '',
+                    tmp_wallet_address: ''
+                },
+                where: {
+                    token_id: { in: tokenItems }
+                }
+            })
+            await prisma.tokens.updateMany({
+                data: {
+                    tmp_unregistered_user: 'KRAKEN',
+                    tmp_wallet_address: wallet_address
+                },
+                where: {
+                    token_id: { in: tokenItems }
+                }
+            })
+        } else {
+            await prisma.profile.update({
+                data: {
+                    wallet_address: wallet_address,
+                    veve_username: username,
+                    complete: true
+                },
+                where: {
+                    user_id: userId
+                }
+            })
 
-        await prisma.tokens.updateMany({
-            data: {
-                user_id: userId
-            },
-            where: {
-                token_id: { in: tokenItems }
-            }
-        })
+            await prisma.tokens.updateMany({
+                data: {
+                    user_id: userId
+                },
+                where: {
+                    token_id: { in: tokenItems }
+                }
+            })
+        }
 
         return {
             "wallet_address": wallet_address,

@@ -6,7 +6,7 @@ export const typeDefs = gql`
         me: User
         veveUser(username: String!): [String!]!
         collectibles(search: String, limit: Int, after: String): CollectiblesConnection
-        tokens(editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String) : TokensConnection
+        tokens(editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String, kraken: Boolean) : TokensConnection
         posts: [Post!]!
         profile(userId: ID!): Profile
         message(id: ID!): Message
@@ -65,6 +65,7 @@ export const typeDefs = gql`
         username: String
         edition: Int
         collectible_id: String
+        kraken: Boolean
     }
 
     input MessageInput {
@@ -165,6 +166,7 @@ export const typeDefs = gql`
         stripe_customer_id: String
         posts: [Post!]!
         profile: Profile
+        role: String!
         tokens: [Token]!
     }
     
@@ -182,6 +184,8 @@ export const typeDefs = gql`
         licensor_id: String
         series_id: String
         collectible: Collectible
+        tmp_unregistered_user: String
+        tmp_wallet_address: String
     }
 
     type Profile {

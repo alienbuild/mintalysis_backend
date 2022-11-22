@@ -75,7 +75,6 @@ model users {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   role      Role     @default(BASIC)
-  tokens    tokens[]
 
   @@index([email], map: "email")
 }
@@ -85,11 +84,11 @@ model profile {
   bio            String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  veve_username  String?  @unique
   user_id        String   @unique
   avatar         String?
   complete       Boolean  @default(false)
   wallet_address String?
+  veve_username  String?  @unique
 }
 
 model posts {
@@ -284,7 +283,6 @@ model collectibles {
   drop_method                          String?
   is_free                              Boolean?  @default(false)
   total_store_allocation               Int?
-  tokens                               tokens[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -335,23 +333,24 @@ model messages {
 }
 
 model tokens {
-  token_id      Int           @id
-  name          String        @db.Text
-  edition       Int
-  mint_date     DateTime      @default(now()) @db.Timestamp(0)
-  rarity        String?       @db.Text
-  collectibleId String?
-  collectible   collectibles? @relation(fields: [collectibleId], references: [collectible_id])
-  uniqueCoverId String?       @db.Text
-  type          String        @db.Text
-  last_updated  DateTime      @default(now()) @db.Timestamp(0)
-  brand_id      String?       @db.Text
-  licensor_id   String?       @db.Text
-  series_id     String        @db.Text
-  user_id       String?
-  user          users?        @relation(fields: [user_id], references: [id])
+  token_id              Int      @id
+  name                  String   @db.Text
+  edition               Int
+  mint_date             DateTime @default(now()) @db.Timestamp(0)
+  rarity                String?  @db.Text
+  collectibleId         String?
+  uniqueCoverId         String?  @db.Text
+  type                  String   @db.Text
+  last_updated          DateTime @default(now()) @db.Timestamp(0)
+  brand_id              String?  @db.Text
+  licensor_id           String?  @db.Text
+  series_id             String   @db.Text
+  user_id               String?
+  tmp_unregistered_user String?
+  tmp_wallet_address    String?
 
-  @@index([user_id, token_id, edition])
+  @@index([user_id, token_id, edition, tmp_unregistered_user])
+  @@index([collectibleId], map: "tokens_collectibleId_fkey")
 }
 
 enum Role {
