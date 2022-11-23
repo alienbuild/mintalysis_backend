@@ -315,7 +315,6 @@ model comics {
   cover_image_full_resolution_url      String?
   cover_image_high_resolution_url      String?
   cover_image_direction                String?
-  cover_rarity                         String?
   cover_total_issued                   Int?
   cover_total_available                Int?
   background_image_direction           String?
