@@ -15,7 +15,7 @@ const password = proxy_parts[3]
 const proxyAgent = new HttpsProxyAgent(`http://${username}:${password}@${ip_address}:${port}`)
 
 const getComicsQuery = `query comicTypeList {
-    comicTypeList {
+    comicTypeList(first: 150, after: "YXJyYXljb25uZWN0aW9uOjE0OQ==") {
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -70,7 +70,9 @@ const getComicsQuery = `query comicTypeList {
                     }
                 }
             }
+            cursor
         }
+        totalCount
     }
 }`
 
@@ -193,7 +195,9 @@ const getLicensorsQuery = `query licensorList {
                     direction
                 }
             }
+            cursor
         }
+        totalCount
     }
 }`
 
@@ -656,57 +660,66 @@ const migrateComics = () => {
     })
         .then(data => data.json())
         .then(data => {
-            console.log('hasNextPage: ', data.data.collectibleTypeList.pageInfo.hasNextPage)
-            console.log('totalCount is: ', data.data.collectibleTypeList.totalCount)
-            console.log('next cursor is: ', data.data.collectibleTypeList.edges.cursor)
-            console.log('end cursor is: ', data.data.collectibleTypeList.pageInfo.endCursor)
+            // console.log('data is: ', data.data.comicTypeList.edges)
+            console.log('hasNextPage: ', data.data.comicTypeList.pageInfo.hasNextPage)
+            console.log('totalCount is: ', data.data.comicTypeList.totalCount)
+            console.log('next cursor is: ', data.data.comicTypeList.edges.cursor)
+            console.log('end cursor is: ', data.data.comicTypeList.pageInfo.endCursor)
 
             const comicTypeList = data.data.comicTypeList.edges
-            comicTypeList.map(async (comic) => {
-
-                const comicsObj = await prisma.comics.create({
-                    data: {
-                        uniqueCoverId: comic.,
-                        name: comic.,
-                        rarity: comic.,
-                        description: comic.,
-                        comic_number: comic.,
-                        comic_series_id: comic.,
-                        cover_image_thumbnail: comic.,
-                        cover_image_full: comic.,
-                        cover_rarity: comic.,
-                        cover_total_issued: comic.,
-                        cover_total_available: comic.,
-                        background_image_direction: comic.,
-                        background_image_full_resolution_url: comic.,
-                        background_image_high_resolution_url: comic.,
-                        background_image_low_resolution_url: comic.,
-                        background_image_med_resolution_url: comic.,
-                        background_image_thumbnail_url: comic.,
-                        background_image_url: comic.,
-                        drop_date: comic.,
-                        drop_method: comic.,
-                        start_year: comic.,
-                        page_count: comic.,
-                        store_price: comic.,
-                        publisher_id: comic.,
-                        market_fee: comic.,
-                        total_issued: comic.,
-                        total_available: comic.,
-                        is_free: comic.,
-                        is_unlimited: comic.,
+            comicTypeList.map(async (comic, index) => {
+                // if (index > 0) return null
+                // console.log('comic is: ', comic)
+                try {
+                    const comicsObj = await prisma.comics.create({
+                        data: {
+                            uniqueCoverId: comic.node.cover.id,
+                            name: comic.node.name,
+                            rarity: comic.node.cover.rarity,
+                            description: comic.node.description,
+                            comic_number: Number(comic.node.comicNumber),
+                            comic_series_id: comic.node.comicSeries.id,
+                            cover_image_thumbnail: comic.node.cover.image.thumbnailUrl,
+                            cover_image_low_resolution_url: comic.node.cover.image.lowResolutionUrl,
+                            cover_image_med_resolution_url: comic.node.cover.image.medResolutionUrl,
+                            cover_image_full_resolution_url: comic.node.cover.image.fullResolutionUrl,
+                            cover_image_high_resolution_url: comic.node.cover.image.highResolutionUrl,
+                            cover_image_direction: comic.node.cover.image.direction,
+                            cover_total_issued: comic.node.cover.totalIssued,
+                            cover_total_available: comic.node.cover.totalAvailable,
+                            background_image_direction: comic.node.backgroundImage?.direction,
+                            background_image_full_resolution_url: comic.node.backgroundImage?.fullResolutionUrl,
+                            background_image_high_resolution_url: comic.node.backgroundImage?.highResolutionUrl,
+                            background_image_low_resolution_url: comic.node.backgroundImage?.lowResolutionUrl,
+                            background_image_med_resolution_url: comic.node.backgroundImage?.medResolutionUrl,
+                            background_image_thumbnail_url: comic.node.backgroundImage?.thumbnailUrl,
+                            background_image_url: comic.node.backgroundImage?.url,
+                            drop_date: comic.node.dropDate,
+                            drop_method: comic.node.dropMethod,
+                            start_year: comic.node.startYear,
+                            page_count: comic.node.pageCount,
+                            store_price: comic.node.storePrice,
+                            publisher_id: comic.node.comicSeries.publisher.id,
+                            market_fee: comic.node.comicSeries.publisher.marketFee,
+                            total_issued: comic.node.totalIssued,
+                            total_available: comic.node.totalAvailable,
+                            is_free: comic.node.isFree,
+                            is_unlimited: comic.node.isUnlimited,
+                        }
+                    })
+                    if (!comicsObj){
+                        console.log('Nope failed.')
+                    } else {
+                        console.log('Success')
                     }
-                })
-
-                if (!comicsObj){
-                    console.log('Nope failed.')
-                } else {
-                    console.log('Success')
+                } catch (e) {
+                    console.log('Nah')
                 }
+
             })
 
         })
         .catch(err => console.log('[ERROR] Denied: ', err))
 }
 
-// migrateCollectibles()
+migrateComics()
