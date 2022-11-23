@@ -20,6 +20,12 @@ export const typeDefs = gql`
     type TokensConnection {
         edges: [Token]!
         pageInfo: PageInfo!
+        summary: WalletSummary
+    }
+    
+    type WalletSummary {
+        valuation: Float
+        count: Int
     }
     
     type PageInfo {
@@ -138,6 +144,8 @@ export const typeDefs = gql`
         series_id: String
         drop_method: String
         is_free: String
+        floor_price: Float
+        total_listings: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
     }
 

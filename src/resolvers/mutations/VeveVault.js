@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import { setTimeout } from 'node:timers/promises'
 
 let tokenItems = []
 let fullCapture = false
@@ -9,7 +10,7 @@ const fetchInitialData = async (tokenCount, wallet_address) => {
     const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&sell_orders=true&order_by=name&direction=asc&status=imx&cursor=eyJpZCI6IjB4YmFlNGNjNWM2ZDA4NDIxZGQ2OTdkZjQwYzQzYjQ1OTVmMTNkMTY2NjMzNjQzNWM5ZmJkODVjMmNkNjFiN2IxYyIsIm5hbWUiOiIjMDEgRWR1YXJkbyBSaXNzbyBCYXRtYW4iLCJ1cGRhdGVkX2F0IjoiMjAyMi0xMS0xMVQwOTowMDo1My4yNzE1OTdaIn0`)
     const walletItems = await getWalletItems.json()
 
-    walletItems.result.map(item => {
+    await walletItems.result.map(item => {
         i++
         tokenItems.push(Number(item.token_id))
     })
@@ -21,16 +22,21 @@ const fetchInitialData = async (tokenCount, wallet_address) => {
 }
 
 const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
-    if (tokenCount <= 200) pageSize = tokenCount
-    const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&sell_orders=true&order_by=name&direction=asc&status=imx&cursor=${cursor}`)
-    const walletItems = await getWalletItems.json()
+    try {
+        await setTimeout(1500)
+        // if (tokenCount <= 200) pageSize = tokenCount
+        const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&sell_orders=true&order_by=name&direction=asc&status=imx&cursor=${cursor}`)
+        const walletItems = await getWalletItems.json()
 
-    walletItems.result.map(item => {
-        tokenItems.push(Number(item.token_id))
-    })
+        await walletItems.result.map(item => {
+            tokenItems.push(Number(item.token_id))
+        })
 
-    if (!cursor) fullCapture = true
-    if (!fullCapture) await keepFetchingData(walletItems.cursor, tokenCount, wallet_address)
+        if (!cursor) fullCapture = true
+        if (!fullCapture) await keepFetchingData(walletItems.cursor, tokenCount, wallet_address)
+    } catch (e) {
+        console.log('[ERROR]: Something went wrong fetching more data.')
+    }
 }
 
 export const veveVaultResolvers = {
@@ -59,6 +65,7 @@ export const veveVaultResolvers = {
                 name: true,
             },
         })
+
         const { token_id } = token
 
         const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
@@ -82,14 +89,13 @@ export const veveVaultResolvers = {
         await fetchInitialData(tokenCount, wallet_address, userId, username, prisma)
 
         if (user.role === 'ADMIN' && kraken){
-            console.log('IS ADMIN AND KRAKEN')
             await prisma.tokens.updateMany({
                 data: {
                     tmp_unregistered_user: '',
                     tmp_wallet_address: ''
                 },
                 where: {
-                    token_id: { in: tokenItems }
+                    tmp_unregistered_user: 'KRAKEN'
                 }
             })
             await prisma.tokens.updateMany({
@@ -112,7 +118,6 @@ export const veveVaultResolvers = {
                     user_id: userId
                 }
             })
-
             await prisma.tokens.updateMany({
                 data: {
                     user_id: userId

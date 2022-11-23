@@ -14,6 +14,66 @@ const password = proxy_parts[3]
 
 const proxyAgent = new HttpsProxyAgent(`http://${username}:${password}@${ip_address}:${port}`)
 
+const getComicsQuery = `query comicTypeList {
+    comicTypeList {
+        pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+        }
+        edges {
+            node {
+                name
+                isFree
+                storePrice
+                isUnlimited
+                totalIssued
+                totalAvailable
+                description
+                dropDate
+                dropMethod
+                minimumAge
+                startYear
+                comicNumber
+                pageCount
+                backgroundImage {
+                    id
+                    url
+                    thumbnailUrl
+                    lowResolutionUrl
+                    medResolutionUrl
+                    fullResolutionUrl
+                    highResolutionUrl
+                    direction
+                }
+                cover {
+                    id
+                    rarity
+                    totalIssued
+                    totalAvailable
+                    image {
+                        url
+                        thumbnailUrl
+                        lowResolutionUrl
+                        medResolutionUrl
+                        fullResolutionUrl
+                        highResolutionUrl
+                        direction
+                    }
+                }
+                comicSeries {
+                    id
+                    publisher {
+                        id
+                        marketFee
+                    }
+                }
+            }
+        }
+    }
+}`
+
 const getCollectiblesQuery = `query collectibleTypeList {
     collectibleTypeList(first:50, after: "YXJyYXljb25uZWN0aW9uOjY0OQ==") {
         pageInfo {
@@ -506,7 +566,7 @@ const migrateSeries = () => {
 }
 
 const migrateCollectibles = () => {
-    console.log('Migrating.')
+    console.log('Migrating collectibles.')
 
     fetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
@@ -580,4 +640,73 @@ const migrateCollectibles = () => {
         .catch(err => console.log('[ERROR] Denied: ', err))
 }
 
-migrateCollectibles()
+const migrateComics = () => {
+    console.log('Migrating collectibles.')
+
+    fetch(`https://web.api.prod.veve.me/graphql`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'user-agent': 'alice-requests',
+            'client-version': '...',
+            'client-name': 'alice-backend',
+            'cookie': process.env.ALICE_COOKIE,
+        },
+        body: JSON.stringify({ query: getComicsQuery }),
+    })
+        .then(data => data.json())
+        .then(data => {
+            console.log('hasNextPage: ', data.data.collectibleTypeList.pageInfo.hasNextPage)
+            console.log('totalCount is: ', data.data.collectibleTypeList.totalCount)
+            console.log('next cursor is: ', data.data.collectibleTypeList.edges.cursor)
+            console.log('end cursor is: ', data.data.collectibleTypeList.pageInfo.endCursor)
+
+            const comicTypeList = data.data.comicTypeList.edges
+            comicTypeList.map(async (comic) => {
+
+                const comicsObj = await prisma.comics.create({
+                    data: {
+                        uniqueCoverId: comic.,
+                        name: comic.,
+                        rarity: comic.,
+                        description: comic.,
+                        comic_number: comic.,
+                        comic_series_id: comic.,
+                        cover_image_thumbnail: comic.,
+                        cover_image_full: comic.,
+                        cover_rarity: comic.,
+                        cover_total_issued: comic.,
+                        cover_total_available: comic.,
+                        background_image_direction: comic.,
+                        background_image_full_resolution_url: comic.,
+                        background_image_high_resolution_url: comic.,
+                        background_image_low_resolution_url: comic.,
+                        background_image_med_resolution_url: comic.,
+                        background_image_thumbnail_url: comic.,
+                        background_image_url: comic.,
+                        drop_date: comic.,
+                        drop_method: comic.,
+                        start_year: comic.,
+                        page_count: comic.,
+                        store_price: comic.,
+                        publisher_id: comic.,
+                        market_fee: comic.,
+                        total_issued: comic.,
+                        total_available: comic.,
+                        is_free: comic.,
+                        is_unlimited: comic.,
+                    }
+                })
+
+                if (!comicsObj){
+                    console.log('Nope failed.')
+                } else {
+                    console.log('Success')
+                }
+            })
+
+        })
+        .catch(err => console.log('[ERROR] Denied: ', err))
+}
+
+// migrateCollectibles()

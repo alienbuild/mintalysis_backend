@@ -253,7 +253,7 @@ model collectibles {
   rarity                               String?
   description                          String?   @db.Text
   edition_type                         String?
-  store_price                          Decimal?
+  store_price                          Decimal?  @db.Decimal(10, 2)
   drop_date                            DateTime?
   market_fee                           Decimal?
   createdAt                            DateTime  @default(now())
@@ -283,6 +283,18 @@ model collectibles {
   drop_method                          String?
   is_free                              Boolean?  @default(false)
   total_store_allocation               Int?
+  all_time_high                        Decimal?  @db.Decimal(10, 2)
+  all_time_low                         Decimal?  @db.Decimal(10, 2)
+  floor_price                          Decimal?  @db.Decimal(10, 2)
+  market_cap                           Decimal?  @db.Decimal(10, 2)
+  one_day_change                       Decimal?  @db.Decimal(10, 2)
+  one_mo_change                        Decimal?  @db.Decimal(10, 2)
+  one_wk_change                        Decimal?  @db.Decimal(10, 2)
+  one_year_change                      Decimal?  @db.Decimal(10, 2)
+  six_mo_change                        Decimal?  @db.Decimal(10, 2)
+  three_mo_change                      Decimal?  @db.Decimal(10, 2)
+  total_listings                       Int?
+  tokens                               tokens[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -291,25 +303,52 @@ model collectibles {
 }
 
 model comics {
-  uniqueCoverId         String    @unique
-  name                  String
-  rarity                String?
-  description           String?
-  comicNumber           Int?
-  comic_series_id       String?
-  comic_series_name     String?
-  cover_image_thumbnail String?
-  cover_image_full      String?
-  drop_date             DateTime?
-  pageCount             Int?
-  store_price           Decimal?
-  total_editions        Int?
-  publisher_id          String?
-  publisher_name        String?
-  market_fee            Decimal?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  id                    Int       @id @default(autoincrement())
+  uniqueCoverId                        String    @id
+  name                                 String
+  rarity                               String?
+  description                          String?   @db.Text
+  comic_number                         Int?
+  comic_series_id                      String?
+  cover_image_thumbnail                String?
+  cover_image_low_resolution_url       String?
+  cover_image_med_resolution_url       String?
+  cover_image_full_resolution_url      String?
+  cover_image_high_resolution_url      String?
+  cover_image_direction                String?
+  cover_rarity                         String?
+  cover_total_issued                   Int?
+  cover_total_available                Int?
+  background_image_direction           String?
+  background_image_full_resolution_url String?
+  background_image_high_resolution_url String?
+  background_image_low_resolution_url  String?
+  background_image_med_resolution_url  String?
+  background_image_thumbnail_url       String?
+  background_image_url                 String?
+  drop_date                            DateTime?
+  drop_method                          String?
+  start_year                           Int?
+  page_count                           Int?
+  store_price                          Decimal?  @db.Decimal(10, 2)
+  publisher_id                         String?
+  market_fee                           Decimal?
+  total_issued                         Int?
+  total_available                      Int?
+  is_free                              Boolean?  @default(false)
+  is_unlimited                         Boolean?  @default(false)
+  createdAt                            DateTime  @default(now())
+  updatedAt                            DateTime  @updatedAt
+  all_time_high                        Decimal?  @db.Decimal(10, 2)
+  all_time_low                         Decimal?  @db.Decimal(10, 2)
+  floor_price                          Decimal?  @db.Decimal(10, 2)
+  market_cap                           Decimal?  @db.Decimal(10, 2)
+  one_day_change                       Decimal?  @db.Decimal(10, 2)
+  one_mo_change                        Decimal?  @db.Decimal(10, 2)
+  one_wk_change                        Decimal?  @db.Decimal(10, 2)
+  one_year_change                      Decimal?  @db.Decimal(10, 2)
+  six_mo_change                        Decimal?  @db.Decimal(10, 2)
+  three_mo_change                      Decimal?  @db.Decimal(10, 2)
+  total_listings                       Int?
 
   @@index([uniqueCoverId], map: "uniqueCoverId")
 }
@@ -333,21 +372,22 @@ model messages {
 }
 
 model tokens {
-  token_id              Int      @id
-  name                  String   @db.Text
+  token_id              Int           @id
+  name                  String        @db.Text
   edition               Int
-  mint_date             DateTime @default(now()) @db.Timestamp(0)
-  rarity                String?  @db.Text
+  mint_date             DateTime      @default(now()) @db.Timestamp(0)
+  rarity                String?       @db.Text
   collectibleId         String?
-  uniqueCoverId         String?  @db.Text
-  type                  String   @db.Text
-  last_updated          DateTime @default(now()) @db.Timestamp(0)
-  brand_id              String?  @db.Text
-  licensor_id           String?  @db.Text
-  series_id             String   @db.Text
+  uniqueCoverId         String?       @db.Text
+  type                  String        @db.Text
+  last_updated          DateTime      @default(now()) @db.Timestamp(0)
+  brand_id              String?       @db.Text
+  licensor_id           String?       @db.Text
+  series_id             String        @db.Text
   user_id               String?
   tmp_unregistered_user String?
   tmp_wallet_address    String?
+  collectible           collectibles? @relation(fields: [collectibleId], references: [collectible_id])
 
   @@index([user_id, token_id, edition, tmp_unregistered_user])
   @@index([collectibleId], map: "tokens_collectibleId_fkey")
