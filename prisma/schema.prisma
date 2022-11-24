@@ -113,49 +113,162 @@ model comments {
   @@index([post_id], map: "comments_post_id_fkey")
 }
 
-model licensors {
-  licensor_id                                String   @id
-  name                                       String?
-  description                                String?  @db.Text
-  landscape_image_direction                  String?
-  landscape_image_full_resolution_url        String?
-  landscape_image_high_resolution_url        String?
-  landscape_image_low_resolution_url         String?
-  landscape_image_med_resolution_url         String?
-  landscape_image_thumbnail_url              String?
-  landscape_image_url                        String?
-  market_fee                                 Decimal?
-  square_image_direction                     String?
-  square_image_full_resolution_url           String?
-  square_image_high_resolution_url           String?
-  square_image_low_resolution_url            String?
-  square_image_med_resolution_url            String?
-  square_image_thumbnail_url                 String?
-  square_image_url                           String?
-  theme_background_image_direction           String?
-  theme_background_image_full_resolution_url String?
-  theme_background_image_high_resolution_url String?
-  theme_background_image_low_resolution_url  String?
-  theme_background_image_med_resolution_url  String?
-  theme_background_image_thumbnail_url       String?
-  theme_background_image_url                 String?
-  theme_footer_image_direction               String?
-  theme_footer_image_full_resolution_url     String?
-  theme_footer_image_high_resolution_url     String?
-  theme_footer_image_low_resolution_url      String?
-  theme_footer_image_med_resolution_url      String?
-  theme_footer_image_thumbnail_url           String?
-  theme_footer_image_url                     String?
-  theme_logo_image_direction                 String?
-  theme_logo_image_full_resolution_url       String?
-  theme_logo_image_high_resolution_url       String?
-  theme_logo_image_low_resolution_url        String?
-  theme_logo_image_med_resolution_url        String?
-  theme_logo_image_thumbnail_url             String?
-  theme_logo_image_url                       String?
+model veve_comics {
+  uniqueCoverId             String                  @id
+  name                      String
+  rarity                    String?
+  description               String?                 @db.Text
+  comic_number              Int?
+  comic_series_id           String?
+  image_thumbnail           String?
+  image_low_resolution_url  String?
+  image_med_resolution_url  String?
+  image_full_resolution_url String?
+  image_high_resolution_url String?
+  image_direction           String?
+  drop_date                 DateTime?
+  drop_method               String?
+  start_year                Int?
+  page_count                Int?
+  store_price               Decimal?                @db.Decimal(10, 2)
+  publisher_id              String?
+  market_fee                Decimal?                @db.Decimal(10, 2)
+  total_issued              Int?
+  total_available           Int?
+  is_free                   Boolean?                @default(false)
+  is_unlimited              Boolean?                @default(false)
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  all_time_high             Decimal?                @db.Decimal(10, 2)
+  all_time_low              Decimal?                @db.Decimal(10, 2)
+  floor_price               Decimal?                @db.Decimal(10, 2)
+  market_cap                Decimal?                @db.Decimal(10, 2)
+  one_day_change            Decimal?                @db.Decimal(10, 2)
+  one_mo_change             Decimal?                @db.Decimal(10, 2)
+  one_wk_change             Decimal?                @db.Decimal(10, 2)
+  one_year_change           Decimal?                @db.Decimal(10, 2)
+  six_mo_change             Decimal?                @db.Decimal(10, 2)
+  three_mo_change           Decimal?                @db.Decimal(10, 2)
+  total_listings            Int?
+  characters                veve_comic_characters[]
+  artists                   veve_comic_artists[]
+  writers                   veve_comic_writers[]
+
+  @@index([uniqueCoverId], map: "uniqueCoverId")
 }
 
-model brands {
+model veve_comic_writers {
+  author_id String        @id
+  name      String
+  comics    veve_comics[]
+}
+
+model veve_comic_artists {
+  artist_id String        @id
+  name      String
+  comics    veve_comics[]
+}
+
+model veve_comic_characters {
+  character_id String        @id
+  name         String
+  comics       veve_comics[]
+}
+
+model veve_publishers {
+  id             Int      @id @default(autoincrement())
+  publisher_id   String   @unique
+  publisher_name String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([publisher_id], map: "publisher_id")
+}
+
+model messages {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model tokens {
+  token_id              Int      @id
+  name                  String   @db.Text
+  edition               Int
+  mint_date             DateTime @default(now()) @db.Timestamp(0)
+  rarity                String?  @db.Text
+  collectibleId         String?
+  uniqueCoverId         String?  @db.Text
+  type                  String   @db.Text
+  last_updated          DateTime @default(now()) @db.Timestamp(0)
+  brand_id              String?  @db.Text
+  licensor_id           String?  @db.Text
+  series_id             String   @db.Text
+  user_id               String?
+  tmp_unregistered_user String?
+  tmp_wallet_address    String?
+
+  @@index([user_id, token_id, edition, tmp_unregistered_user])
+  @@index([collectibleId], map: "tokens_collectibleId_fkey")
+}
+
+model veve_collectibles {
+  collectible_id                       String    @id
+  name                                 String
+  rarity                               String?
+  description                          String?   @db.Text
+  edition_type                         String?
+  store_price                          Decimal?  @db.Decimal(10, 2)
+  drop_date                            DateTime?
+  market_fee                           Decimal?  @db.Decimal(10, 2)
+  createdAt                            DateTime  @default(now())
+  updatedAt                            DateTime
+  background_image_direction           String?
+  background_image_full_resolution_url String?
+  background_image_high_resolution_url String?
+  background_image_low_resolution_url  String?
+  background_image_med_resolution_url  String?
+  background_image_thumbnail_url       String?
+  background_image_url                 String?
+  image_direction                      String?
+  image_full_resolution_url            String?
+  image_high_resolution_url            String?
+  image_low_resolution_url             String?
+  image_med_resolution_url             String?
+  image_thumbnail_url                  String?
+  image_url                            String?
+  is_unlimited                         Boolean?  @default(false)
+  total_available                      Int?
+  total_issued                         Int?
+  total_likes                          Int?
+  variety                              String?
+  brand_id                             String
+  licensor_id                          String
+  series_id                            String
+  drop_method                          String?
+  is_free                              Boolean?  @default(false)
+  total_store_allocation               Int?
+  all_time_high                        Decimal?  @db.Decimal(10, 2)
+  all_time_low                         Decimal?  @db.Decimal(10, 2)
+  floor_price                          Decimal?  @db.Decimal(10, 2)
+  market_cap                           Decimal?  @db.Decimal(10, 2)
+  one_day_change                       Decimal?  @db.Decimal(10, 2)
+  one_mo_change                        Decimal?  @db.Decimal(10, 2)
+  one_wk_change                        Decimal?  @db.Decimal(10, 2)
+  one_year_change                      Decimal?  @db.Decimal(10, 2)
+  six_mo_change                        Decimal?  @db.Decimal(10, 2)
+  three_mo_change                      Decimal?  @db.Decimal(10, 2)
+  total_listings                       Int?
+
+  @@index([brand_id], map: "collectibles_brand_id_fkey")
+  @@index([licensor_id], map: "collectibles_licensor_id_fkey")
+  @@index([name], map: "collectibles_name_idx")
+  @@index([series_id], map: "collectibles_series_id_fkey")
+}
+
+model veve_brands {
   brand_id                                   String  @id
   name                                       String?
   description                                String? @db.Text
@@ -199,7 +312,49 @@ model brands {
   @@index([licensor_id], map: "brands_licensor_id_fkey")
 }
 
-model series {
+model veve_licensors {
+  licensor_id                                String   @id
+  name                                       String?
+  description                                String?  @db.Text
+  landscape_image_direction                  String?
+  landscape_image_full_resolution_url        String?
+  landscape_image_high_resolution_url        String?
+  landscape_image_low_resolution_url         String?
+  landscape_image_med_resolution_url         String?
+  landscape_image_thumbnail_url              String?
+  landscape_image_url                        String?
+  market_fee                                 Decimal? @db.Decimal(10, 2)
+  square_image_direction                     String?
+  square_image_full_resolution_url           String?
+  square_image_high_resolution_url           String?
+  square_image_low_resolution_url            String?
+  square_image_med_resolution_url            String?
+  square_image_thumbnail_url                 String?
+  square_image_url                           String?
+  theme_background_image_direction           String?
+  theme_background_image_full_resolution_url String?
+  theme_background_image_high_resolution_url String?
+  theme_background_image_low_resolution_url  String?
+  theme_background_image_med_resolution_url  String?
+  theme_background_image_thumbnail_url       String?
+  theme_background_image_url                 String?
+  theme_footer_image_direction               String?
+  theme_footer_image_full_resolution_url     String?
+  theme_footer_image_high_resolution_url     String?
+  theme_footer_image_low_resolution_url      String?
+  theme_footer_image_med_resolution_url      String?
+  theme_footer_image_thumbnail_url           String?
+  theme_footer_image_url                     String?
+  theme_logo_image_direction                 String?
+  theme_logo_image_full_resolution_url       String?
+  theme_logo_image_high_resolution_url       String?
+  theme_logo_image_low_resolution_url        String?
+  theme_logo_image_med_resolution_url        String?
+  theme_logo_image_thumbnail_url             String?
+  theme_logo_image_url                       String?
+}
+
+model veve_series {
   series_id                                  String   @id
   name                                       String?
   description                                String?  @db.Text
@@ -245,151 +400,6 @@ model series {
 
   @@index([brand_id], map: "series_brand_id_fkey")
   @@index([licensor_id], map: "series_licensor_id_fkey")
-}
-
-model collectibles {
-  collectible_id                       String    @id
-  name                                 String
-  rarity                               String?
-  description                          String?   @db.Text
-  edition_type                         String?
-  store_price                          Decimal?  @db.Decimal(10, 2)
-  drop_date                            DateTime?
-  market_fee                           Decimal?
-  createdAt                            DateTime  @default(now())
-  updatedAt                            DateTime  @updatedAt
-  background_image_direction           String?
-  background_image_full_resolution_url String?
-  background_image_high_resolution_url String?
-  background_image_low_resolution_url  String?
-  background_image_med_resolution_url  String?
-  background_image_thumbnail_url       String?
-  background_image_url                 String?
-  image_direction                      String?
-  image_full_resolution_url            String?
-  image_high_resolution_url            String?
-  image_low_resolution_url             String?
-  image_med_resolution_url             String?
-  image_thumbnail_url                  String?
-  image_url                            String?
-  is_unlimited                         Boolean?  @default(false)
-  total_available                      Int?
-  total_issued                         Int?
-  total_likes                          Int?
-  variety                              String?
-  brand_id                             String
-  licensor_id                          String
-  series_id                            String
-  drop_method                          String?
-  is_free                              Boolean?  @default(false)
-  total_store_allocation               Int?
-  all_time_high                        Decimal?  @db.Decimal(10, 2)
-  all_time_low                         Decimal?  @db.Decimal(10, 2)
-  floor_price                          Decimal?  @db.Decimal(10, 2)
-  market_cap                           Decimal?  @db.Decimal(10, 2)
-  one_day_change                       Decimal?  @db.Decimal(10, 2)
-  one_mo_change                        Decimal?  @db.Decimal(10, 2)
-  one_wk_change                        Decimal?  @db.Decimal(10, 2)
-  one_year_change                      Decimal?  @db.Decimal(10, 2)
-  six_mo_change                        Decimal?  @db.Decimal(10, 2)
-  three_mo_change                      Decimal?  @db.Decimal(10, 2)
-  total_listings                       Int?
-  tokens                               tokens[]
-
-  @@index([brand_id], map: "collectibles_brand_id_fkey")
-  @@index([licensor_id], map: "collectibles_licensor_id_fkey")
-  @@index([series_id], map: "collectibles_series_id_fkey")
-  @@index([name])
-}
-
-model comics {
-  uniqueCoverId                        String    @id
-  name                                 String
-  rarity                               String?
-  description                          String?   @db.Text
-  comic_number                         Int?
-  comic_series_id                      String?
-  cover_image_thumbnail                String?
-  cover_image_low_resolution_url       String?
-  cover_image_med_resolution_url       String?
-  cover_image_full_resolution_url      String?
-  cover_image_high_resolution_url      String?
-  cover_image_direction                String?
-  cover_total_issued                   Int?
-  cover_total_available                Int?
-  background_image_direction           String?
-  background_image_full_resolution_url String?
-  background_image_high_resolution_url String?
-  background_image_low_resolution_url  String?
-  background_image_med_resolution_url  String?
-  background_image_thumbnail_url       String?
-  background_image_url                 String?
-  drop_date                            DateTime?
-  drop_method                          String?
-  start_year                           Int?
-  page_count                           Int?
-  store_price                          Decimal?  @db.Decimal(10, 2)
-  publisher_id                         String?
-  market_fee                           Decimal?
-  total_issued                         Int?
-  total_available                      Int?
-  is_free                              Boolean?  @default(false)
-  is_unlimited                         Boolean?  @default(false)
-  createdAt                            DateTime  @default(now())
-  updatedAt                            DateTime  @updatedAt
-  all_time_high                        Decimal?  @db.Decimal(10, 2)
-  all_time_low                         Decimal?  @db.Decimal(10, 2)
-  floor_price                          Decimal?  @db.Decimal(10, 2)
-  market_cap                           Decimal?  @db.Decimal(10, 2)
-  one_day_change                       Decimal?  @db.Decimal(10, 2)
-  one_mo_change                        Decimal?  @db.Decimal(10, 2)
-  one_wk_change                        Decimal?  @db.Decimal(10, 2)
-  one_year_change                      Decimal?  @db.Decimal(10, 2)
-  six_mo_change                        Decimal?  @db.Decimal(10, 2)
-  three_mo_change                      Decimal?  @db.Decimal(10, 2)
-  total_listings                       Int?
-
-  @@index([uniqueCoverId], map: "uniqueCoverId")
-}
-
-model publishers {
-  id             Int      @id @default(autoincrement())
-  publisher_id   String   @unique
-  publisher_name String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([publisher_id], map: "publisher_id")
-}
-
-model messages {
-  id        String   @id @default(uuid())
-  text      String
-  createdAt DateTime @default(now())
-  read      Boolean  @default(false)
-  updatedAt DateTime @updatedAt
-}
-
-model tokens {
-  token_id              Int           @id
-  name                  String        @db.Text
-  edition               Int
-  mint_date             DateTime      @default(now()) @db.Timestamp(0)
-  rarity                String?       @db.Text
-  collectibleId         String?
-  uniqueCoverId         String?       @db.Text
-  type                  String        @db.Text
-  last_updated          DateTime      @default(now()) @db.Timestamp(0)
-  brand_id              String?       @db.Text
-  licensor_id           String?       @db.Text
-  series_id             String        @db.Text
-  user_id               String?
-  tmp_unregistered_user String?
-  tmp_wallet_address    String?
-  collectible           collectibles? @relation(fields: [collectibleId], references: [collectible_id])
-
-  @@index([user_id, token_id, edition, tmp_unregistered_user])
-  @@index([collectibleId], map: "tokens_collectibleId_fkey")
 }
 
 enum Role {
