@@ -6,6 +6,7 @@ export const typeDefs = gql`
         me: User
         veveUser(username: String!): [String!]!
         collectibles(search: String, limit: Int, after: String): CollectiblesConnection
+        comics(search: String, limit: Int, after: String) : ComicsConnection
         tokens(editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String, kraken: Boolean) : TokensConnection
         posts: [Post!]!
         profile(userId: ID!): Profile
@@ -14,6 +15,11 @@ export const typeDefs = gql`
     
     type CollectiblesConnection {
         edges: [Collectible!]!
+        pageInfo: PageInfo!
+    }
+
+    type ComicsConnection {
+        edges: [Comic!]!
         pageInfo: PageInfo!
     }
     
@@ -145,6 +151,51 @@ export const typeDefs = gql`
         drop_method: String
         is_free: String
         floor_price: Float
+        market_cap: Float
+        one_day_change: Float
+        one_mo_change: Float
+        one_wk_change: Float
+        one_year_change: Float
+        six_mo_change: Float
+        three_mo_change: Float
+        total_listings: Int
+        tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
+    }
+    
+    type Comic {
+        uniqueCoverId: String!
+        name: String!
+        rarity: String!
+        description: String!
+        comic_number: Int!
+        comic_series_id: String!
+        image_thumbnail: String!
+        image_low_resolution_url: String
+        image_med_resolution_url: String
+        image_full_resolution_url: String
+        image_high_resolution_url: String
+        image_direction: String
+        drop_date: String
+        drop_method: String
+        start_year: Int
+        page_count: Int
+        store_price: Float
+        publisher_id: String
+        market_fee: Float
+        total_issued: Int
+        total_available: Int
+        is_free: Boolean
+        is_unlimited: Boolean
+        all_time_high: Float
+        all_time_low: Float
+        floor_price: Float
+        market_cap: Float
+        one_day_change: Float
+        one_mo_change: Float
+        one_wk_change: Float
+        one_year_change: Float
+        six_mo_change: Float
+        three_mo_change: Float
         total_listings: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
     }
@@ -192,6 +243,7 @@ export const typeDefs = gql`
         licensor_id: String
         series_id: String
         collectible: Collectible
+        comic: Comic
         tmp_unregistered_user: String
         tmp_wallet_address: String
     }

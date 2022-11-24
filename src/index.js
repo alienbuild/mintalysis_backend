@@ -17,6 +17,7 @@ import {
     Profile,
     User,
     Collectible,
+    Comic,
     Token
 } from "./resolvers/index.js"
 import {PubSub} from "graphql-subscriptions"
@@ -55,6 +56,7 @@ export const pubsub = new PubSub();
                 Post,
                 User,
                 Collectible,
+                Comic,
                 Token
             },
         })

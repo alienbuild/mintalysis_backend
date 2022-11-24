@@ -14,8 +14,8 @@ const password = proxy_parts[3]
 
 const proxyAgent = new HttpsProxyAgent(`http://${username}:${password}@${ip_address}:${port}`)
 
-const getComicsQuery = `query comicTypeList {
-    comicTypeList(first: 150, after: "YXJyYXljb25uZWN0aW9uOjE0OQ==") {
+const getComicsQuery = `query marketListingByComicCover {
+    marketListingByComicCover {
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -24,20 +24,9 @@ const getComicsQuery = `query comicTypeList {
         }
         edges {
             node {
-                name
-                isFree
-                storePrice
-                isUnlimited
+                rarity
                 totalIssued
-                totalAvailable
-                description
-                dropDate
-                dropMethod
-                minimumAge
-                startYear
-                comicNumber
-                pageCount
-                backgroundImage {
+                image {
                     id
                     url
                     thumbnailUrl
@@ -47,26 +36,55 @@ const getComicsQuery = `query comicTypeList {
                     highResolutionUrl
                     direction
                 }
-                cover {
+                comicType {
                     id
-                    rarity
+                    name
+                    isFree
+                    storePrice
+                    isUnlimited
                     totalIssued
                     totalAvailable
-                    image {
-                        url
-                        thumbnailUrl
-                        lowResolutionUrl
-                        medResolutionUrl
-                        fullResolutionUrl
-                        highResolutionUrl
-                        direction
-                    }
-                }
-                comicSeries {
-                    id
-                    publisher {
+                    description
+                    dropDate
+                    dropMethod
+                    minimumAge
+                    startYear
+                    comicNumber
+                    pageCount
+                    comicSeries {
                         id
-                        marketFee
+                        publisher {
+                            id
+                            marketFee
+                        }
+                    }
+                    artists {
+                        edges{
+                            node{
+                                id
+                                name
+                            }
+                            cursor
+                        }
+                        totalCount
+                    }
+                    characters {
+                        edges {
+                            node{
+                                id
+                                name
+                            }
+                        }
+                        totalCount
+                    }
+                    writers {
+                        edges {
+                            node {
+                                id
+                                name
+                            }
+                        }
+                        totalCount
                     }
                 }
             }
@@ -359,7 +377,7 @@ const migrateLicensors = () => {
 
             licensorList.map(async (licensor) => {
 
-                const licensorObj = await prisma.licensors.create({
+                const licensorObj = await prisma.veve_licensors.create({
                     data: {
                         licensor_id: licensor.node.id,
                         name: licensor.node.name,
@@ -436,7 +454,7 @@ const migrateBrands = () => {
 
             brandList.map(async (brand) => {
 
-                const brandObj = await prisma.brands.create({
+                const brandObj = await prisma.veve_brands.create({
                     data: {
                         brand_id: brand.node.id,
                         name: brand.node.name,
@@ -511,7 +529,7 @@ const migrateSeries = () => {
             const seriesList = data.data.seriesList.edges
             seriesList.map(async (series) => {
 
-                const seriesObj = await prisma.series.create({
+                const seriesObj = await prisma.veve_series.create({
                     data: {
                         series_id: series.node.id,
                         name: series.node.name,
@@ -594,7 +612,7 @@ const migrateCollectibles = () => {
             const collectibleTypeList = data.data.collectibleTypeList.edges
             collectibleTypeList.map(async (collectible) => {
 
-                const collectiblesObj = await prisma.collectibles.create({
+                const collectiblesObj = await prisma.veve_collectibles.create({
                     data: {
                         collectible_id: collectible.node.id,
                         name: collectible.node.name,
@@ -660,60 +678,118 @@ const migrateComics = () => {
     })
         .then(data => data.json())
         .then(data => {
-            // console.log('data is: ', data.data.comicTypeList.edges)
-            console.log('hasNextPage: ', data.data.comicTypeList.pageInfo.hasNextPage)
-            console.log('totalCount is: ', data.data.comicTypeList.totalCount)
-            console.log('next cursor is: ', data.data.comicTypeList.edges.cursor)
-            console.log('end cursor is: ', data.data.comicTypeList.pageInfo.endCursor)
+            // console.log('data is: ', data.data.marketListingByComicCover.edges)
+            console.log('hasNextPage: ', data.data.marketListingByComicCover.pageInfo.hasNextPage)
+            console.log('totalCount is: ', data.data.marketListingByComicCover.totalCount)
+            console.log('next cursor is: ', data.data.marketListingByComicCover.edges.cursor)
+            console.log('end cursor is: ', data.data.marketListingByComicCover.pageInfo.endCursor)
 
-            const comicTypeList = data.data.comicTypeList.edges
-            comicTypeList.map(async (comic, index) => {
+            const marketListingByComicCover = data.data.marketListingByComicCover.edges
+            marketListingByComicCover.map(async (comic, index) => {
                 // if (index > 0) return null
-                // console.log('comic is: ', comic)
+                let writersArr = []
+                let artistsArr = []
+                let charactersArr = []
+
                 try {
-                    const comicsObj = await prisma.comics.create({
+                    comic.node.comicType.writers.edges.map(async (writer) => {
+                        writersArr.push({
+                            where: { author_id: writer.node.id },
+                            create: { author_id: writer.node.id, name: writer.node.name },
+                        })
+                        // await prisma.veve_comic_writers.upsert({
+                        //     where: {
+                        //         author_id: writer.node.id
+                        //     },
+                        //     update: {},
+                        //     create: {
+                        //         author_id: writer.node.id,
+                        //         name: writer.node.name
+                        //     }
+                        // })
+                    })
+
+                    comic.node.comicType.artists.edges.map(async (artist) => {
+                        artistsArr.push({
+                            where: { artist_id: artist.node.id },
+                            create: { artist_id: artist.node.id, name: artist.node.name },
+                        })
+                        // await prisma.veve_comic_artists.upsert({
+                        //     where: {
+                        //         artist_id: artist.node.id
+                        //     },
+                        //     update: {},
+                        //     create: {
+                        //         artist_id: artist.node.id,
+                        //         name: artist.node.name
+                        //     }
+                        // })
+                    })
+
+                    comic.node.comicType.characters.edges.map(async (character) => {
+                        charactersArr.push({
+                            where: { character_id: character.node.id },
+                            create: { character_id: character.node.id, name: character.node.name },
+                        })
+                        // await prisma.veve_comic_characters.upsert({
+                        //     where: {
+                        //         character_id: character.node.id
+                        //     },
+                        //     update: {},
+                        //     create: {
+                        //         character_id: character.node.id,
+                        //         name: character.node.name
+                        //     }
+                        // })
+                    })
+                } catch (error) {
+                    console.log('[ERROR] Unable to save comic collaborators. ', error)
+                }
+
+                try {
+                    const comicsObj = await prisma.veve_comics.create({
                         data: {
-                            uniqueCoverId: comic.node.cover.id,
-                            name: comic.node.name,
-                            rarity: comic.node.cover.rarity,
-                            description: comic.node.description,
-                            comic_number: Number(comic.node.comicNumber),
-                            comic_series_id: comic.node.comicSeries.id,
-                            cover_image_thumbnail: comic.node.cover.image.thumbnailUrl,
-                            cover_image_low_resolution_url: comic.node.cover.image.lowResolutionUrl,
-                            cover_image_med_resolution_url: comic.node.cover.image.medResolutionUrl,
-                            cover_image_full_resolution_url: comic.node.cover.image.fullResolutionUrl,
-                            cover_image_high_resolution_url: comic.node.cover.image.highResolutionUrl,
-                            cover_image_direction: comic.node.cover.image.direction,
-                            cover_total_issued: comic.node.cover.totalIssued,
-                            cover_total_available: comic.node.cover.totalAvailable,
-                            background_image_direction: comic.node.backgroundImage?.direction,
-                            background_image_full_resolution_url: comic.node.backgroundImage?.fullResolutionUrl,
-                            background_image_high_resolution_url: comic.node.backgroundImage?.highResolutionUrl,
-                            background_image_low_resolution_url: comic.node.backgroundImage?.lowResolutionUrl,
-                            background_image_med_resolution_url: comic.node.backgroundImage?.medResolutionUrl,
-                            background_image_thumbnail_url: comic.node.backgroundImage?.thumbnailUrl,
-                            background_image_url: comic.node.backgroundImage?.url,
-                            drop_date: comic.node.dropDate,
-                            drop_method: comic.node.dropMethod,
-                            start_year: comic.node.startYear,
-                            page_count: comic.node.pageCount,
-                            store_price: comic.node.storePrice,
-                            publisher_id: comic.node.comicSeries.publisher.id,
-                            market_fee: comic.node.comicSeries.publisher.marketFee,
+                            uniqueCoverId: comic.node.image.id,
+                            name: comic.node.comicType.name,
+                            rarity: comic.node.rarity,
+                            description: comic.node.comicType.description,
+                            comic_number: Number(comic.node.comicType.comicNumber),
+                            comic_series_id: comic.node.comicType.comicSeries.id,
+                            image_thumbnail: comic.node.image.thumbnailUrl,
+                            image_low_resolution_url: comic.node.image.lowResolutionUrl,
+                            image_med_resolution_url: comic.node.image.medResolutionUrl,
+                            image_full_resolution_url: comic.node.image.fullResolutionUrl,
+                            image_high_resolution_url: comic.node.image.highResolutionUrl,
+                            image_direction: comic.node.image.direction,
+                            drop_date: comic.node.comicType.dropDate,
+                            drop_method: comic.node.comicType.dropMethod,
+                            start_year: comic.node.comicType.startYear,
+                            page_count: comic.node.comicType.pageCount,
+                            store_price: comic.node.comicType.storePrice,
+                            publisher_id: comic.node.comicType.comicSeries.publisher.id,
+                            market_fee: comic.node.comicType.comicSeries.publisher.marketFee,
                             total_issued: comic.node.totalIssued,
-                            total_available: comic.node.totalAvailable,
-                            is_free: comic.node.isFree,
-                            is_unlimited: comic.node.isUnlimited,
+                            total_available: comic.node.comicType.totalAvailable,
+                            is_free: comic.node.comicType.isFree,
+                            is_unlimited: comic.node.comicType.isUnlimited,
+                            writers: {
+                                connectOrCreate: writersArr,
+                            },
+                            artists: {
+                                connectOrCreate: artistsArr,
+                            },
+                            characters: {
+                                connectOrCreate: charactersArr,
+                            }
                         }
                     })
                     if (!comicsObj){
                         console.log('Nope failed.')
                     } else {
-                        console.log('Success')
+                        console.log(`[SUCCESS] ${comic.node.comicType.name} / Rarity ${comic.node.rarity}`)
                     }
                 } catch (e) {
-                    console.log('Nah')
+                    console.log(`[ERROR] Cover ID: ${comic.node.image.id} / Name : ${comic.node.comicType.name} / Rarity: ${comic.node.rarity} `)
                 }
 
             })
