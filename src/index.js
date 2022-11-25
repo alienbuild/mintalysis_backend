@@ -24,9 +24,11 @@ import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
+import {Immutascrape} from "../services/immutascrape.js";
+import {scheduledRapidJobs} from "../services/cronJobs.js";
 
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 export const pubsub = new PubSub();
 
 (async function() {
@@ -111,6 +113,8 @@ export const pubsub = new PubSub();
     const PORT = 4000;
     httpServer.listen(PORT, () => {
            console.log(`🚀 Server ready`);
+           // Immutascrape()
+           scheduledRapidJobs()
     });
 
 })();

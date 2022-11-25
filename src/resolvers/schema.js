@@ -56,6 +56,14 @@ export const typeDefs = gql`
 
     type Subscription {
         messageCreated: Message
+        imxVeveTransfersUpdated: [VEVETransfer]
+    }
+    
+    type VEVETransfer {
+        id: ID!
+        from_user: String
+        to_user: String
+        token: [Token]
     }
     
     type AvatarUploadResponse {

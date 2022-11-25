@@ -194,24 +194,37 @@ model messages {
 }
 
 model tokens {
-  token_id              Int      @id
-  name                  String   @db.Text
-  edition               Int
-  mint_date             DateTime @default(now()) @db.Timestamp(0)
-  rarity                String?  @db.Text
+  token_id              Int               @id
+  name                  String?           @db.Text
+  edition               Int?
+  mint_date             DateTime?         @default(now()) @db.Timestamp(0)
+  rarity                String?           @db.Text
   collectibleId         String?
-  uniqueCoverId         String?  @db.Text
-  type                  String   @db.Text
-  last_updated          DateTime @default(now()) @db.Timestamp(0)
-  brand_id              String?  @db.Text
-  licensor_id           String?  @db.Text
-  series_id             String   @db.Text
+  uniqueCoverId         String?           @db.Text
+  type                  String?           @db.Text
+  last_updated          DateTime?         @default(now()) @db.Timestamp(0)
+  brand_id              String?           @db.Text
+  licensor_id           String?           @db.Text
+  series_id             String?           @db.Text
   user_id               String?
   tmp_unregistered_user String?
   tmp_wallet_address    String?
+  clown_transfers       clown_transfers[]
+  toProcess             Boolean?          @default(false)
 
   @@index([user_id, token_id, edition, tmp_unregistered_user])
   @@index([collectibleId], map: "tokens_collectibleId_fkey")
+}
+
+model clown_transfers {
+  id        String   @id @default(uuid())
+  from_user String   @db.Text
+  to_user   String   @db.Text
+  timestamp DateTime @default(now()) @db.Timestamp(0)
+  token_id  Int
+  token     tokens   @relation(fields: [token_id], references: [token_id])
+
+  @@index([token_id, timestamp])
 }
 
 model veve_collectibles {
