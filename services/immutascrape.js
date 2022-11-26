@@ -58,7 +58,7 @@ export const Immutascrape = () => {
                 query: getImxTransactions(),
                 variables: {
                     address: "0xa7aefead2f25972d80516628417ac46b3f2604af",
-                    pageSize: 15, // 2673 is max?
+                    pageSize: 30, // 2673 is max?
                     txnType: "transfer"
                 }
             })
@@ -120,7 +120,7 @@ export const Immutascrape = () => {
 
                 // Send imxTransArr to gql mutation (createTransfer)
                 try {
-                    console.log('[SENDING] Attempting to send imx transactions to gql.')
+                    console.log('[SENDING] Attempting to send imx transactions to gql.', imxTransArr.length)
                     // console.log('Sending: ', imxTransArr)
                     await fetch(`http://localhost:4000/graphql`, {
                         method: 'POST',
