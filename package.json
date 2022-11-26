@@ -8,8 +8,8 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "start": "babel-node src/index.js",
-    "dev": "nodemon --trace-warnings src/index.js"
+    "start": "babel-node --trace-warnings src/index.js",
+    "dev": "nodemon --signal SIGINT --trace-warnings src/index.js"
   },
   "dependencies": {
     "@graphql-tools/schema": "^9.0.5",

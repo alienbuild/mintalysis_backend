@@ -58,13 +58,14 @@ export const Immutascrape = () => {
                 query: getImxTransactions(),
                 variables: {
                     address: "0xa7aefead2f25972d80516628417ac46b3f2604af",
-                    pageSize: 100, // 2673 is max?
+                    pageSize: 15, // 2673 is max?
                     txnType: "transfer"
                 }
             })
         })
             .then(imxTransactions => imxTransactions.json())
             .then(async imxTransactions => {
+                // console.log('[RECEIVED] Got transactions from IMX.', imxTransactions)
 
                 // const nextToken = imxTransactions.data.listTransactionsV2.nextToken
                 // console.log('nextToken is: ', nextToken)
@@ -117,25 +118,49 @@ export const Immutascrape = () => {
 
                 })
 
+                // Send imxTransArr to gql mutation (createTransfer)
                 try {
-                    const saveImxTransactions = await prisma.clown_transfers.createMany({
-                        data: imxTransArr,
-                        skipDuplicates: true
-                    })
-
-                    if (saveImxTransactions.count > 0){
-                        const transfers = await prisma.clown_transfers.findMany()
-                        console.log('ALERTING PUBSUB')
-                        await pubsub.publish('VEVE_IMX_TRANSFERS_UPDATED', {
-                            imxVeveTransfersUpdated: transfers
+                    console.log('[SENDING] Attempting to send imx transactions to gql.')
+                    // console.log('Sending: ', imxTransArr)
+                    await fetch(`http://localhost:4000/graphql`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            query: `mutation($transferInput: [VeveTransferInput]) { createVeveTransfer(transferInput: $transferInput) }`,
+                            variables:{
+                                "transferInput": imxTransArr
+                            }
                         })
-                    }
-
-
-
-                }catch (e) {
-                    console.log('fail clown: ', e)
+                    })
+                        .then(data => data.json())
+                        .then(data => {
+                            // console.log('Mutation res is: ', data)
+                        })
+                        .catch(error => console.log('[ERROR] Mutation did not like transfers. ', error))
+                } catch (e) {
+                    console.log('[ERROR] Unable to send transactions through mutation. ', e)
                 }
+
+                // try {
+                //     const saveImxTransactions = await prisma.clown_transfers.createMany({
+                //         data: imxTransArr,
+                //         skipDuplicates: true
+                //     })
+                //
+                //     if (saveImxTransactions.count > 0){
+                //         const transfers = await prisma.clown_transfers.findMany()
+                //         console.log('ALERTING PUBSUB')
+                //         await pubsub.publish('VEVE_IMX_TRANSFERS_UPDATED', {
+                //             imxVeveTransfersUpdated: transfers
+                //         })
+                //     }
+                //
+                // }catch (e) {
+                //     console.log('fail clown: ', e)
+                // }
 
 
             })

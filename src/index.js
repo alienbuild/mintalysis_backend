@@ -18,15 +18,16 @@ import {
     User,
     Collectible,
     Comic,
-    Token
+    Token,
+    VeveTransfer
 } from "./resolvers/index.js"
 import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
-import {Immutascrape} from "../services/immutascrape.js";
+import {Immutascrape} from "../services/immutascrape.js"
 import {scheduledRapidJobs} from "../services/cronJobs.js";
-
+// import {scheduledRapidJobs} from "../services/cronJobs.js"
 
 export const prisma = new PrismaClient();
 export const pubsub = new PubSub();
@@ -45,7 +46,6 @@ export const pubsub = new PubSub();
     }))
 
     app.use(graphqlUploadExpress({ maxFieldSize: 100000, maxFiles: 10 }))
-
     let schema
     try {
         schema = makeExecutableSchema({
@@ -59,13 +59,13 @@ export const pubsub = new PubSub();
                 User,
                 Collectible,
                 Comic,
-                Token
+                Token,
+                VeveTransfer
             },
         })
     } catch (e){
         console.log('Nah : ', e)
     }
-
 
     // const permissions = shield({
     //     Query: {},
@@ -110,11 +110,18 @@ export const pubsub = new PubSub();
     await server.start();
     server.applyMiddleware({ app });
 
-    const PORT = 4000;
-    httpServer.listen(PORT, () => {
-           console.log(`🚀 Server ready`);
-           // Immutascrape()
-           scheduledRapidJobs()
-    });
+    try {
+        const PORT = 4000;
+        httpServer.listen(PORT, () => {
+            console.log(`🚀 Server ready`);
+            // Immutascrape()
+            scheduledRapidJobs()
+        });
+        console.log('here 3')
+    } catch (e) {
+        console.log('Server start error: ', e)
+    }
+
+
 
 })();

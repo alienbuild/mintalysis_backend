@@ -1,11 +1,13 @@
-import {pubsub} from "../index.js"
+import {prisma, pubsub} from "../index.js"
 
 const Subscription = {
     messageCreated: {
         subscribe: (_, __, ___) => pubsub.asyncIterator('MESSAGE_CREATED')
     },
-    imxVeveTransfersUpdated: {
-        subscribe: (_, __, ___) => pubsub.asyncIterator('VEVE_IMX_TRANSFERS_UPDATED')
+    createVeveTransfer: {
+        subscribe: (_, __, ___, info) => {
+             return pubsub.asyncIterator('VEVE_IMX_TRANSFER_CREATED')
+        }
     }
 }
 
