@@ -3,23 +3,32 @@ import { pubsub } from "../../index.js"
 export const veveTransferResolvers = {
     createVeveTransfer: async (_, { transferInput: imxTransArr }, { prisma }) => {
 
-        console.log('[RECIVED] IMX Txns total: ', imxTransArr.length)
+        console.log('[RECIVED] IMX Txns total::: ', imxTransArr.length)
+        let sendBkArray = []
         await imxTransArr.map(async (transfer, index) => {
 
-            const saveImxTransactions = await prisma.clown_transfers.createMany({
-                data: transfer,
-                skipDuplicates: true
-            })
+            sendBkArray.push(transfer)
+            // const saveImxTransactions = await prisma.clown_transfers.createMany({
+            //     data: transfer,
+            //     skipDuplicates: true
+            // })
 
-            console.log('saveImxTransactions is: ', saveImxTransactions)
+            // console.log('saveImxTransactions is: ', saveImxTransactions)
 
             // if (saveImxTransactions.count > 0){
             //     console.log('Saved more than 0 tokens.')
             //     setTimeout(async () => {
-                    console.log('[ALERTED SUBSCRIBERS]') 
-                    await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
-                        createVeveTransfer: transfer
-                    })
+            // try {
+            //     setImmediate(async () => {
+            //         await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
+            //             createVeveTransfer: transfer
+            //         })
+            //     })
+            //
+            // } catch (e) {
+            //     console.log('Nah nobody was alerted.')
+            // }
+
             //     }, 1000)
             // } else {
             //     console.log('Nah didnt save any mate.')
@@ -52,6 +61,12 @@ export const veveTransferResolvers = {
             // }
 
         })
+
+        await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
+            createVeveTransfer: sendBkArray
+        })
+
+        console.log('sendbk array is: ', sendBkArray.length)
 
         return true
     }

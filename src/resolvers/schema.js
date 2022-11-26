@@ -63,7 +63,7 @@ export const typeDefs = gql`
 
     type Subscription { 
         messageCreated: Message
-        createVeveTransfer: VeveTransfer
+        createVeveTransfer: [VeveTransfer]
     }
     
     input VeveTransferInput {
