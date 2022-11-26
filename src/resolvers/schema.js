@@ -7,7 +7,8 @@ export const typeDefs = gql`
         veveUser(username: String!): [String!]!
         collectibles(search: String, limit: Int, after: String): CollectiblesConnection
         comics(search: String, limit: Int, after: String) : ComicsConnection
-        tokens(editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String, kraken: Boolean) : TokensConnection
+        tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String, kraken: Boolean) : TokensConnection
+        transfers(id: ID, limit: Int) : TransfersConnection
         posts: [Post!]!
         profile(userId: ID!): Profile
         message(id: ID!): Message
@@ -27,6 +28,11 @@ export const typeDefs = gql`
         edges: [Token]!
         pageInfo: PageInfo!
         summary: WalletSummary
+    }
+     
+    type TransfersConnection {
+        edges: [VeveTransfer]!
+        pageInfo: PageInfo
     }
     
     type WalletSummary {
@@ -52,10 +58,29 @@ export const typeDefs = gql`
         deleteComment(id: ID!): Comment!
         updateComment(id: ID!, data: UpdateCommentInput!): Comment! 
         createMessage(messageInput: MessageInput) : Message!
+        createVeveTransfer(transferInput: [VeveTransferInput]) : Boolean
     }
 
-    type Subscription {
+    type Subscription { 
         messageCreated: Message
+        createVeveTransfer: VeveTransfer
+    }
+    
+    input VeveTransferInput {
+        id: ID!
+        from_user: String
+        to_user: String 
+        timestamp: String
+        token_id: Int
+    }
+
+    type VeveTransfer {
+        id: ID!
+        from_user: String
+        to_user: String
+        timestamp: String
+        token_id: String
+        token: Token
     }
     
     type AvatarUploadResponse {
@@ -231,14 +256,14 @@ export const typeDefs = gql`
     
     type Token {
         token_id: ID!
-        name: String!
-        edition: Int!
+        name: String
+        edition: Int
         mint_date: String
         rarity: String
         collectibleId: String
         uniqueCoverId: String
-        type: String!
-        last_updated: String!
+        type: String
+        last_updated: String
         brand_id: String
         licensor_id: String
         series_id: String

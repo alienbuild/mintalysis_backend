@@ -10,7 +10,7 @@ const Query = {
             }
         })
     },
-    tokens: async (_, { type, search, limit = 15, after, userId, editionNumber, collectibleId, uniqueCoverId, kraken }, { prisma }) => {
+    tokens: async (_, { token_id, type, search, limit = 15, after, userId, editionNumber, collectibleId, uniqueCoverId, kraken }, { prisma }) => {
         if (kraken) limit = 10000
         let queryParams = { take: limit, orderBy: [{ mint_date: 'desc' }] }
         let whereParams = {}
@@ -86,7 +86,12 @@ const Query = {
             }
         }
         queryParams = { ...queryParams, where: { ...whereParams } }
-        tokens = await prisma.tokens.findMany(queryParams)
+
+        if (token_id) {
+            tokens = [await prisma.tokens.findUnique({where: {token_id: Number(token_id)}})]
+        } else {
+            tokens = await prisma.tokens.findMany(queryParams)
+        }
 
         return {
             edges: tokens,
@@ -95,6 +100,27 @@ const Query = {
             }
         }
 
+    },
+    transfers: async (_, {token_id, limit = 10}, { prisma }) => {
+        console.log('hit for some reason? ', _)
+        let queryParams = { take: limit }
+        let transfers
+        if (token_id){
+            transfers = await prisma.clown_transfers.findMany({
+                where: {
+                    token_id: token_id
+                }
+            })
+        } else {
+            transfers = await prisma.clown_transfers.findMany(queryParams)
+        }
+
+        return {
+            edges: transfers,
+            pageInfo: {
+                endCursor: transfers.length > 1 ? encodeCursor(String(transfers[transfers.length - 1].token_id)) : null
+            }
+        }
     },
     veveUser: async (_, {username}, ___) => {
         let returnArr = []
