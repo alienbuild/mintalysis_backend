@@ -115,9 +115,8 @@ export const pubsub = new PubSub();
         httpServer.listen(PORT, () => {
             console.log(`🚀 Server ready`);
             // Immutascrape()
-            scheduledRapidJobs()
+            // scheduledRapidJobs()
         });
-        console.log('here 3')
     } catch (e) {
         console.log('Server start error: ', e)
     }
