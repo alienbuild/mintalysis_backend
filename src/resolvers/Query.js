@@ -9,7 +9,8 @@ const Query = {
                 id: userInfo.userId
             },
             include: {
-                projects: true
+                projects: true,
+                // veve_collectibles: true
             }
         })
     },
@@ -18,8 +19,6 @@ const Query = {
         let queryParams = { take: limit }
         let whereParams = {}
 
-        console.log('limit is: ', limit)
-        console.log('after is: ', after)
         if (after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(after)) } }
 
         if (search) whereParams = { ...whereParams, name: { contains: search } }

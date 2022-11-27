@@ -88,67 +88,82 @@ export const veveVaultResolvers = {
 
         await fetchInitialData(tokenCount, wallet_address, userId, username, prisma)
 
-        if (user.role === 'ADMIN' && kraken){
-            await prisma.tokens.updateMany({
-                data: {
-                    tmp_unregistered_user: '',
-                    tmp_wallet_address: ''
-                },
-                where: {
-                    tmp_unregistered_user: 'KRAKEN'
-                }
-            })
-            await prisma.tokens.updateMany({
-                data: {
-                    tmp_unregistered_user: 'KRAKEN',
-                    tmp_wallet_address: wallet_address
-                },
-                where: {
-                    token_id: { in: tokenItems }
-                }
-            })
-        } else {
+        console.log('All tokens gathered: ', tokenCount.length)
 
-            try {
-                await prisma.users.update({
-                    data: {
-                        projects: {
-                            connectOrCreate: {
-                                where: { id: project_id },
-                                create: {
-                                    id: project_id,
-                                },
-                            }
-                        }
+        const userAssets = await prisma.$transaction(tokenItems.map((token) =>
+            prisma.tokens.upsert({
+                    create: {
+                        token_id: token,
+                        toProcess: true
+                    },
+                    update: {
+                        user_id: userId
                     },
                     where: {
-                        id: userId
+                        token_id: token
+                    },
+                    select: {
+                        collectibleId: true,
+                        uniqueCoverId: true,
+                        type: true
                     }
                 })
-            } catch (e) {
-                console.log('project fail: ', e)
-            }
+        ))
 
-            await prisma.profile.update({
-                data: {
-                    onboarded: true,
-                    veve_username: username,
-                    veve_wallet_imported: true,
-                    veve_wallet_address: wallet_address
+        let collectibleIds = []
+        let uniqueCoverIds = []
+        await userAssets.map((asset) => {
+            if (asset.type === 'collectible'){
+                collectibleIds.push(asset.collectibleId)
+            } else if (asset.type === 'comic'){
+                uniqueCoverIds.push(asset.uniqueCoverId)
+            }
+        })
+        console.log('all tokens have been updated.' , tokenItems.length)
+
+        await prisma.users.update({
+            data: {
+                projects: {
+                    connectOrCreate: {
+                        where: { id: project_id },
+                        create: { id: project_id }
+                    }
                 },
-                where: {
-                    user_id: userId
-                }
-            })
-            await prisma.tokens.updateMany({
-                data: {
-                    user_id: userId
+                veve_collectibles: {
+                    connectOrCreate: collectibleIds.map((_collectibleId) => {
+                        return {
+                            where: { collectible_id: _collectibleId },
+                            create: { collectible_id: _collectibleId }
+                        }
+                    })
+                    // connectOrCreate: {
+                    //     where: {
+                    //         collectible_id: 'a31da526-c03e-49b0-8c10-c93a243a9fb5'
+                    //     },
+                    //     create: {
+                    //         collectible_id: 'a31da526-c03e-49b0-8c10-c93a243a9fb5'
+                    //     }
+                    // },
                 },
-                where: {
-                    token_id: { in: tokenItems }
-                }
-            })
-        }
+            },
+            where: {
+                id: userId
+            },
+        })
+
+        console.log('updating profile.')
+        await prisma.profile.update({
+            data: {
+                onboarded: true,
+                veve_username: username,
+                veve_wallet_imported: true,
+                veve_wallet_address: wallet_address
+            },
+            where: {
+                user_id: userId
+            }
+        })
+        console.log('profile updated.')
 
         return {
             "wallet_address": wallet_address,

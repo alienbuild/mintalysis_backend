@@ -604,11 +604,6 @@ const migrateCollectibles = () => {
         .then(data => data.json())
         .then(data => {
 
-            console.log('hasNextPage: ', data.data.collectibleTypeList.pageInfo.hasNextPage)
-            console.log('totalCount is: ', data.data.collectibleTypeList.totalCount)
-            console.log('next cursor is: ', data.data.collectibleTypeList.edges.cursor)
-            console.log('end cursor is: ', data.data.collectibleTypeList.pageInfo.endCursor)
-
             const collectibleTypeList = data.data.collectibleTypeList.edges
             collectibleTypeList.map(async (collectible) => {
 

@@ -93,22 +93,26 @@ export const typeDefs = gql`
 
     type CollectiblesConnection {
         edges: [Collectible!]!
+        totalCount: Int
         pageInfo: PageInfo!
     }
 
     type ComicsConnection {
         edges: [Comic!]!
+        totalCount: Int
         pageInfo: PageInfo!
     }
 
     type TokensConnection {
         edges: [Token]!
+        totalCount: Int
         pageInfo: PageInfo!
         summary: WalletSummary
     }
 
     type TransfersConnection {
         edges: [VeveTransfer]!
+        totalCount: Int
         pageInfo: PageInfo
     }
 
@@ -145,12 +149,12 @@ export const typeDefs = gql`
     
     type Collectible {
         collectible_id: String!
-        name: String!
+        name: String
         rarity: String
-        description: String!
+        description: String
         edition_type: String
-        store_price: Float!
-        drop_date: String!
+        store_price: Float
+        drop_date: String
         market_fee: Float
         createdAt: String
         updatedAt: String
@@ -256,6 +260,7 @@ export const typeDefs = gql`
         role: String!
         tokens: [Token]!
         projects: [Project]
+        veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
     }
     
     type Project {
