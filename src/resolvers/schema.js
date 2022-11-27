@@ -11,9 +11,86 @@ export const typeDefs = gql`
         transfers(id: ID, limit: Int) : TransfersConnection
         posts: [Post!]!
         profile(userId: ID!): Profile
+        projects(id: ID, name: String): [Project]
         message(id: ID!): Message
     }
+
+    type Mutation {
+        signup(credentials: CredentialsInput!) : AuthPayload!
+        signin(credentials: CredentialsInput!) : AuthPayload
+        veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
+        avatarUpload(file: Upload) : AvatarUploadResponse #Auth only
+        postCreate(post: PostInput!): PostPayload! #Auth only
+        postUpdate(postId: ID!, post: PostInput!): PostPayload! #Auth only
+        postDelete(postId: ID!): PostPayload! #Auth only
+        postPublish(postId: ID!) : PostPayload! #Auth only
+        postUnpublish(postId: ID!) : PostPayload! #Auth only
+        createComment(comment: CreateCommentInput!): Comment! #Auth only
+        deleteComment(id: ID!): Comment! #Auth only
+        updateComment(id: ID!, data: UpdateCommentInput!): Comment! #Auth only 
+        createMessage(messageInput: MessageInput) : Message! #Auth only
+        createVeveTransfer(transferInput: [VeveTransferInput]) : Boolean #Admin only
+        createProject(name: String!, abbr: String, active: Boolean) : Project #Admin only
+    }
     
+    scalar Upload
+
+    input VeveTransferInput {
+        id: ID!
+        from_user: String
+        to_user: String
+        timestamp: String
+        token_id: Int
+    }
+
+    input VaultImportInput {
+        username: String
+        edition: Int
+        collectible_id: String
+        project_id: String
+        kraken: Boolean
+    }
+
+    input MessageInput {
+        text: String
+        username: String
+    }
+
+    input PostInput {
+        title: String
+        content: String
+    }
+
+    input CredentialsInput {
+        email: String!
+        password: String!
+    }
+
+    input CreateCommentInput {
+        text: String!
+        author: ID!
+        post: ID!
+    }
+
+    input UpdateCommentInput {
+        text: String
+    }
+
+    input sortOptions {
+        sortDirection: String!
+        sortField: String!
+    }
+
+    input pagingOptions {
+        limit: Int
+        after: String
+    }
+    
+    type Subscription { 
+        messageCreated: Message
+        createVeveTransfer: [VeveTransfer]
+    }
+
     type CollectiblesConnection {
         edges: [Collectible!]!
         pageInfo: PageInfo!
@@ -23,55 +100,25 @@ export const typeDefs = gql`
         edges: [Comic!]!
         pageInfo: PageInfo!
     }
-    
+
     type TokensConnection {
         edges: [Token]!
         pageInfo: PageInfo!
         summary: WalletSummary
     }
-     
+
     type TransfersConnection {
         edges: [VeveTransfer]!
         pageInfo: PageInfo
     }
-    
+
     type WalletSummary {
         valuation: Float
         count: Int
     }
-    
+
     type PageInfo {
         endCursor: String
-    }
-
-    type Mutation {
-        signup(credentials: CredentialsInput!) : AuthPayload!
-        signin(credentials: CredentialsInput!) : AuthPayload
-        veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload!
-        avatarUpload(file: Upload) : AvatarUploadResponse
-        postCreate(post: PostInput!): PostPayload!
-        postUpdate(postId: ID!, post: PostInput!): PostPayload!
-        postDelete(postId: ID!): PostPayload!
-        postPublish(postId: ID!) : PostPayload!
-        postUnpublish(postId: ID!) : PostPayload!
-        createComment(comment: CreateCommentInput!): Comment!
-        deleteComment(id: ID!): Comment!
-        updateComment(id: ID!, data: UpdateCommentInput!): Comment! 
-        createMessage(messageInput: MessageInput) : Message!
-        createVeveTransfer(transferInput: [VeveTransferInput]) : Boolean
-    }
-
-    type Subscription { 
-        messageCreated: Message
-        createVeveTransfer: [VeveTransfer]
-    }
-    
-    input VeveTransferInput {
-        id: ID!
-        from_user: String
-        to_user: String 
-        timestamp: String
-        token_id: Int
     }
 
     type VeveTransfer {
@@ -90,54 +137,10 @@ export const typeDefs = gql`
         error: String
         token: String
     } 
-    
-    scalar Upload
 
     type Message {
         text: String
         createdBy: String
-    }
-
-    input VaultImportInput {
-        username: String
-        edition: Int
-        collectible_id: String
-        kraken: Boolean
-    }
-
-    input MessageInput {
-        text: String
-        username: String
-    }
-
-    input PostInput {
-        title: String
-        content: String
-    }
-
-    input CredentialsInput {
-        email: String!
-        password: String!
-    }
-    
-    input CreateCommentInput {
-        text: String!
-        author: ID!
-        post: ID!
-    }
-
-    input UpdateCommentInput {
-        text: String
-    }
-
-    input sortOptions {
-        sortDirection: String!
-        sortField: String!
-    }
-    
-    input pagingOptions {
-        limit: Int
-        after: String
     }
     
     type Collectible {
@@ -252,6 +255,15 @@ export const typeDefs = gql`
         profile: Profile
         role: String!
         tokens: [Token]!
+        projects: [Project]
+    }
+    
+    type Project {
+        id: ID!
+        name: String!
+        abbr: String
+        active: Boolean!
+        users: [User]
     }
     
     type Token {
@@ -278,9 +290,11 @@ export const typeDefs = gql`
         bio: String
         isMyProfile: Boolean!
         user: User!
-        complete: Boolean!
-        avatar: String
-        wallet_address: String
+        onboarded: Boolean!
+        avatar: String 
+        veve_wallet_address: String
+        veve_project: Boolean!
+        veve_username: String
     }
 
     type UserError {
@@ -302,5 +316,4 @@ export const typeDefs = gql`
         wallet_address: String!
         token_count: Int!
     }
-
 `

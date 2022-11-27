@@ -69,26 +69,38 @@ model transfers_daily {
 }
 
 model users {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  role      Role     @default(BASIC)
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  role              Role                @default(BASIC)
+  projects          nft_projects[]
+  veve_collectibles veve_collectibles[]
+  veve_comics       veve_comics[]
 
   @@index([email], map: "email")
 }
 
 model profile {
-  id             Int      @id @default(autoincrement())
-  bio            String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user_id        String   @unique
-  avatar         String?
-  complete       Boolean  @default(false)
-  wallet_address String?
-  veve_username  String?  @unique
+  id                   Int      @id @default(autoincrement())
+  bio                  String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user_id              String   @unique
+  avatar               String?
+  onboarded            Boolean  @default(false)
+  veve_wallet_imported Boolean  @default(false)
+  veve_wallet_address  String?
+  veve_username        String?  @unique
+}
+
+model nft_projects {
+  id     String  @id @default(uuid())
+  name   String? @unique
+  abbr   String? @unique
+  active Boolean @default(false)
+  users  users[]
 }
 
 model posts {
@@ -153,6 +165,7 @@ model veve_comics {
   characters                veve_comic_characters[]
   artists                   veve_comic_artists[]
   writers                   veve_comic_writers[]
+  users                     users[]
 
   @@index([uniqueCoverId], map: "uniqueCoverId")
 }
@@ -274,6 +287,7 @@ model veve_collectibles {
   six_mo_change                        Decimal?  @db.Decimal(10, 2)
   three_mo_change                      Decimal?  @db.Decimal(10, 2)
   total_listings                       Int?
+  users                                users[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")

@@ -52,7 +52,7 @@ export const veveVaultResolvers = {
             }
         })
 
-        const { username, edition, collectible_id, kraken } = payload
+        const { username, edition, collectible_id, project_id, kraken } = payload
 
         const token = await prisma.tokens.findFirst({
             where: {
@@ -108,11 +108,33 @@ export const veveVaultResolvers = {
                 }
             })
         } else {
+
+            try {
+                await prisma.users.update({
+                    data: {
+                        projects: {
+                            connectOrCreate: {
+                                where: { id: project_id },
+                                create: {
+                                    id: project_id,
+                                },
+                            }
+                        }
+                    },
+                    where: {
+                        id: userId
+                    }
+                })
+            } catch (e) {
+                console.log('project fail: ', e)
+            }
+
             await prisma.profile.update({
                 data: {
-                    wallet_address: wallet_address,
+                    onboarded: true,
                     veve_username: username,
-                    complete: true
+                    veve_wallet_imported: true,
+                    veve_wallet_address: wallet_address
                 },
                 where: {
                     user_id: userId

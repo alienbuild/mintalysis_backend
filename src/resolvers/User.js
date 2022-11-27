@@ -33,7 +33,16 @@ const User = {
                 user_id: parent.id
             }
         })
-    }
+    },
+    // projects: (parent, __, { prisma }) => {
+    //     console.log('parent is: ', parent)
+    //
+    //     return prisma.nft_projects.findMany({
+    //         where: {
+    //             id: parent.id
+    //         }
+    //     })
+    // }
 }
 
 export { User }

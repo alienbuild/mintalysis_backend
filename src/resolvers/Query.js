@@ -7,18 +7,27 @@ const Query = {
         return prisma.users.findUnique({
             where: {
                 id: userInfo.userId
+            },
+            include: {
+                projects: true
             }
         })
     },
     tokens: async (_, { token_id, type, search, limit = 15, after, userId, editionNumber, collectibleId, uniqueCoverId, kraken }, { prisma }) => {
         if (kraken) limit = 10000
-        let queryParams = { take: limit, orderBy: [{ mint_date: 'desc' }] }
+        let queryParams = { take: limit }
         let whereParams = {}
 
-        if (after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: decodeCursor(Number(after)) } }
+        console.log('limit is: ', limit)
+        console.log('after is: ', after)
+        if (after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(after)) } }
+
         if (search) whereParams = { ...whereParams, name: { contains: search } }
         if (type) whereParams = { ...whereParams, type: type }
-        if (userId) whereParams = { ...whereParams, user_id: userId }
+        if (userId) {
+            whereParams = { ...whereParams, user_id: userId }
+            queryParams = { ...queryParams, distinct: ['collectibleId', 'uniqueCoverId']}
+        }
         if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
         if (collectibleId) whereParams = { ...whereParams, collectibleId: collectibleId }
         if (uniqueCoverId) whereParams = { ...whereParams, uniqueCoverId: uniqueCoverId }
@@ -200,7 +209,19 @@ const Query = {
             ]
         })
     },
-    message: (_, {ID}) => prisma.messages.findUnique({ where: { id: ID} })
+    message: (_, {ID}) => prisma.messages.findUnique({ where: { id: ID} }),
+    projects: async (_,{ id, name }, { prisma }) => {
+        let queryParams = {}
+        if (id) queryParams = { ...queryParams, id}
+        if (name) queryParams = { ...queryParams, name}
+        if (id){
+            return [prisma.nft_projects.findUnique({
+                where:queryParams
+            })]
+        } else {
+            return prisma.nft_projects.findMany({})
+        }
+    }
 }
 
 export { Query }
