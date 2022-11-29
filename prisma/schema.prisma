@@ -227,7 +227,7 @@ model tokens {
   clown_transfers       clown_transfers[]
   toProcess             Boolean?          @default(false)
 
-  @@index([token_id, edition, tmp_unregistered_user])
+  @@index([user_id, token_id, edition, tmp_unregistered_user])
   @@index([collectibleId], map: "tokens_collectibleId_fkey")
 }
 

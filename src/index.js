@@ -19,14 +19,15 @@ import {
     Collectible,
     Comic,
     Token,
-    VeveTransfer
+    VeveTransfer,
+    DateTime
 } from "./resolvers/index.js"
 import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
-import {Immutascrape} from "../services/immutascrape.js"
-import {scheduledRapidJobs} from "../services/cronJobs.js";
+import {scheduledRapidJobs} from "../services/cronJobs.js"
+import mongoose from "mongoose"
 // import {scheduledRapidJobs} from "../services/cronJobs.js"
 
 export const prisma = new PrismaClient();
@@ -60,7 +61,8 @@ export const pubsub = new PubSub();
                 Collectible,
                 Comic,
                 Token,
-                VeveTransfer
+                VeveTransfer,
+                DateTime
             },
         })
     } catch (e){
@@ -110,12 +112,17 @@ export const pubsub = new PubSub();
     await server.start();
     server.applyMiddleware({ app });
 
+    // MongoDB Database
+    mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
+        .then(() => console.log('Connected to MongoDB'))
+        .catch((e) => console.log('Error connecting to MongoDB', e))
+
     try {
         const PORT = 4000;
         httpServer.listen(PORT, () => {
             console.log(`🚀 Server ready`);
             // Immutascrape()
-            // scheduledRapidJobs()
+            scheduledRapidJobs()
         });
     } catch (e) {
         console.log('Server start error: ', e)
