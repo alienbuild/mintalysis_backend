@@ -5,7 +5,7 @@ export const typeDefs = gql`
     type Query {
         me: User
         veveUser(username: String!): [String!]!
-        collectibles(search: String, limit: Int, after: String): CollectiblesConnection
+        collectibles(id: ID, search: String, limit: Int, after: String): CollectiblesConnection
         comics(search: String, limit: Int, after: String) : ComicsConnection
         tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String, kraken: Boolean) : TokensConnection
         transfers(id: ID, limit: Int) : TransfersConnection
@@ -34,6 +34,8 @@ export const typeDefs = gql`
     }
     
     scalar Upload
+    
+    scalar DateTime
 
     input VeveTransferInput {
         id: ID!
@@ -146,7 +148,17 @@ export const typeDefs = gql`
         text: String
         createdBy: String
     }
-    
+
+    type VEVEValuationObj {
+        low: Float,
+        volume: Float,
+        listings: Float,
+        value: Float,
+        open: Float,
+        high: Float
+        date: DateTime
+    }
+
     type Collectible {
         collectible_id: String!
         name: String
@@ -192,6 +204,7 @@ export const typeDefs = gql`
         three_mo_change: Float
         total_listings: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
+        valuations(period: Int) : [[VEVEValuationObj]]
     }
     
     type Comic {

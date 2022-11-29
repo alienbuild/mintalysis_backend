@@ -143,14 +143,18 @@ const Query = {
 
         return returnArr
     },
-    collectibles: async (_, { search, limit = 5, after }, { prisma }) => {
+    collectibles: async (_, { id, search, limit = 5, after }, { prisma }) => {
 
         if (limit > 100) return null
 
         let queryParams = { take: limit, orderBy: [{ createdAt: 'desc' }] }
+        let whereParams = {}
 
+        if (id) whereParams = {...whereParams, collectible_id: id }
         if (after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(after) } }
-        if (search) { queryParams = { ...queryParams, where: { name: { contains: search } }} }
+        if (search) whereParams = {...whereParams, name: { contains: search} }
+
+        queryParams = { ...queryParams, where: { ...whereParams } }
 
         const collectibles = await prisma.veve_collectibles.findMany(queryParams)
 

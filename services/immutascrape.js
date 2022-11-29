@@ -120,7 +120,6 @@ export const Immutascrape = () => {
 
                 // Send imxTransArr to gql mutation (createTransfer)
                 try {
-                    console.log('[SENDING] Attempting to send imx transactions to gql.', imxTransArr.length)
                     // console.log('Sending: ', imxTransArr)
                     await fetch(`http://localhost:4000/graphql`, {
                         method: 'POST',
@@ -167,7 +166,7 @@ export const Immutascrape = () => {
             .catch(error => console.log('[ERROR] Unable to fetch IMX transactions.', error))
 
     } catch (e){
-        console.log('Nah: ', e)
+        console.log('[ERROR] Immutascrape: ', e)
     }
 
 }
