@@ -154,6 +154,7 @@ model veve_comics {
   updatedAt                 DateTime                @updatedAt
   all_time_high             Decimal?                @db.Decimal(10, 2)
   all_time_low              Decimal?                @db.Decimal(10, 2)
+  all_time_change           Decimal?                @db.Decimal(10, 2)
   floor_price               Decimal?                @db.Decimal(10, 2)
   market_cap                Decimal?                @db.Decimal(10, 2)
   one_day_change            Decimal?                @db.Decimal(10, 2)
@@ -288,6 +289,7 @@ model veve_collectibles {
   one_year_change                      Decimal?  @db.Decimal(10, 2)
   six_mo_change                        Decimal?  @db.Decimal(10, 2)
   three_mo_change                      Decimal?  @db.Decimal(10, 2)
+  all_time_change                      Decimal?  @db.Decimal(10, 2)
   total_listings                       Int?
   users                                users[]
 

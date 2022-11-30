@@ -196,12 +196,15 @@ export const typeDefs = gql`
         is_free: String
         floor_price: Float
         market_cap: Float
+        all_time_high: Float
+        all_time_low: Float
         one_day_change: Float
         one_mo_change: Float
         one_wk_change: Float
         one_year_change: Float
         six_mo_change: Float
         three_mo_change: Float
+        all_time_change: Float
         total_listings: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
         valuations(period: Int) : [[VEVEValuationObj]]
