@@ -1,8 +1,11 @@
 import fetch from 'node-fetch'
 import HttpsProxyAgent from "https-proxy-agent"
 import { PrismaClient } from "@prisma/client"
+import CollectiblePrice from "../models/CollectiblePrices.js"
+import ComicPrice from "../models/ComicPrices.js"
+import mongoose from "mongoose"
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
 // Setup proxy
 const proxy_string = process.env.PROXY
@@ -11,6 +14,11 @@ const ip_address = proxy_parts[0]
 const port = proxy_parts[1]
 const username = proxy_parts[2]
 const password = proxy_parts[3]
+
+// MongoDB Database
+mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((e) => console.log('Error connecting to MongoDB', e))
 
 const proxyAgent = new HttpsProxyAgent(`http://${username}:${password}@${ip_address}:${port}`)
 
@@ -793,4 +801,932 @@ const migrateComics = () => {
         .catch(err => console.log('[ERROR] Denied: ', err))
 }
 
-migrateComics()
+const migrateCollectibleStats = async () => {
+    const collectibles = await prisma.veve_collectibles.findMany({})
+    collectibles.map(async (collectible, index) => {
+        // if (index > 3) return
+
+        let market_cap
+        let one_day_change
+        let one_wk_change
+        let one_mo_change
+        let one_year_change
+        let six_mo_change
+        let three_mo_change
+        let all_time_change
+
+        const { collectible_id } = collectible
+
+        let collectibleMetrics = await CollectiblePrice.aggregate([
+            {
+                '$match': {
+                    'collectibleId': collectible_id
+                }
+            }, {
+                '$set': {
+                    'target-date': '$$NOW'
+                }
+            }, {
+                '$facet': {
+                    'one_day': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },
+                        {
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'one_week': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                7, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },
+                        {
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'one_month': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'three_months': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                3, 30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'six_months': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                6, 30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'one_year': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                12, 30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'all_time': [
+                        {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        }, {
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ]
+                }
+            }
+        ])
+        collectibleMetrics = collectibleMetrics[0]
+
+        one_day_change = collectibleMetrics.one_day[0]?.percentage_change
+        one_wk_change = collectibleMetrics.one_week[0]?.percentage_change
+        one_mo_change = collectibleMetrics?.one_month[0]?.percentage_change
+        three_mo_change = collectibleMetrics?.three_months[0]?.percentage_change
+        six_mo_change = collectibleMetrics?.six_months[0]?.percentage_change
+        one_year_change = collectibleMetrics?.one_year[0]?.percentage_change
+        all_time_change = collectibleMetrics?.all_time[0]?.percentage_change
+
+        let all_time_high = await CollectiblePrice.find({collectibleId: collectible_id }).sort({value: -1}).select('value').limit(1)
+        all_time_high = all_time_high[0]?.value
+
+        let all_time_low = await CollectiblePrice.find({collectibleId: collectible_id }).sort({value: 1}).select('value').limit(1)
+        all_time_low = all_time_low[0]?.value
+
+        const save = await prisma.veve_collectibles.update({
+            data: {
+                one_day_change,
+                one_wk_change,
+                one_mo_change,
+                one_year_change,
+                six_mo_change,
+                three_mo_change,
+                all_time_change
+            },
+            where: {
+                collectible_id
+            }
+        })
+
+        if (save) {
+            console.log(`Successfully saved ${collectible_id}`)
+        } else {
+            console.log(`[ERROR] could not save ${collectible_id}.`)
+        }
+
+    })
+}
+
+const migrateComicStats = async () => {
+    const comics = await prisma.veve_comics.findMany({})
+    comics.map(async (comic, index) => {
+        // if (index > 2) return
+
+        let market_cap
+        let one_day_change
+        let one_wk_change
+        let one_mo_change
+        let one_year_change
+        let six_mo_change
+        let three_mo_change
+        let all_time_change
+
+        const { uniqueCoverId } = comic
+
+        let comicMetrics = await ComicPrice.aggregate([
+            {
+                '$match': {
+                    'uniqueCoverId': uniqueCoverId
+                }
+            }, {
+                '$set': {
+                    'target-date': '$$NOW'
+                }
+            }, {
+                '$facet': {
+                    'one_day': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },
+                        {
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'one_week': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                7, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },
+                        {
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'one_month': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'three_months': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                3, 30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'six_months': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                6, 30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'one_year': [
+                        {
+                            '$match': {
+                                '$expr': {
+                                    '$lte': [
+                                        {
+                                            '$subtract': [
+                                                '$target-date', '$date'
+                                            ]
+                                        }, {
+                                            '$multiply': [
+                                                12, 30, 24, 60, 60, 1000
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        },{
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ],
+                    'all_time': [
+                        {
+                            '$group': {
+                                '_id': null,
+                                'avg': {
+                                    '$avg': '$value'
+                                },
+                                'previous': {
+                                    '$first': '$value'
+                                },
+                                'current': {
+                                    '$last': '$value'
+                                },
+                                'min': {
+                                    '$min': '$low'
+                                },
+                                'max': {
+                                    '$max': '$high'
+                                }
+                            }
+                        }, {
+                            '$addFields': {
+                                'percentage_change': {
+                                    '$multiply': [
+                                        {
+                                            '$divide': [
+                                                {
+                                                    '$subtract': [
+                                                        '$current', '$previous'
+                                                    ]
+                                                }, '$current'
+                                            ]
+                                        }, 100
+                                    ]
+                                }
+                            }
+                        }, {
+                            '$unset': [
+                                '_id'
+                            ]
+                        }
+                    ]
+                }
+            }
+        ])
+        comicMetrics = comicMetrics[0]
+
+        one_day_change = comicMetrics.one_day[0]?.percentage_change
+        one_wk_change = comicMetrics.one_week[0]?.percentage_change
+        one_mo_change = comicMetrics?.one_month[0]?.percentage_change
+        three_mo_change = comicMetrics?.three_months[0]?.percentage_change
+        six_mo_change = comicMetrics?.six_months[0]?.percentage_change
+        one_year_change = comicMetrics?.one_year[0]?.percentage_change
+        all_time_change = comicMetrics?.all_time[0]?.percentage_change
+
+        let all_time_high = await ComicPrice.find({uniqueCoverId: uniqueCoverId }).sort({value: -1}).select('value').limit(1)
+        all_time_high = all_time_high[0]?.value
+
+        let all_time_low = await ComicPrice.find({uniqueCoverId: uniqueCoverId }).sort({value: 1}).select('value').limit(1)
+        all_time_low = all_time_low[0]?.value
+
+        const save = await prisma.veve_comics.update({
+            data: {
+                one_day_change,
+                one_wk_change,
+                one_mo_change,
+                one_year_change,
+                six_mo_change,
+                three_mo_change,
+                all_time_change,
+                all_time_high,
+                all_time_low
+            },
+            where: {
+                uniqueCoverId
+            }
+        })
+
+        if (save) {
+            console.log(`Successfully saved ${uniqueCoverId}`)
+        } else {
+            console.log(`[ERROR] could not save ${uniqueCoverId}.`)
+        }
+
+    })
+}
+
+// migrateComicStats()
+// migrateCollectibleStats()
+// migrateComics()
