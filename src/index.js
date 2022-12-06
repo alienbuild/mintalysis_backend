@@ -28,6 +28,7 @@ import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
 import {scheduledRapidJobs} from "../services/cronJobs.js"
 import mongoose from "mongoose"
+import {scheduledHourlyJobs} from "../services/alice/index.js";
 // import {scheduledHourlyJobs} from "../services/alice/index.js";
 
 export const prisma = new PrismaClient();
@@ -121,8 +122,8 @@ export const pubsub = new PubSub();
         const PORT = 4000;
         httpServer.listen(PORT, () => {
             console.log(`🚀 Server ready`);
-            // scheduledHourlyJobs()
-            scheduledRapidJobs()
+            scheduledHourlyJobs()
+            // scheduledRapidJobs()
         });
     } catch (e) {
         console.log('Server start error: ', e)

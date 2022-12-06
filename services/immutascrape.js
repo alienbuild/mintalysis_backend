@@ -3,6 +3,17 @@ import HttpsProxyAgent from "https-proxy-agent"
 import moment from 'moment'
 import { prisma, pubsub } from "../src/index.js"
 
+import Twit from 'twit'
+
+const T = new Twit({
+    consumer_key:         process.env.TWITTER_API_KEY,
+    consumer_secret:      process.env.TWITTER_API_SECRET,
+    access_token:         process.env.TWITTER_ACCESS_TOKEN,
+    access_token_secret:  process.env.TWITTER_ACCESS_TOKEN_SECRET,
+    timeout_ms:           60*1000,  // optional HTTP request timeout to apply to all requests.
+    strictSSL:            true,     // optional - requires SSL certificates to be valid.
+})
+
 // Setup proxy
 const proxy_string = process.env.PROXY
 const proxy_parts = proxy_string.split(':')
@@ -72,6 +83,13 @@ export const Immutascrape = () => {
 
                 let imxTransArr = []
                 await imxTransactions.data.listTransactionsV2.items.map((transaction) => {
+
+                    console.log('transaction is: ', transaction)
+
+                    const alertTweet = ``
+                    T.post('statuses/update', {status: alertTweet}, (err, data, response) => {
+                        if (!err) console.log('Twitter notification sent to user.')
+                    })
 
                     const imxTransObj = {
                         id: transaction.txn_id.toString(),
@@ -170,3 +188,5 @@ export const Immutascrape = () => {
     }
 
 }
+
+Immutascrape()
