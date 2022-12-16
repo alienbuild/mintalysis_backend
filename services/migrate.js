@@ -700,16 +700,6 @@ const migrateComics = () => {
                             where: { author_id: writer.node.id },
                             create: { author_id: writer.node.id, name: writer.node.name },
                         })
-                        // await prisma.veve_comic_writers.upsert({
-                        //     where: {
-                        //         author_id: writer.node.id
-                        //     },
-                        //     update: {},
-                        //     create: {
-                        //         author_id: writer.node.id,
-                        //         name: writer.node.name
-                        //     }
-                        // })
                     })
 
                     comic.node.comicType.artists.edges.map(async (artist) => {
@@ -717,16 +707,6 @@ const migrateComics = () => {
                             where: { artist_id: artist.node.id },
                             create: { artist_id: artist.node.id, name: artist.node.name },
                         })
-                        // await prisma.veve_comic_artists.upsert({
-                        //     where: {
-                        //         artist_id: artist.node.id
-                        //     },
-                        //     update: {},
-                        //     create: {
-                        //         artist_id: artist.node.id,
-                        //         name: artist.node.name
-                        //     }
-                        // })
                     })
 
                     comic.node.comicType.characters.edges.map(async (character) => {
@@ -734,16 +714,6 @@ const migrateComics = () => {
                             where: { character_id: character.node.id },
                             create: { character_id: character.node.id, name: character.node.name },
                         })
-                        // await prisma.veve_comic_characters.upsert({
-                        //     where: {
-                        //         character_id: character.node.id
-                        //     },
-                        //     update: {},
-                        //     create: {
-                        //         character_id: character.node.id,
-                        //         name: character.node.name
-                        //     }
-                        // })
                     })
                 } catch (error) {
                     console.log('[ERROR] Unable to save comic collaborators. ', error)

@@ -17,11 +17,6 @@ const port = proxy_parts[1]
 const username = proxy_parts[2]
 const password = proxy_parts[3]
 
-// MongoDB Database
-mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(() => console.log('Connected to MongoDB'))
-    .catch((e) => console.log('Error connecting to MongoDB', e))
-
 const getVeveCollectibleFloorsQuery = () => {
     return `query collectibleTypeList {
     collectibleTypeList(first: 2000) {
@@ -1074,5 +1069,3 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors. `, err))
 }
-
-VEVE_GET_COLLECTIBLE_FLOORS()
