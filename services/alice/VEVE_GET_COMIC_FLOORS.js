@@ -1,11 +1,7 @@
 import fetch from 'node-fetch'
-import HttpsProxyAgent from "https-proxy-agent"
 import { PrismaClient } from "@prisma/client"
-import CollectiblePrice from "../../models/CollectiblePrices.js"
 import ComicPrice from "../../models/ComicPrices.js"
-import mongoose from "mongoose"
-import MarketPrice from "../../models/MarketPrice.js";
-import slugify from 'slugify'
+import {cookieRotator} from "./cookieRotator.js";
 
 const prisma = new PrismaClient()
 
@@ -568,10 +564,14 @@ export const VEVE_GET_COMIC_FLOORS = async () => {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'client-name': 'alice-backend',
-            'client-version': '...',
-            'user-agent': 'alice-requests',
-            'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+            'cookie': cookieRotator(),
+            'client-name': 'veve-web-app',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'client-operation': 'AuthUserDetails',
+            // 'client-name': 'alice-backend',
+            // 'client-version': '...',
+            // 'user-agent': 'alice-requests',
+            // 'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
         },
         body: JSON.stringify({
             query: getVeveComicFloorsQuery(),
@@ -579,7 +579,6 @@ export const VEVE_GET_COMIC_FLOORS = async () => {
     })
         .then(comic_floors => comic_floors.json())
         .then(async comic_floors => {
-            // console.log('comic floors is: ', comic_floors)
             const edges = comic_floors.data.marketListingByComicCover.edges
             await edges.map(async (comic, index) => {
                 if (index > 0) return
