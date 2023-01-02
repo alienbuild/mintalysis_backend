@@ -1,11 +1,10 @@
 import fetch from 'node-fetch'
-import HttpsProxyAgent from "https-proxy-agent"
 import { PrismaClient } from "@prisma/client"
 import CollectiblePrice from "../../models/CollectiblePrices.js"
-import ComicPrice from "../../models/ComicPrices.js"
-import mongoose from "mongoose"
-import MarketPrice from "../../models/MarketPrice.js";
+import MarketPrice from "../../models/MarketPrice.js"
 import slugify from 'slugify'
+import HttpsProxyAgent from "https-proxy-agent"
+import {cookieRotator} from "./cookieRotator.js"
 
 const prisma = new PrismaClient()
 
@@ -16,6 +15,8 @@ const ip_address = proxy_parts[0]
 const port = proxy_parts[1]
 const username = proxy_parts[2]
 const password = proxy_parts[3]
+
+const proxyAgent = new HttpsProxyAgent(`http://${username}:${password}@${ip_address}:${port}`)
 
 const getVeveCollectibleFloorsQuery = () => {
     return `query collectibleTypeList {
@@ -1048,11 +1049,16 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'client-name': 'alice-backend',
-            'client-version': '...',
-            'user-agent': 'alice-requests',
-            'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+            'cookie': cookieRotator(),
+            'client-name': 'veve-web-app',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'client-operation': 'AuthUserDetails',
+            // 'client-name': 'alice-backend',
+            // 'client-version': '...',
+            // 'user-agent': 'alice-requests',
+            // 'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
         },
+        // agent: proxyAgent,
         body: JSON.stringify({
             query: getVeveCollectibleFloorsQuery(),
         }),
@@ -1061,7 +1067,7 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         .then(async collectible_floors => {
             const edges = collectible_floors.data.collectibleTypeList.edges
             await edges.map(async (collectible, index) => {
-                // if (index > 0) return
+                if (index > 0) return
                 await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
                 await updateLegacyShit(collectible.node)

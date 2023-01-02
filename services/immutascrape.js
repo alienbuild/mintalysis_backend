@@ -1,7 +1,6 @@
 import fetch from 'node-fetch'
 import HttpsProxyAgent from "https-proxy-agent"
 import moment from 'moment'
-import { prisma, pubsub } from "../src/index.js"
 
 import Twit from 'twit'
 

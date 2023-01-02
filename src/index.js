@@ -26,10 +26,8 @@ import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
-import {scheduledRapidJobs} from "../services/cronJobs.js"
 import mongoose from "mongoose"
-import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
-// import {scheduledHourlyJobs} from "../services/alice/index.js";
+import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js"
 
 export const prisma = new PrismaClient();
 export const pubsub = new PubSub();
