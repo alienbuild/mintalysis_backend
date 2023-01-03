@@ -7,21 +7,22 @@ import { ApolloServer } from "apollo-server-express"
 import { shield } from "graphql-shield"
 import { applyMiddleware } from "graphql-middleware"
 import { PrismaClient } from "@prisma/client"
-import { typeDefs } from './resolvers/schema.js'
+import typeDefs from './typeDefs/index.js'
+import resolvers from "./resolvers/index.js"
 import { getUserFromToken } from './utils/getUserFromToken.js'
-import {
-    Mutation,
-    Query,
-    Subscription,
-    Post,
-    Profile,
-    User,
-    Collectible,
-    Comic,
-    Token,
-    VeveTransfer,
-    DateTime
-} from "./resolvers/index.js"
+// import {
+//     Mutation,
+//     Query,
+//     Subscription,
+//     Post,
+//     Profile,
+//     User,
+//     Collectible,
+//     Comic,
+//     Token,
+//     VeveTransfer,
+//     DateTime
+// } from "./resolvers/index.js"
 import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"
@@ -50,19 +51,7 @@ export const pubsub = new PubSub();
     try {
         schema = makeExecutableSchema({
             typeDefs,
-            resolvers: {
-                Query,
-                Mutation,
-                Subscription,
-                Profile,
-                Post,
-                User,
-                Collectible,
-                Comic,
-                Token,
-                VeveTransfer,
-                DateTime
-            },
+            resolvers
         })
     } catch (e){
         console.log('Nah : ', e)
@@ -94,6 +83,8 @@ export const pubsub = new PubSub();
                 userInfo,
             }
         },
+        csrfPrevention: true,
+        cache: "bounded",
         instrospection: true,
         plugins: [
         {
