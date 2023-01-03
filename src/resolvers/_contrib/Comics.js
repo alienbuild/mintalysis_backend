@@ -1,4 +1,4 @@
-import {decodeCursor, encodeCursor} from "../utils/index.js";
+import {decodeCursor, encodeCursor} from "../../utils/index.js";
 
 const Comic = {
     tokens: async ({uniqueCoverId}, {sortOptions, pagingOptions}, { prisma }) => {

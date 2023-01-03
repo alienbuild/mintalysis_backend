@@ -581,7 +581,7 @@ export const VEVE_GET_COMIC_FLOORS = async () => {
         .then(async comic_floors => {
             const edges = comic_floors.data.marketListingByComicCover.edges
             await edges.map(async (comic, index) => {
-                if (index > 0) return
+                // if (index > 0) return
                 await updateTimeSeries(comic.node)
                 await updateMintalysis(comic.node)
             })

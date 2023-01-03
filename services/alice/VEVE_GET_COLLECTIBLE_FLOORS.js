@@ -1067,7 +1067,7 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         .then(async collectible_floors => {
             const edges = collectible_floors.data.collectibleTypeList.edges
             await edges.map(async (collectible, index) => {
-                if (index > 0) return
+                // if (index > 0) return
                 await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
                 await updateLegacyShit(collectible.node)

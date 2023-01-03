@@ -1,5 +1,5 @@
-import {decodeCursor, encodeCursor} from "../utils/index.js"
-import CollectiblePrice from "../../models/CollectiblePrices.js"
+import {decodeCursor, encodeCursor} from "../../utils/index.js"
+import CollectiblePrice from "../../../models/CollectiblePrices.js"
 
 const Collectible = {
     tokens: async ({collectible_id}, {sortOptions, pagingOptions}, { prisma }) => {
