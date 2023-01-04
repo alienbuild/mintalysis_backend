@@ -1,4 +1,4 @@
-import {checkVeveUsername} from "../utils/checkVeveUsername.js";
+import {validateVeveUsername} from "../utils/validateVeveUsername.js";
 import * as cloudinary from "cloudinary";
 import {ApolloError} from "apollo-server-express";
 
@@ -33,10 +33,10 @@ const resolvers = {
                 isMyProfile
             }
         },
-        veveUser: async (_, {username}, ___) => {
+        validateVeveUsername: async (_, {username}, ___) => {
             let returnArr = []
             try {
-                const userList = await checkVeveUsername(username)
+                const userList = await validateVeveUsername(username)
                 userList.edges.map((user) => {
                     returnArr.push(user.node.username)
                 })
@@ -46,6 +46,30 @@ const resolvers = {
 
             return returnArr
         },
+        searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
+            console.log('HIT search users')
+
+            if (!userInfo) throw new ApolloError('Not authorised')
+
+            const { userId: myUserId } = userInfo
+            
+            try {
+                return await prisma.user.findMany({
+                    where: {
+                        username: {
+                            contains: searchedUsername,
+                            not: myUserId,
+                            mode: 'insensitive'
+                        }
+                    }
+                })
+
+            } catch (error) {
+                console.log('Search users error ', error)
+                throw new ApolloError(error?.message)
+            }
+
+        }
     },
     Mutation: {
         avatarUpload: async (_, { file }, { userInfo, prisma }) => {

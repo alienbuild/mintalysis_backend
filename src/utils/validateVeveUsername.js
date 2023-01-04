@@ -13,7 +13,7 @@ const getUsernameQuery = (username) => {
     }`
 }
 
-export const checkVeveUsername = async (username) => {
+export const validateVeveUsername = async (username) => {
     const callVeveApi = await fetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
         headers: {

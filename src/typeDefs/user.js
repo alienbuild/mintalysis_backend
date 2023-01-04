@@ -5,8 +5,9 @@ const typeDefs = gql`
     type Query {
         me: User
         profile(userId: ID!): Profile
-        veveUser(username: String!): [String!]!
+        validateVeveUsername(username: String!): [String!]!
         veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
+        searchUsers: String
     }
     
     type Mutation {
