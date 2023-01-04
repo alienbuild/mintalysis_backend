@@ -1043,13 +1043,16 @@ const updateLegacyShit = async (collectible) => {
 }
 
 export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
+
+    const cookieToUse = cookieRotator()
+
     console.log(`[ALICE][VEVE] - [COLLECTIBLE FLOORS]`)
     await fetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'cookie': cookieRotator(),
+            'cookie': cookieToUse,
             'client-name': 'veve-web-app',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
             'client-operation': 'AuthUserDetails',
@@ -1073,5 +1076,5 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
                 await updateLegacyShit(collectible.node)
             })
         })
-        .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors. `, err))
+        .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
 }
