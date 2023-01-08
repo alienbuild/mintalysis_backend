@@ -10,7 +10,11 @@ const typeDefs = gql`
     }
     
     type Mutation {
-        createConversation(username: String): String
+        createConversation(participantIds: [String]): createConversationResponse
+    }
+    
+    type createConversationResponse {
+        conversationId: String
     }
 `
 

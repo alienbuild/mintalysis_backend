@@ -61,7 +61,7 @@ const resolvers = {
 
             return {
                 userErrors: [],
-                token: jwt.sign({ userId: user.id }, process.env.JSON_SIGNATURE, { expiresIn: "3d" }),
+                token: jwt.sign({ userId: user.id, username: user.username }, process.env.JSON_SIGNATURE, { expiresIn: "3d" }),
                 user: {
                     id: user.id,
                     username: user.username
@@ -80,7 +80,7 @@ const resolvers = {
 
             if (!user) {
                 return {
-                    userErrors: [{message: "Invalid credentials."}],
+                    userErrors: [{ message: "Invalid credentials." }],
                     token: null
                 }
             }
@@ -95,7 +95,7 @@ const resolvers = {
 
             return {
                 userErrors: [],
-                token: jwt.sign({ userId: user.id }, process.env.JSON_SIGNATURE, { expiresIn: '3d' }),
+                token: jwt.sign({ userId: user.id, username: user.username }, process.env.JSON_SIGNATURE, { expiresIn: '3d' }),
                 user: user
             }
         }

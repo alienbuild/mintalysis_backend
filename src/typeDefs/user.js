@@ -7,7 +7,7 @@ const typeDefs = gql`
         profile(userId: ID!): Profile
         validateVeveUsername(username: String!): [String!]!
         veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
-        searchUsers: String
+        searchUsers(username: String!): [User]
     }
     
     type Mutation {
@@ -17,6 +17,7 @@ const typeDefs = gql`
     type User {
         id: ID!
         username: String
+        avatar: String
         email: String!
         wallet_address: String
         stripe_customer_id: String

@@ -92,6 +92,7 @@ const getVevelatestComicsQuery = () => {
 }
 
 export const VEVE_GET_LATEST_COMICS = async () => {
+    console.log('GETTING LATEST COMICS')
     console.log(`[ALICE][VEVE] - [GET LATEST COLLECTIBLES]`)
 
     await fetch(`https://web.api.prod.veve.me/graphql`, {
@@ -179,8 +180,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
                     })
                     console.log(`[SUCCESS][VEVE][COMIC]: ${comic.node.comicType.name} added to prisma db.`)
                 } catch (e) {
-                    console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`)
-
+                    // console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`)
                 }
 
             })

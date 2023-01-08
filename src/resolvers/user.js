@@ -47,25 +47,22 @@ const resolvers = {
             return returnArr
         },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
-            console.log('HIT search users')
 
             if (!userInfo) throw new ApolloError('Not authorised')
 
-            const { userId: myUserId } = userInfo
+            const { username: myUsername } = userInfo
             
             try {
-                return await prisma.user.findMany({
+                return await prisma.users.findMany({
                     where: {
                         username: {
                             contains: searchedUsername,
-                            not: myUserId,
-                            mode: 'insensitive'
+                            not: myUsername,
                         }
                     }
                 })
 
             } catch (error) {
-                console.log('Search users error ', error)
                 throw new ApolloError(error?.message)
             }
 
@@ -124,7 +121,17 @@ const resolvers = {
 
 
         }
+    },
+    User : {
+        profile: (parent, __, { prisma }) => {
+            return prisma.profile.findUnique({
+                where: {
+                    user_id: parent.id
+                }
+            })
+        },
     }
 }
 
 export default resolvers
+
