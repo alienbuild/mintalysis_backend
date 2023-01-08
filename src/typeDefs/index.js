@@ -8,6 +8,7 @@ import tokenTypeDefs from './tokens.js'
 import transferTypeDefs from './transfers.js'
 import projectTypeDefs from './projects.js'
 import conversationTypeDefs from './conversations.js'
+import messageTypeDefs from './messages.js'
 
 const typeDefs = [
     scalarDefs,
@@ -20,6 +21,7 @@ const typeDefs = [
     transferTypeDefs,
     projectTypeDefs,
     conversationTypeDefs,
+    messageTypeDefs
 ]
 
 export default typeDefs

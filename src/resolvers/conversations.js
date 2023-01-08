@@ -3,7 +3,32 @@ import { Prisma } from '@prisma/client'
 
 const resolvers = {
     Query: {
-        searchConversations: () => {}
+        conversations: async ( _, __, { userInfo, prisma }) => {
+            if (!userInfo.userId) throw new ApolloError('Not authorised.')
+
+            const { userId } = userInfo
+
+            try {
+
+                return await prisma.conversation.findMany({
+                    where: {
+                        participants: {
+                            some: {
+                                user_id: {
+                                    equals: userId
+                                }
+                            }
+                        }
+                    },
+                    include: conversationPopulated
+                })
+
+            } catch (err) {
+                console.log(`[ERROR] getting conversations: `, err)
+                throw new ApolloError('Unable to get conversations')
+            }
+
+        }
     },
     Mutation: {
         createConversation: async (_, { participantIds }, { userInfo, prisma } ) => {

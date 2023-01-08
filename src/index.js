@@ -10,19 +10,6 @@ import { PrismaClient } from "@prisma/client"
 import typeDefs from './typeDefs/index.js'
 import resolvers from "./resolvers/index.js"
 import { getUserFromToken } from './utils/getUserFromToken.js'
-// import {
-//     Mutation,
-//     Query,
-//     Subscription,
-//     Post,
-//     Profile,
-//     User,
-//     Collectible,
-//     Comic,
-//     Token,
-//     VeveTransfer,
-//     DateTime
-// } from "./resolvers/index.js"
 import {PubSub} from "graphql-subscriptions"
 import cors from "cors"
 import helmet from "helmet"

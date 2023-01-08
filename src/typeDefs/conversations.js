@@ -6,11 +6,25 @@ const typeDefs = gql`
     }
     
     type Query {
-        searchConversations: String
+        conversations: [Conversation]
     }
     
     type Mutation {
         createConversation(participantIds: [String]): createConversationResponse
+    }
+    
+    type Conversation {
+        id: String
+        latest_message: Message
+        participants: [Participant]
+        createdAt: DateTime
+        updatedAt: DateTime
+    }
+    
+    type Participant {
+        id: String
+        user: User
+        has_seen_latest_message: Boolean
     }
     
     type createConversationResponse {

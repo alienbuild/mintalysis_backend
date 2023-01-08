@@ -26,6 +26,7 @@ const typeDefs = gql`
         tokens: [Token]!
         projects: [Project]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
+        
     }
 
     type Profile {
