@@ -1,4 +1,3 @@
-import {pubsub} from "../index.js"
 import {encodeCursor} from "../utils/index.js"
 
 const resolvers = {
@@ -25,7 +24,7 @@ const resolvers = {
         },
     },
     Mutation: {
-        createVeveTransfer: async (_, { transferInput: imxTransArr }, { prisma }) => {
+        createVeveTransfer: async (_, { transferInput: imxTransArr }, { prisma, pubsub }) => {
 
             let sendBkArray = []
             await imxTransArr.map(async (transfer, index) => {

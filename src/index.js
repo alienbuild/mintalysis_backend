@@ -1,111 +1,133 @@
-import express from 'express'
-import { createServer } from 'http'
-import { makeExecutableSchema } from "@graphql-tools/schema"
-import { SubscriptionServer } from "subscriptions-transport-ws"
-import { execute, subscribe } from "graphql"
-import { ApolloServer } from "apollo-server-express"
-import { shield } from "graphql-shield"
-import { applyMiddleware } from "graphql-middleware"
-import { PrismaClient } from "@prisma/client"
+import { makeExecutableSchema } from "@graphql-tools/schema";
+import { PrismaClient } from "@prisma/client";
+// import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
+// import { ApolloServer } from "apollo-server-express";
+import { ApolloServer } from "@apollo/server";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { expressMiddleware } from "@apollo/server/express4";
+import express from "express";
+import { PubSub } from "graphql-subscriptions";
+import { useServer } from "graphql-ws/lib/use/ws";
+import { createServer } from "http";
+import { WebSocketServer } from "ws";
 import typeDefs from './typeDefs/index.js'
 import resolvers from "./resolvers/index.js"
-import { getUserFromToken } from './utils/getUserFromToken.js'
-import {PubSub} from "graphql-subscriptions"
-import cors from "cors"
-import helmet from "helmet"
-import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs"
+import * as dotenv from "dotenv";
+import cors from "cors";
+import pkg from 'body-parser';
+const { json } = pkg;
+import { getUserFromToken } from "./utils/getUserFromToken.js"
 import mongoose from "mongoose"
-import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js"
+import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
 
-export const prisma = new PrismaClient();
-export const pubsub = new PubSub();
+const main = async () => {
+    dotenv.config();
+    // Create the schema, which will be used separately by ApolloServer and
+    // the WebSocket server.
+    const schema = makeExecutableSchema({
+        typeDefs,
+        resolvers,
+    });
 
-(async function() {
+    // Create an Express app and HTTP server; we will attach both the WebSocket
+    // server and the ApolloServer to this HTTP server.
     const app = express();
     const httpServer = createServer(app);
 
-    app.use(express.json())
-    app.use(express
-        .urlencoded({extended:true}))
-    app.use(cors())
-    app.use(helmet({
-        crossOriginEmbedderPolicy: false,
-        contentSecurityPolicy:(process.env.NODE_ENV === 'production' ? undefined:false)
-    }))
-
-    app.use(graphqlUploadExpress({ maxFieldSize: 100000, maxFiles: 10 }))
-    let schema
-    try {
-        schema = makeExecutableSchema({
-            typeDefs,
-            resolvers
-        })
-    } catch (e){
-        console.log('Nah : ', e)
-    }
-
-    // const permissions = shield({
-    //     Query: {},
-    //     Mutation: {}
-    // })
-    // const schemaWithPermissions = applyMiddleware(schema, permissions)
-
-    const subscriptionServer = SubscriptionServer.create(
-        {
-            // schemaWithPermissions,
-            schema,
-            execute,
-            subscribe
-        },
-        { server: httpServer, path: '/graphql' }
-    );
-
-    const server = new ApolloServer({
-        // schemaWithPermissions,
-        schema,
-        context: async ({ req }) => {
-            const userInfo = await getUserFromToken(req.headers.authorization)
-            return {
-                prisma,
-                userInfo,
-            }
-        },
-        csrfPrevention: true,
-        cache: "bounded",
-        instrospection: true,
-        plugins: [
-        {
-                async serverWillStart(){
-                    return {
-                        async drainServer(){
-                            subscriptionServer.close();
-                        }
-                    }
-                }
-            }
-        ]
+    // Create our WebSocket server using the HTTP server we just set up.
+    const wsServer = new WebSocketServer({
+        server: httpServer,
+        path: "/graphql/subscriptions",
     });
 
+    // Context parameters
+    const prisma = new PrismaClient();
+    const pubsub = new PubSub();
+
+    const getSubscriptionContext = async ( ctx ) => {
+        // ctx is the graphql-ws Context where connectionParams live
+        if (ctx.connectionParams && ctx.connectionParams.authorization) {
+            const { authorization } = ctx.connectionParams;
+            const userInfo = await getUserFromToken(authorization)
+            return { userInfo, prisma, pubsub };
+        }
+        // Otherwise let our resolvers know we don't have a current user
+        return { userInfo: null, prisma, pubsub };
+    };
+
+    // Save the returned server's info so we can shutdown this server later
+    const serverCleanup = useServer(
+        {
+            schema,
+            context: (ctx) => {
+                // This will be run every time the client sends a subscription request
+                // Returning an object will add that information to our
+                // GraphQL context, which all of our resolvers have access to.
+                return getSubscriptionContext(ctx);
+            },
+        },
+        wsServer
+    );
+    // Set up ApolloServer.
+    const server = new ApolloServer({
+        schema,
+        csrfPrevention: true,
+        plugins: [
+            // Proper shutdown for the HTTP server.
+            ApolloServerPluginDrainHttpServer({ httpServer }),
+
+            // Proper shutdown for the WebSocket server.
+            {
+                async serverWillStart() {
+                    return {
+                        async drainServer() {
+                            await serverCleanup.dispose();
+                        },
+                    };
+                },
+            },
+        ],
+    });
     await server.start();
-    server.applyMiddleware({ app });
+
+    const corsOptions = {
+        origin: process.env.BASE_URL,
+        credentials: true,
+    };
+
+    app.use(
+        "/graphql",
+        cors(corsOptions),
+        json(),
+        expressMiddleware(server, {
+            context: async ({ req }) => {
+
+            const userInfo = await getUserFromToken(req.headers.authorization)
+        // const session = await getSession({ req });
+
+        return { userInfo, prisma, pubsub };
+    },
+})
+);
+
+    // server.applyMiddleware({ app, path: "/graphql", cors: corsOptions });
 
     // MongoDB Database
     mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
         .then(() => console.log('Connected to MongoDB'))
         .catch((e) => console.log('Error connecting to MongoDB', e))
 
-    try {
-        const PORT = 4000;
-        httpServer.listen(PORT, () => {
-            console.log(`🚀 Server ready`);
-            scheduledHourlyJobs()
-            scheduledDailyJobs()
-            // scheduledRapidJobs()
-        });
-    } catch (e) {
-        console.log('Server start error: ', e)
-    }
+    const PORT = 4007;
 
+    // Now that our HTTP server is fully set up, we can listen to it.
+    await new Promise((resolve) =>
+            httpServer.listen(PORT, () => {
+                scheduledHourlyJobs()
+                scheduledDailyJobs()
+                resolve()
+            })
+    );
+    console.log(`Server is now running on http://localhost:${PORT}/graphql`);
+};
 
-
-})();
+main()

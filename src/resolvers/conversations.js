@@ -1,5 +1,7 @@
 import {ApolloError} from "apollo-server-express";
-import { Prisma } from '@prisma/client'
+import {Prisma} from '@prisma/client'
+
+import {withFilter} from "graphql-subscriptions";
 
 const resolvers = {
     Query: {
@@ -24,15 +26,13 @@ const resolvers = {
                 })
 
             } catch (err) {
-                console.log(`[ERROR] getting conversations: `, err)
                 throw new ApolloError('Unable to get conversations')
             }
 
         }
     },
     Mutation: {
-        createConversation: async (_, { participantIds }, { userInfo, prisma } ) => {
-            console.log('Inside create conversation: ', participantIds)
+        createConversation: async (_, { participantIds }, { userInfo, prisma, pubsub } ) => {
             if (!userInfo) throw new ApolloError('Not authorised')
 
             const { userId } = userInfo
@@ -52,16 +52,33 @@ const resolvers = {
                     include: conversationPopulated
                 })
 
+                pubsub.publish('CONVERSATION_CREATED', {
+                    conversationCreated: conversation
+                })
+
                 return {
                     conversationId: conversation.id
                 }
 
             } catch (err) {
-                console.log('Create conversation error: ', err)
                 throw new ApolloError('Error creating conversation.')
             }
         }
     },
+    Subscription: {
+        conversationCreated: {
+            // subscribe: (_, __, { pubsub }) => {
+            //     return pubsub.asyncIterator(['CONVERSATION_CREATED'])
+            // }
+            subscribe: withFilter(
+                (_, __, { pubsub, userInfo}) => pubsub.asyncIterator(['CONVERSATION_CREATED']),
+                (payload, _, { userInfo }) => {
+                    const { conversationCreated: { participants } } = payload
+                    return !!participants.find(p => p.user_id === userInfo?.userId)
+                },
+            )
+        }
+    }
 }
 
 export const participantPopulated = Prisma.validator()({
