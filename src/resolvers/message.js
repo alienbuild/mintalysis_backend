@@ -101,7 +101,7 @@ const resolvers = {
                 })
 
                 pubsub.publish('MESSAGE_SENT', { messageSent: newMessage })
-                // pubsub.publish('CONVERSATION_UPDATED', { conversationUpdated: conversation })
+                pubsub.publish('CONVERSATION_UPDATED', { conversationUpdated: { conversation } })
 
             } catch (err) {
                 console.log('Error sending message mutation: ', err)
@@ -109,6 +109,7 @@ const resolvers = {
             }
 
             return true
+
         },
         markConversationAsRead: async (_, { userId, conversationId }, { userInfo, prisma }) => {
 
@@ -150,7 +151,7 @@ const resolvers = {
             }, (payload, {conversationId}, _) => {
                 return payload.messageSent.conversationId === conversationId
             })
-        }
+        },
     }
 }
 

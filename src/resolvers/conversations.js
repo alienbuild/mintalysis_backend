@@ -1,6 +1,7 @@
 import {Prisma} from '@prisma/client'
 import {withFilter} from "graphql-subscriptions"
 import {GraphQLError} from "graphql"
+import {userIsConversationParticipant} from "../utils/userIsConversationParticipant.js";
 
 const resolvers = {
     Query: {
@@ -70,9 +71,19 @@ const resolvers = {
                 (_, __, { pubsub }) => pubsub.asyncIterator(['CONVERSATION_CREATED']),
                 (payload, _, { userInfo }) => {
                     const { conversationCreated: { participants } } = payload
-                    return !!participants.find(p => p.user_id === userInfo?.userId)
+
+                    return userIsConversationParticipant(participants, userInfo?.userId)
                 },
             )
+        },
+        conversationUpdated: {
+            subscribe: withFilter(
+                (_, __, { pubsub }) => pubsub.asyncIterator(['CONVERSATION_UPDATED']),
+                (payload, _, { userInfo }) => {
+                    if (!userInfo) throw new GraphQLError('Not authorised.')
+
+                    return userIsConversationParticipant(payload.conversationUpdated.conversation.participants, userInfo?.userId)
+            })
         }
     }
 }
