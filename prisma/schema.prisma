@@ -108,6 +108,8 @@ model conversation {
   latest_message    message?                   @relation(name: "latest_conversation_message", fields: [latest_message_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
   participants      conversation_participant[]
   messages          message[]
+
+  @@index([latest_message_id], map: "latest_message_id")
 }
 
 model conversation_participant {
@@ -119,6 +121,8 @@ model conversation_participant {
   has_seen_latest_message Boolean
   createdAt               DateTime     @default(now())
   updatedAt               DateTime     @updatedAt
+
+  @@index([has_seen_latest_message], map: "has_seen_latest_message")
 }
 
 model message {
@@ -131,6 +135,7 @@ model message {
   body           String        @db.Text
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
 }
 
 model nft_projects {
