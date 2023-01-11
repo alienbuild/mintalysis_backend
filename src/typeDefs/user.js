@@ -1,4 +1,4 @@
-import { gql } from "apollo-server-express"
+import gql from 'graphql-tag'
 
 const typeDefs = gql`
     
@@ -7,7 +7,7 @@ const typeDefs = gql`
         profile(userId: ID!): Profile
         validateVeveUsername(username: String!): [String!]!
         veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
-        searchUsers: String
+        searchUsers(username: String!): [User]
     }
     
     type Mutation {
@@ -17,6 +17,7 @@ const typeDefs = gql`
     type User {
         id: ID!
         username: String
+        avatar: String
         email: String!
         wallet_address: String
         stripe_customer_id: String
@@ -25,6 +26,7 @@ const typeDefs = gql`
         tokens: [Token]!
         projects: [Project]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
+        
     }
 
     type Profile {

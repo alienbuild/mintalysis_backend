@@ -11,6 +11,8 @@ const scheduledHourlyJobs = () => {
     console.log('Hourly jobs queued up.')
     schedule.scheduleJob('05 * * * *', () => {
         VEVE_GET_COLLECTIBLE_FLOORS()
+    })
+    schedule.scheduleJob('08 * * * *', () => {
         VEVE_GET_COMIC_FLOORS()
     })
 }

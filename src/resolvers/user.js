@@ -1,6 +1,6 @@
-import {validateVeveUsername} from "../utils/validateVeveUsername.js";
-import * as cloudinary from "cloudinary";
-import {ApolloError} from "apollo-server-express";
+import {validateVeveUsername} from "../utils/validateVeveUsername.js"
+import * as cloudinary from "cloudinary"
+import { GraphQLError } from "graphql"
 
 const resolvers = {
     Query: {
@@ -47,26 +47,23 @@ const resolvers = {
             return returnArr
         },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
-            console.log('HIT search users')
 
-            if (!userInfo) throw new ApolloError('Not authorised')
+            if (!userInfo) throw new GraphQLError('Not authorised')
 
-            const { userId: myUserId } = userInfo
+            const { username: myUsername } = userInfo
             
             try {
-                return await prisma.user.findMany({
+                return await prisma.users.findMany({
                     where: {
                         username: {
                             contains: searchedUsername,
-                            not: myUserId,
-                            mode: 'insensitive'
+                            not: myUsername,
                         }
                     }
                 })
 
             } catch (error) {
-                console.log('Search users error ', error)
-                throw new ApolloError(error?.message)
+                throw new GraphQLError(error?.message)
             }
 
         }
@@ -119,12 +116,22 @@ const resolvers = {
                 }
 
             } catch (e) {
-                throw new ApolloError('There was an issue uploading your avatar.')
+                throw new GraphQLError('There was an issue uploading your avatar.')
             }
 
 
         }
+    },
+    User : {
+        profile: (parent, __, { prisma }) => {
+            return prisma.profile.findUnique({
+                where: {
+                    user_id: parent.id
+                }
+            })
+        },
     }
 }
 
 export default resolvers
+

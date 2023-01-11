@@ -1,4 +1,4 @@
-import { gql } from "apollo-server-express"
+import gql from 'graphql-tag'
 
 const typeDefs = gql`
     type Conversations {
@@ -6,11 +6,34 @@ const typeDefs = gql`
     }
     
     type Query {
-        searchConversations: String
+        conversations: [Conversation]
     }
     
     type Mutation {
-        createConversation(username: String): String
+        createConversation(participantIds: [String]): createConversationResponse
+        markConversationAsRead(userId: String! conversationId: String!) : Boolean
+    }
+    
+    type Subscription {
+        conversationCreated: Conversation
+    }
+    
+    type Conversation {
+        id: String
+        latest_message: Message
+        participants: [Participant]
+        createdAt: DateTime
+        updatedAt: DateTime
+    }
+    
+    type Participant {
+        id: String
+        user: User
+        has_seen_latest_message: Boolean
+    }
+    
+    type createConversationResponse {
+        conversationId: String
     }
 `
 
