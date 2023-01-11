@@ -1,4 +1,4 @@
-import { gql } from "apollo-server-express"
+import gql from 'graphql-tag'
 
 const typeDefs = gql`
     type Conversations {
@@ -11,6 +11,7 @@ const typeDefs = gql`
     
     type Mutation {
         createConversation(participantIds: [String]): createConversationResponse
+        markConversationAsRead(userId: String! conversationId: String!) : Boolean
     }
     
     type Subscription {

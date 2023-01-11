@@ -1,4 +1,4 @@
-import {gql} from "apollo-server-express";
+import gql from 'graphql-tag'
 
 const typeDefs = gql`
     type Message {
@@ -6,6 +6,18 @@ const typeDefs = gql`
         sender: User
         body: String
         createdAt: DateTime
+    }
+
+    type Query {
+        messages(conversationId: String) : [Message] 
+    }
+     
+    type Mutation {
+        sendMessage(id: String, conversationId: String, senderId: String, body: String) : Boolean
+    }
+    
+    type Subscription {
+        messageSent(conversationId: String): Message
     }
 `
 

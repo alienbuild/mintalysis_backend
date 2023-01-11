@@ -1699,4 +1699,4 @@ const migrateComicStats = async () => {
 
 // migrateComicStats()
 // migrateCollectibleStats()
-// migrateComics()
+migrateComics()

@@ -1,7 +1,5 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { PrismaClient } from "@prisma/client";
-// import { ApolloServerPluginDrainHttpServer } from "apollo-server-core";
-// import { ApolloServer } from "apollo-server-express";
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { expressMiddleware } from "@apollo/server/express4";

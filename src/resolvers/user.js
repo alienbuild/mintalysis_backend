@@ -1,6 +1,6 @@
-import {validateVeveUsername} from "../utils/validateVeveUsername.js";
-import * as cloudinary from "cloudinary";
-import {ApolloError} from "apollo-server-express";
+import {validateVeveUsername} from "../utils/validateVeveUsername.js"
+import * as cloudinary from "cloudinary"
+import { GraphQLError } from "graphql"
 
 const resolvers = {
     Query: {
@@ -48,7 +48,7 @@ const resolvers = {
         },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
 
-            if (!userInfo) throw new ApolloError('Not authorised')
+            if (!userInfo) throw new GraphQLError('Not authorised')
 
             const { username: myUsername } = userInfo
             
@@ -63,7 +63,7 @@ const resolvers = {
                 })
 
             } catch (error) {
-                throw new ApolloError(error?.message)
+                throw new GraphQLError(error?.message)
             }
 
         }
@@ -116,7 +116,7 @@ const resolvers = {
                 }
 
             } catch (e) {
-                throw new ApolloError('There was an issue uploading your avatar.')
+                throw new GraphQLError('There was an issue uploading your avatar.')
             }
 
 

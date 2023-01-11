@@ -1,12 +1,11 @@
-import {ApolloError} from "apollo-server-express";
 import {Prisma} from '@prisma/client'
-
-import {withFilter} from "graphql-subscriptions";
+import {withFilter} from "graphql-subscriptions"
+import {GraphQLError} from "graphql"
 
 const resolvers = {
     Query: {
         conversations: async ( _, __, { userInfo, prisma }) => {
-            if (!userInfo.userId) throw new ApolloError('Not authorised.')
+            if (!userInfo.userId) throw new GraphQLError('Not authorised.')
 
             const { userId } = userInfo
 
@@ -26,14 +25,14 @@ const resolvers = {
                 })
 
             } catch (err) {
-                throw new ApolloError('Unable to get conversations')
+                throw new GraphQLError('Unable to get conversations')
             }
 
         }
     },
     Mutation: {
         createConversation: async (_, { participantIds }, { userInfo, prisma, pubsub } ) => {
-            if (!userInfo) throw new ApolloError('Not authorised')
+            if (!userInfo) throw new GraphQLError('Not authorised')
 
             const { userId } = userInfo
 
@@ -61,17 +60,14 @@ const resolvers = {
                 }
 
             } catch (err) {
-                throw new ApolloError('Error creating conversation.')
+                throw new GraphQLError('Error creating conversation.')
             }
         }
     },
     Subscription: {
         conversationCreated: {
-            // subscribe: (_, __, { pubsub }) => {
-            //     return pubsub.asyncIterator(['CONVERSATION_CREATED'])
-            // }
             subscribe: withFilter(
-                (_, __, { pubsub, userInfo}) => pubsub.asyncIterator(['CONVERSATION_CREATED']),
+                (_, __, { pubsub }) => pubsub.asyncIterator(['CONVERSATION_CREATED']),
                 (payload, _, { userInfo }) => {
                     const { conversationCreated: { participants } } = payload
                     return !!participants.find(p => p.user_id === userInfo?.userId)
