@@ -93,9 +93,18 @@ const resolvers = {
     },
     Subscription: {
         createVeveTransfer: {
-            subscribe: (_, __, ___, info) => {
+            subscribe: (_, __, { pubsub }) => {
                 return pubsub.asyncIterator('VEVE_IMX_TRANSFER_CREATED')
             }
+        }
+    },
+    VeveTransfer: {
+        token: async ({ token_id }, __, { prisma }) => {
+            return await prisma.tokens.findUnique({
+                where: {
+                    token_id: token_id
+                }
+            })
         }
     }
 }

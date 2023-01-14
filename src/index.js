@@ -17,6 +17,7 @@ const { json } = pkg;
 import { getUserFromToken } from "./utils/getUserFromToken.js"
 import mongoose from "mongoose"
 import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
+import {scheduledRapidJobs} from "../services/cronJobs.js";
 
 export const prisma = new PrismaClient();
 
@@ -121,6 +122,7 @@ const main = async () => {
     // Now that our HTTP server is fully set up, we can listen to it.
     await new Promise((resolve) =>
             httpServer.listen(PORT, () => {
+                scheduledRapidJobs()
                 scheduledHourlyJobs()
                 scheduledDailyJobs()
                 resolve()

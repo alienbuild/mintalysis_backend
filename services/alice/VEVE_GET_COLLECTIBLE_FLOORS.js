@@ -1073,7 +1073,7 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
                 // if (index > 0) return
                 await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
-                await updateLegacyShit(collectible.node)
+                // await updateLegacyShit(collectible.node)
             })
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
