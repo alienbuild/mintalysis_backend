@@ -18,6 +18,8 @@ import { getUserFromToken } from "./utils/getUserFromToken.js"
 import mongoose from "mongoose"
 import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
 
+export const prisma = new PrismaClient();
+
 const main = async () => {
     dotenv.config();
     // Create the schema, which will be used separately by ApolloServer and
@@ -39,7 +41,6 @@ const main = async () => {
     });
 
     // Context parameters
-    const prisma = new PrismaClient();
     const pubsub = new PubSub();
 
     const getSubscriptionContext = async ( ctx ) => {

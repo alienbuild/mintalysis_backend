@@ -12,11 +12,17 @@ const typeDefs = gql`
     type Mutation {
         createConversation(participantIds: [String]): createConversationResponse
         markConversationAsRead(userId: String! conversationId: String!) : Boolean
+        deleteConversation(conversationId: String!) : Boolean
     }
     
     type Subscription {
         conversationCreated: Conversation
         conversationUpdated: ConversationUpdatedPayload
+        conversationDeleted: ConversationDeletedSubscriptionPayload
+    }
+    
+    type ConversationDeletedSubscriptionPayload { 
+        id: String
     }
      
     type ConversationUpdatedPayload {

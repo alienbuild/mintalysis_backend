@@ -1,9 +1,7 @@
 import fetch from 'node-fetch'
-import { PrismaClient } from "@prisma/client"
 import ComicPrice from "../../models/ComicPrices.js"
 import {cookieRotator} from "./cookieRotator.js";
-
-const prisma = new PrismaClient()
+import { prisma } from '../../src/index.js'
 
 // Setup proxy
 const proxy_string = process.env.PROXY
