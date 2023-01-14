@@ -63,6 +63,41 @@ const resolvers = {
             } catch (err) {
                 throw new GraphQLError('Error creating conversation.')
             }
+        },
+        deleteConversation: async (_, { conversationId }, { userInfo, prisma, pubsub }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised.')
+
+            try {
+
+                const [deletedConversation] = await prisma.$transaction([
+                    prisma.conversation.delete({
+                        where: {
+                            id: conversationId
+                        },
+                        include: conversationPopulated
+                    }),
+                    prisma.conversation_participant.deleteMany({
+                        where: {
+                            id: conversationId
+                        }
+                    }),
+                    prisma.message.deleteMany({
+                        where: {
+                            id: conversationId
+                        }
+                    })
+                ])
+
+                pubsub.publish('CONVERSATION_DELETED', {
+                    conversationDeleted: deletedConversation
+                })
+
+            } catch (err) {
+                console.log('Error deleting conversation: ', err)
+                throw new GraphQLError('Error deleting conversation.')
+            }
+
+            return true
         }
     },
     Subscription: {
@@ -84,6 +119,17 @@ const resolvers = {
 
                     return userIsConversationParticipant(payload.conversationUpdated.conversation.participants, userInfo?.userId)
             })
+        },
+        conversationDeleted: {
+            subscribe: withFilter(
+                (_, __, { pubsub }) => pubsub.asyncIterator(['CONVERSATION_DELETED']),
+                (payload, _, { userInfo }) => {
+                    if (!userInfo) throw new GraphQLError('Not authorised.')
+
+                    return userIsConversationParticipant(payload.conversationDeleted.conversation.participants, userInfo?.userId)
+
+                }
+            )
         }
     }
 }

@@ -6,7 +6,7 @@ import slugify from 'slugify'
 import HttpsProxyAgent from "https-proxy-agent"
 import {cookieRotator} from "./cookieRotator.js"
 
-const prisma = new PrismaClient()
+import { prisma } from "../../src/index.js"
 
 // Setup proxy
 const proxy_string = process.env.PROXY
