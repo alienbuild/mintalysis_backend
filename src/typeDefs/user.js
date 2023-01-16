@@ -5,8 +5,6 @@ const typeDefs = gql`
     type Query {
         me: User
         profile(userId: ID!): Profile
-        validateVeveUsername(username: String!): [String!]!
-        veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
         searchUsers(username: String!): [User]
     }
     
@@ -26,7 +24,6 @@ const typeDefs = gql`
         tokens: [Token]!
         projects: [Project]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
-        
     }
 
     type Profile {
@@ -41,11 +38,6 @@ const typeDefs = gql`
         veve_username: String
     }
 
-    type VeveVaultImportPayload {
-        wallet_address: String!
-        token_count: Int!
-    }
-
     type AvatarUploadResponse {
         success: Boolean!
         message: String
@@ -53,7 +45,6 @@ const typeDefs = gql`
         error: String
         token: String
     } 
-
 
 `
 

@@ -83,8 +83,6 @@ export const Immutascrape = () => {
                 let imxTransArr = []
                 await imxTransactions.data.listTransactionsV2.items.map((transaction) => {
 
-                    console.log('transaction is: ', transaction)
-
                     const alertTweet = ``
                     T.post('statuses/update', {status: alertTweet}, (err, data, response) => {
                         if (!err) console.log('Twitter notification sent to user.')
@@ -138,7 +136,7 @@ export const Immutascrape = () => {
                 // Send imxTransArr to gql mutation (createTransfer)
                 try {
                     // console.log('Sending: ', imxTransArr)
-                    await fetch(`http://localhost:4000/graphql`, {
+                    await fetch(`http://localhost:4007/graphql`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

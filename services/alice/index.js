@@ -8,7 +8,6 @@ import {VEVE_GET_LATEST_LICENSORS} from "./VEVE_GET_LATEST_LICENSORS.js"
 import {VEVE_GET_LATEST_SERIES} from "./VEVE_GET_LATEST_SERIES.js"
 
 const scheduledHourlyJobs = () => {
-    console.log('Hourly jobs queued up.')
     schedule.scheduleJob('05 * * * *', () => {
         VEVE_GET_COLLECTIBLE_FLOORS()
     })
@@ -18,7 +17,6 @@ const scheduledHourlyJobs = () => {
 }
 
 const scheduledDailyJobs = () => {
-    console.log('Daily jobs queued up.')
     schedule.scheduleJob("0 0 * * *", () => {
         VEVE_GET_LATEST_COLLECTIBLES()
         VEVE_GET_LATEST_COMICS()

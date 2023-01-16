@@ -1,5 +1,4 @@
 import fetch from 'node-fetch'
-import { PrismaClient } from "@prisma/client"
 import CollectiblePrice from "../../models/CollectiblePrices.js"
 import MarketPrice from "../../models/MarketPrice.js"
 import slugify from 'slugify'
@@ -7,6 +6,7 @@ import HttpsProxyAgent from "https-proxy-agent"
 import {cookieRotator} from "./cookieRotator.js"
 
 import { prisma } from "../../src/index.js"
+import {pubsub} from "../../src/index.js"
 
 // Setup proxy
 const proxy_string = process.env.PROXY
@@ -92,7 +92,6 @@ const updateTimeSeries = (collectible) => {
 
                 CollectiblePrice.insertMany(newArr)
                     .then((success) => {
-                        console.log('[SUCCESS][COMIC]: Time series updated.')
                         resolve()
                     })
                     .catch((error) => console.log(`[ERROR] Unable to insertMany on CollectiblePrice. name is ${collectible.name} / ${collectible.id}`))
@@ -550,7 +549,6 @@ const updateMintalysis = async (collectible) => {
         } catch (e) {
             console.log(`[ERROR] Unable to update mintalysis - Name: ${collectible.name}. Id: ${collectible.id}`)
         }
-        console.log('[SUCCESS][COLLECTIBLE]: Mintalysis updated.')
         resolve()
     })
 }
@@ -1071,10 +1069,13 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
             const edges = collectible_floors.data.collectibleTypeList.edges
             await edges.map(async (collectible, index) => {
                 // if (index > 0) return
-                await updateTimeSeries(collectible.node)
+                // await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
-                await updateLegacyShit(collectible.node)
+                // await updateLegacyShit(collectible.node)
             })
+
+            await pubsub.publish(`VEVE_PRICES_UPDATED`, true)
+
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
 }

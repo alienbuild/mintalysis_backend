@@ -1,10 +1,18 @@
 import * as schedule from "node-schedule"
 import {Immutascrape} from "./immutascrape.js"
 
- const scheduledRapidJobs = () => {
+import { VEVE_GET_COLLECTIBLE_FLOORS } from "./alice/VEVE_GET_COLLECTIBLE_FLOORS.js";
+
+const scheduledRapidJobs = () => {
     schedule.scheduleJob('*/30 * * * * *', () => {
         Immutascrape()
     })
 }
 
-export { scheduledRapidJobs }
+const scheduledLiveJobs = () => {
+    schedule.scheduleJob('*/30 * * * * *', () => {
+        VEVE_GET_COLLECTIBLE_FLOORS()
+    })
+}
+
+export { scheduledRapidJobs, scheduledLiveJobs }
