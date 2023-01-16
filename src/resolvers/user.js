@@ -34,19 +34,6 @@ const resolvers = {
                 isMyProfile
             }
         },
-        validateVeveUsername: async (_, {username}, ___) => {
-            let returnArr = []
-            try {
-                const userList = await validateVeveUsername(username)
-                userList.edges.map((user) => {
-                    returnArr.push(user.node.username)
-                })
-            } catch (err) {
-                console.log('[ERROR] Fetching user list from VEVE api: ', err)
-            }
-
-            return returnArr
-        },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
 
             if (!userInfo) throw new GraphQLError('Not authorised')

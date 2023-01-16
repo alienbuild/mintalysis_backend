@@ -9,6 +9,7 @@ import transferTypeDefs from './transfers.js'
 import projectTypeDefs from './projects.js'
 import conversationTypeDefs from './conversations.js'
 import messageTypeDefs from './messages.js'
+import veveTypeDefs from './veve.js'
 
 const typeDefs = [
     scalarDefs,
@@ -21,7 +22,8 @@ const typeDefs = [
     transferTypeDefs,
     projectTypeDefs,
     conversationTypeDefs,
-    messageTypeDefs
+    messageTypeDefs,
+    veveTypeDefs
 ]
 
 export default typeDefs

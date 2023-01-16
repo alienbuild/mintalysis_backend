@@ -9,6 +9,7 @@ import collectibleResolvers from './collectibles.js'
 import comicResolvers from './comics.js'
 import conversationResolvers from './conversations.js'
 import messageResolvers from './message.js'
+import veveResolvers from './veve.js'
 
 const resolvers = merge({},
     DateTime,
@@ -20,7 +21,8 @@ const resolvers = merge({},
     collectibleResolvers,
     comicResolvers,
     conversationResolvers,
-    messageResolvers
+    messageResolvers,
+    veveResolvers
 )
 
 export default resolvers

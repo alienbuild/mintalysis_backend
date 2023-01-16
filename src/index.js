@@ -17,9 +17,10 @@ const { json } = pkg;
 import { getUserFromToken } from "./utils/getUserFromToken.js"
 import mongoose from "mongoose"
 import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
-import {scheduledRapidJobs} from "../services/cronJobs.js";
+import {scheduledRapidJobs, scheduledLiveJobs} from "../services/cronJobs.js";
 
 export const prisma = new PrismaClient();
+export const pubsub = new PubSub();
 
 const main = async () => {
     dotenv.config();
@@ -42,7 +43,6 @@ const main = async () => {
     });
 
     // Context parameters
-    const pubsub = new PubSub();
 
     const getSubscriptionContext = async ( ctx ) => {
         // ctx is the graphql-ws Context where connectionParams live
@@ -122,9 +122,10 @@ const main = async () => {
     // Now that our HTTP server is fully set up, we can listen to it.
     await new Promise((resolve) =>
             httpServer.listen(PORT, () => {
-                scheduledRapidJobs()
+                // scheduledRapidJobs()
                 scheduledHourlyJobs()
                 scheduledDailyJobs()
+                // scheduledLiveJobs()
                 resolve()
             })
     );
