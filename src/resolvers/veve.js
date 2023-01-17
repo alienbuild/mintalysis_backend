@@ -88,7 +88,7 @@ const resolvers = {
         //     }
         // }
         veveCollectiblePrice: {
-            subscribe: (_, __, { pubsub }) => {
+            subscribe: (_, { veveCollectiblePrice }, { pubsub }) => {
                 return pubsub.asyncIterator(['VEVE_PRICES_UPDATED'])
             }
         }

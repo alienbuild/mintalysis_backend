@@ -1074,7 +1074,9 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
                 // await updateLegacyShit(collectible.node)
             })
 
-            await pubsub.publish(`VEVE_PRICES_UPDATED`, true)
+            await pubsub.publish(`VEVE_PRICES_UPDATED`, {
+                veveCollectiblePrice: new Date()
+            })
 
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))

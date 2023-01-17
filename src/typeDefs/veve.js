@@ -8,8 +8,12 @@ const typeDefs = gql`
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
     }
     
+    type Mutation {
+        updateLastSeen(last_seen: String) : Boolean
+    }
+    
     type Subscription {
-        veveCollectiblePrice(collectible_id: String): Boolean
+        veveCollectiblePrice(collectible_id: String): DateTime
     }
     
     type VeveCollectiblePriceDataPayload { 

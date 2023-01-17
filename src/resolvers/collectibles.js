@@ -50,6 +50,7 @@ const resolvers = {
             }
         },
         valuations: async ({ collectible_id }, { period }, { prisma }) => {
+            console.log('yeah hit...')
             switch (period){
                 case 1:
                     return [await CollectiblePrice.aggregate([
@@ -120,7 +121,6 @@ const resolvers = {
                     ])]
             }
         }
-
     }
 }
 

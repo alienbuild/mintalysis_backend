@@ -6,10 +6,16 @@ const typeDefs = gql`
         me: User
         profile(userId: ID!): Profile
         searchUsers(username: String!): [User]
+        getUsers: [User]
     }
     
     type Mutation {
         avatarUpload(file: Upload) : AvatarUploadResponse #Auth only
+        updateLastSeen(now: String) : Boolean
+    }
+    
+    type Subscription {
+        getOnlineUsers: [User]
     }
 
     type User {

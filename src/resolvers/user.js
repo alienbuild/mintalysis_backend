@@ -54,6 +54,10 @@ const resolvers = {
                 throw new GraphQLError(error?.message)
             }
 
+        },
+        getUsers: async (_, __, { prisma, userInfo}) => {
+
+            return await prisma.users.findMany({})
         }
     },
     Mutation: {
@@ -108,6 +112,26 @@ const resolvers = {
             }
 
 
+        },
+        updateLastSeen: async (_, { last_seen }, { userInfo, prisma }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised')
+
+            await prisma.users.update({
+                where: {
+                    id: userInfo.userId
+                },
+                data: {
+                    last_seen
+                }
+            })
+
+            return true
+        }
+    },
+    Subscription: {
+        getOnlineUsers: async (_, __, { userInfo, prisma }) => {
+
+            return []
         }
     },
     User : {
