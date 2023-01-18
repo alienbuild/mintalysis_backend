@@ -13,6 +13,7 @@ const resolvers = {
                 },
                 include: {
                     projects: true,
+                    following: true,
                     // veve_collectibles: true
                 }
             })
@@ -54,6 +55,25 @@ const resolvers = {
                 throw new GraphQLError(error?.message)
             }
 
+        },
+        getUsers: async (_, __, { prisma, userInfo}) => {
+
+            return await prisma.users.findMany({})
+        },
+        findUserFollowing: async (_, { userId }, { userInfo, prisma }) => {
+
+            if (!userInfo) throw new GraphQLError('Not authorised.')
+
+            const test = await prisma.users.findUnique({
+                where: {
+                    id: userInfo.userId,
+                },
+                select: {
+                    following: true
+                },
+            });
+
+            return test
         }
     },
     Mutation: {
@@ -108,6 +128,45 @@ const resolvers = {
             }
 
 
+        },
+        updateLastSeen: async (_, { last_seen }, { userInfo, prisma }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised')
+
+            await prisma.users.update({
+                where: {
+                    id: userInfo.userId
+                },
+                data: {
+                    last_seen
+                }
+            })
+
+            return true
+        },
+        followUser: async (_, { userId }, { userInfo, prisma }) => {
+
+            if (!userInfo) throw new GraphQLError('Not authorised.')
+
+            const test = await prisma.users.update({
+                where: {
+                    id: userInfo.userId
+                },
+                data: {
+                    following: {
+                        connect: {
+                            id: userId
+                        }
+                    }
+                }
+            })
+
+            return test
+        }
+    },
+    Subscription: {
+        getOnlineUsers: async (_, __, { userInfo, prisma }) => {
+
+            return []
         }
     },
     User : {
