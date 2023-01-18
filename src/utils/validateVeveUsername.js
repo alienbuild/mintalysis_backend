@@ -29,8 +29,6 @@ export const validateVeveUsername = async (username) => {
     })
     const veveResponse = await callVeveApi.json()
 
-    console.log('veve res is: ', veveResponse)
-
     return veveResponse.data.userList
 
 }

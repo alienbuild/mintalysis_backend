@@ -162,3 +162,4 @@ export const VEVE_GET_LATEST_SERIES = async () => {
         })
         .catch(err => console.log('[ERROR][VEVE][SERIES] Unable to get latest series. ', err))
 }
+

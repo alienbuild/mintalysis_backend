@@ -10,7 +10,7 @@ const scheduledRapidJobs = () => {
 }
 
 const scheduledLiveJobs = () => {
-    schedule.scheduleJob('*/30 * * * * *', () => {
+    schedule.scheduleJob('*/15 * * * * *', () => {
         VEVE_GET_COLLECTIBLE_FLOORS()
     })
 }

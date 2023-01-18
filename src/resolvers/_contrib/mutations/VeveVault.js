@@ -41,18 +41,20 @@ const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
 
 export const veveVaultResolvers = {
     veveVaultImport: async (_, { payload }, { userInfo, prisma }) => {
+        console.log('hit')
+        console.log('payoad is: ', payload)
 
         const { userId } = userInfo
-        const user = await prisma.users.findUnique({
-            where: {
-                id: userInfo.userId
-            },
-            select: {
-                role: true
-            }
-        })
+        // const user = await prisma.users.findUnique({
+        //     where: {
+        //         id: userInfo.userId
+        //     },
+        //     select: {
+        //         role: true
+        //     }
+        // })
 
-        const { username, edition, collectible_id, project_id, kraken } = payload
+        const { username, edition, collectible_id, project_id } = payload
 
         const token = await prisma.tokens.findFirst({
             where: {
@@ -71,6 +73,8 @@ export const veveVaultResolvers = {
         const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
         const imxOwner = await getImxOwner.json()
         const wallet_address = imxOwner.user
+
+        console.log('imx res is: ', imxOwner)
 
         // TODO: Check if the wallet address is already assigned to a user
         // If the wallet is already assigned throw new error
