@@ -4,6 +4,7 @@ const typeDefs = gql`
     
     type Query {
         me: User
+        findUserFollowing(userId: String!) : User
         profile(userId: ID!): Profile
         searchUsers(username: String!): [User]
         getUsers: [User]
@@ -12,6 +13,7 @@ const typeDefs = gql`
     type Mutation {
         avatarUpload(file: Upload) : AvatarUploadResponse #Auth only
         updateLastSeen(now: String) : Boolean
+        followUser(userId: String!) : User
     }
     
     type Subscription {
@@ -23,10 +25,12 @@ const typeDefs = gql`
         username: String
         avatar: String
         email: String!
+        last_seen: DateTime 
         wallet_address: String
         stripe_customer_id: String
         profile: Profile
         role: String!
+        following: [User]
         tokens: [Token]!
         projects: [Project]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection

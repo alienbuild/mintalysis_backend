@@ -1069,7 +1069,7 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
             const edges = collectible_floors.data.collectibleTypeList.edges
             await edges.map(async (collectible, index) => {
                 // if (index > 0) return
-                // await updateTimeSeries(collectible.node)
+                await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
                 // await updateLegacyShit(collectible.node)
             })
@@ -1081,3 +1081,4 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
 }
+

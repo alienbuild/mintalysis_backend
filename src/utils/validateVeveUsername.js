@@ -14,6 +14,8 @@ const getUsernameQuery = (username) => {
 }
 
 export const validateVeveUsername = async (username) => {
+    console.log('username is: ', username)
+
     const callVeveApi = await fetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
         headers: {
@@ -26,6 +28,9 @@ export const validateVeveUsername = async (username) => {
         body: JSON.stringify({query: getUsernameQuery(username)}),
     })
     const veveResponse = await callVeveApi.json()
+
+    console.log('veve res is: ', veveResponse)
+
     return veveResponse.data.userList
 
 }

@@ -3,12 +3,12 @@ import gql from "graphql-tag"
 const typeDefs = gql`
     
     type Query {
-        veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
     }
     
     type Mutation {
+        veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
         updateLastSeen(last_seen: String) : Boolean
     }
     

@@ -13,6 +13,7 @@ const resolvers = {
                 },
                 include: {
                     projects: true,
+                    following: true,
                     // veve_collectibles: true
                 }
             })
@@ -58,6 +59,21 @@ const resolvers = {
         getUsers: async (_, __, { prisma, userInfo}) => {
 
             return await prisma.users.findMany({})
+        },
+        findUserFollowing: async (_, { userId }, { userInfo, prisma }) => {
+
+            if (!userInfo) throw new GraphQLError('Not authorised.')
+
+            const test = await prisma.users.findUnique({
+                where: {
+                    id: userInfo.userId,
+                },
+                select: {
+                    following: true
+                },
+            });
+
+            return test
         }
     },
     Mutation: {
@@ -126,6 +142,25 @@ const resolvers = {
             })
 
             return true
+        },
+        followUser: async (_, { userId }, { userInfo, prisma }) => {
+
+            if (!userInfo) throw new GraphQLError('Not authorised.')
+
+            const test = await prisma.users.update({
+                where: {
+                    id: userInfo.userId
+                },
+                data: {
+                    following: {
+                        connect: {
+                            id: userId
+                        }
+                    }
+                }
+            })
+
+            return test
         }
     },
     Subscription: {
