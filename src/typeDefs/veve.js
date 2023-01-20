@@ -14,6 +14,7 @@ const typeDefs = gql`
     
     type Subscription {
         veveCollectiblePrice(collectible_id: String): DateTime
+        veveVaultImport: VeveVaultImportSubcriptionPayload
     }
     
     type VeveCollectiblePriceDataPayload { 
@@ -34,6 +35,11 @@ const typeDefs = gql`
     type VeveVaultImportPayload {
         wallet_address: String!
         token_count: Int!
+    }
+    
+    type VeveVaultImportSubcriptionPayload {
+        message: String
+        complete: Boolean
     }
     
 `

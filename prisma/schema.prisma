@@ -229,7 +229,7 @@ model tokens {
   mint_date             DateTime?         @default(now()) @db.Timestamp(0)
   rarity                String?           @db.Text
   collectibleId         String?
-  uniqueCoverId         String?           @db.Text
+  uniqueCoverId         String?
   type                  String?           @db.Text
   last_updated          DateTime?         @default(now()) @db.Timestamp(0)
   brand_id              String?           @db.Text
