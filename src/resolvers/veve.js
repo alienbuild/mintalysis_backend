@@ -32,7 +32,6 @@ const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
         const walletItems = await getWalletItems.json()
 
         await walletItems.result.map(item => {
-            console.log('ok item is: ', item)
             tokenItems.push(Number(item.token_id))
         })
 
@@ -124,7 +123,6 @@ const resolvers = {
     },
     Mutation: {
         veveVaultImport: async (_, { payload }, { userInfo, prisma }) => {
-            console.log('payload is: ', payload)
 
             const { userId } = userInfo
 
@@ -162,40 +160,34 @@ const resolvers = {
             })
             const tokenCount = await getTokenCount.json()
 
+
             await fetchInitialData(tokenCount, wallet_address, userId, username, prisma)
 
-            console.log('All tokens gathered: ', tokenCount.length)
+            console.log('Total tokens in wallet is: ', tokenCount.data.getWalletCollections.items.length)
 
-            const userAssets = await prisma.$transaction(tokenItems.map((token) =>
-                prisma.tokens.upsert({
-                    create: {
-                        token_id: token,
-                        toProcess: true
-                    },
-                    update: {
-                        user_id: userId
-                    },
-                    where: {
-                        token_id: token
-                    },
-                    select: {
-                        collectibleId: true,
-                        uniqueCoverId: true,
-                        type: true
-                    }
-                })
-            ))
+            const test = await prisma.tokens.findMany({
+                where: {
+                    token_id: { in: tokenItems },
+                },
+                select: {
+                    collectibleId: true,
+                    uniqueCoverId: true,
+                    type: true
+                }
+            })
 
             let collectibleIds = []
             let uniqueCoverIds = []
-            await userAssets.map((asset) => {
+            await test.map((asset) => {
                 if (asset.type === 'collectible'){
                     collectibleIds.push(asset.collectibleId)
                 } else if (asset.type === 'comic'){
                     uniqueCoverIds.push(asset.uniqueCoverId)
                 }
             })
-            console.log('all tokens have been updated.' , tokenItems.length)
+
+            const _collectibleIds = [...new Set(collectibleIds)]
+            const _uniqueCoverIds = [...new Set(uniqueCoverIds)]
 
             await prisma.users.update({
                 data: {
@@ -206,20 +198,9 @@ const resolvers = {
                         }
                     },
                     veve_collectibles: {
-                        connectOrCreate: collectibleIds.map((_collectibleId) => {
-                            return {
-                                where: { collectible_id: _collectibleId },
-                                create: { collectible_id: _collectibleId }
-                            }
-                        })
-                        // connectOrCreate: {
-                        //     where: {
-                        //         collectible_id: 'a31da526-c03e-49b0-8c10-c93a243a9fb5'
-                        //     },
-                        //     create: {
-                        //         collectible_id: 'a31da526-c03e-49b0-8c10-c93a243a9fb5'
-                        //     }
-                        // },
+                        connect: _collectibleIds.map((__collectibleId) => {
+                            return { collectible_id: __collectibleId }
+                        }),
                     },
                 },
                 where: {
@@ -227,7 +208,6 @@ const resolvers = {
                 },
             })
 
-            console.log('updating profile.')
             await prisma.profile.update({
                 data: {
                     onboarded: true,
@@ -239,7 +219,6 @@ const resolvers = {
                     user_id: userId
                 }
             })
-            console.log('profile updated.')
 
             return {
                 "wallet_address": wallet_address,
@@ -249,6 +228,9 @@ const resolvers = {
         },
     },
     Subscription: {
+        veveVaultImport: async (_, {}, { pubsub }) => {
+            return pubsub.asyncIterator(['VEVE_VAULT_IMPORT'])
+        },
         // veveCollectiblePrice: {
         //     subscribe: async (_, {collectible_id}, { pubsub }) => {
         //         console.log('sub id is: ', collectible_id)

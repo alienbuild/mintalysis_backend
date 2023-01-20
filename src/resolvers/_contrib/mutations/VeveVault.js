@@ -41,18 +41,8 @@ const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
 
 export const veveVaultResolvers = {
     veveVaultImport: async (_, { payload }, { userInfo, prisma }) => {
-        console.log('hit')
-        console.log('payoad is: ', payload)
 
         const { userId } = userInfo
-        // const user = await prisma.users.findUnique({
-        //     where: {
-        //         id: userInfo.userId
-        //     },
-        //     select: {
-        //         role: true
-        //     }
-        // })
 
         const { username, edition, collectible_id, project_id } = payload
 
@@ -74,6 +64,7 @@ export const veveVaultResolvers = {
         const imxOwner = await getImxOwner.json()
         const wallet_address = imxOwner.user
 
+        // PUBSUB HERE THE WALLET ADDRESS TO THE USER
         console.log('imx res is: ', imxOwner)
 
         // TODO: Check if the wallet address is already assigned to a user
@@ -94,25 +85,23 @@ export const veveVaultResolvers = {
 
         console.log('All tokens gathered: ', tokenCount.length)
 
-        const userAssets = await prisma.$transaction(tokenItems.map((token) =>
-            prisma.tokens.upsert({
-                    create: {
-                        token_id: token,
-                        toProcess: true
-                    },
-                    update: {
-                        user_id: userId
-                    },
-                    where: {
-                        token_id: token
-                    },
-                    select: {
-                        collectibleId: true,
-                        uniqueCoverId: true,
-                        type: true
-                    }
-                })
-        ))
+            const userAssets = await prisma.$transaction(tokenItems.map((token) =>
+                prisma.tokens.upsert({
+                        create: {
+                            token_id: token,
+                            toProcess: true
+                        },
+                        update: {},
+                        where: {
+                            token_id: token
+                        },
+                        select: {
+                            collectibleId: true,
+                            uniqueCoverId: true,
+                            type: true
+                        }
+                    })
+            ))
 
         let collectibleIds = []
         let uniqueCoverIds = []
@@ -140,14 +129,6 @@ export const veveVaultResolvers = {
                             create: { collectible_id: _collectibleId }
                         }
                     })
-                    // connectOrCreate: {
-                    //     where: {
-                    //         collectible_id: 'a31da526-c03e-49b0-8c10-c93a243a9fb5'
-                    //     },
-                    //     create: {
-                    //         collectible_id: 'a31da526-c03e-49b0-8c10-c93a243a9fb5'
-                    //     }
-                    // },
                 },
             },
             where: {
