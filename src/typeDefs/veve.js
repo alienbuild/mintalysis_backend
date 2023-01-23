@@ -38,6 +38,7 @@ const typeDefs = gql`
     }
     
     type VeveVaultImportSubcriptionPayload {
+        user_id: String
         message: String
         complete: Boolean
     }

@@ -59,6 +59,7 @@ const typeDefs = gql`
         three_mo_change: Float
         all_time_change: Float
         total_listings: Int
+        quantity: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
         valuations(period: Int) : [[VEVEValuationObj]]
     }

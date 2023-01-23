@@ -1,5 +1,6 @@
 import {decodeCursor, encodeCursor} from "../utils/index.js"
 import CollectiblePrice from "../../models/CollectiblePrices.js"
+import {GraphQLError} from "graphql";
 
 const resolvers = {
     Query: {
@@ -40,13 +41,25 @@ const resolvers = {
             }
             queryParams = { ...queryParams, take: limit, orderBy: [sortParams], where: { ...whereParams } }
 
-            const tokens = await prisma.tokens.findMany(queryParams)
+            const tokens = await prisma.veve_tokens.findMany(queryParams)
 
             return {
                 edges: tokens,
                 pageInfo: {
                     endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
                 }
+            }
+        },
+        quantity: async ({ collectible_id }, __, { prisma, userInfo }) => {
+            try {
+                return await prisma.veve_tokens.count({
+                    where: {
+                        collectible_id: collectible_id,
+                        user_id: userInfo.userId
+                    },
+                })
+            } catch(err) {
+                throw new GraphQLError('Could not count collectibles.')
             }
         },
         valuations: async ({ collectible_id }, { period }, { prisma }) => {

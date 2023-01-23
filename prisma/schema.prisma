@@ -69,23 +69,19 @@ model transfers_daily {
 }
 
 model users {
-  id                String                     @id @default(uuid())
-  email             String                     @unique
-  avatar            String?
-  password          String
-  username          String                     @unique
-  last_seen         DateTime?                  @updatedAt
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-  role              Role                       @default(BASIC)
-  followedBy        users[]                    @relation("UserFollows")
-  following         users[]                    @relation("UserFollows")
-  tokens            tokens[]
-  projects          nft_projects[]
-  veve_collectibles veve_collectibles[]
-  veve_comics       veve_comics[]
-  conversations     conversation_participant[]
-  messages          message[]
+  id        String         @id @default(uuid())
+  email     String         @unique
+  password  String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  role      Role           @default(BASIC)
+  username  String         @unique
+  avatar    String?
+  tokens    veve_tokens[]
+  last_seen DateTime?      @updatedAt
+  users_B   users[]        @relation("user_follows")
+  users_A   users[]        @relation("user_follows")
+  projects  nft_projects[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -93,51 +89,48 @@ model users {
 
 model profile {
   id                   Int      @id @default(autoincrement())
-  bio                  String? //TODO: DELETE
+  bio                  String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
   user_id              String   @unique
   veve_username        String?  @unique
   onboarded            Boolean  @default(false)
-  veve_wallet_address  String?
   veve_wallet_imported Boolean  @default(false)
+  veve_wallet_address  String?
 }
 
 model conversation {
-  id                String                     @id @default(uuid())
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-  latest_message_id String?                    @unique
-  latest_message    message?                   @relation(name: "latest_conversation_message", fields: [latest_message_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  participants      conversation_participant[]
-  messages          message[]
+  id                String   @id @default(uuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  latest_message_id String?  @unique
 
   @@index([latest_message_id], map: "latest_message_id")
 }
 
 model conversation_participant {
-  id                      String       @id @default(uuid())
+  id                      String   @id @default(uuid())
   user_id                 String
-  user                    users        @relation(fields: [user_id], references: [id])
   conversation_id         String
-  conversation            conversation @relation(fields: [conversation_id], references: [id])
+  createdAt               DateTime @default(now())
   has_seen_latest_message Boolean
-  createdAt               DateTime     @default(now())
-  updatedAt               DateTime     @updatedAt
+  updatedAt               DateTime @updatedAt
 
   @@index([has_seen_latest_message], map: "has_seen_latest_message")
+  @@index([conversation_id], map: "conversation_participant_conversation_id_fkey")
+  @@index([user_id], map: "conversation_participant_user_id_fkey")
 }
 
 model message {
-  id             String        @id @default(uuid())
+  id             String   @id @default(uuid())
   conversationId String
-  conversation   conversation  @relation(fields: [conversationId], references: [id])
   senderId       String
-  sender         users         @relation(fields: [senderId], references: [id])
-  is_latest_in   conversation? @relation(name: "latest_conversation_message")
-  body           String        @db.Text
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  body           String   @db.Text
+
+  @@index([conversationId], map: "message_conversationId_fkey")
+  @@index([senderId], map: "message_senderId_fkey")
 }
 
 model nft_projects {
@@ -149,7 +142,7 @@ model nft_projects {
 }
 
 model veve_comics {
-  uniqueCoverId             String                  @id
+  unique_cover_id           String                  @id
   name                      String
   rarity                    String?
   description               String?                 @db.Text
@@ -186,12 +179,11 @@ model veve_comics {
   image_med_resolution_url  String?
   image_thumbnail           String?
   all_time_change           Decimal?                @db.Decimal(10, 2)
-  users                     users[]
   artists                   veve_comic_artists[]
   characters                veve_comic_characters[]
   writers                   veve_comic_writers[]
 
-  @@index([uniqueCoverId], map: "uniqueCoverId")
+  @@index([unique_cover_id], map: "unique_cover_id")
 }
 
 model veve_comic_writers {
@@ -222,51 +214,49 @@ model veve_publishers {
   @@index([publisher_id], map: "publisher_id")
 }
 
-model tokens {
-  token_id              Int               @id
-  name                  String?           @db.Text
-  edition               Int?
-  mint_date             DateTime?         @default(now()) @db.Timestamp(0)
-  rarity                String?           @db.Text
-  collectibleId         String?
-  uniqueCoverId         String?
-  type                  String?           @db.Text
-  last_updated          DateTime?         @default(now()) @db.Timestamp(0)
-  brand_id              String?           @db.Text
-  licensor_id           String?           @db.Text
-  series_id             String?           @db.Text
-  tmp_unregistered_user String?
-  tmp_wallet_address    String?
-  toProcess             Boolean?          @default(false)
-  user_id               String?
-  users                 users?            @relation(fields: [user_id], references: [id])
-  clown_transfers       clown_transfers[]
+model veve_tokens {
+  token_id          Int                 @id
+  name              String?             @db.Text
+  edition           Int?
+  mint_date         DateTime?           @default(now()) @db.Timestamp(0)
+  rarity            String?             @db.Text
+  collectible_id    String?
+  unique_cover_id   String?
+  type              String?             @db.Text
+  last_updated      DateTime?           @default(now()) @db.Timestamp(0)
+  brand_id          String?             @db.Text
+  licensor_id       String?             @db.Text
+  series_id         String?             @db.Text
+  user_id           String?
+  users             users?              @relation(fields: [user_id], references: [id])
+  clown_transfers   clown_transfers[]
+  veve_collectibles veve_collectibles[]
 
-  @@index([user_id, token_id, edition, tmp_unregistered_user])
-  @@index([collectibleId], map: "tokens_collectibleId_fkey")
+  @@index([token_id])
 }
 
 model clown_transfers {
-  id        String   @id @default(uuid())
-  from_user String   @db.Text
-  to_user   String   @db.Text
-  timestamp DateTime @default(now()) @db.Timestamp(0)
-  token_id  Int
-  token     tokens   @relation(fields: [token_id], references: [token_id])
+  id                  String       @id @default(uuid())
+  from_user           String       @db.Text
+  to_user             String       @db.Text
+  timestamp           DateTime     @default(now()) @db.Timestamp(0)
+  token_id            Int
+  veve_tokens         veve_tokens? @relation(fields: [veve_tokensToken_id], references: [token_id])
+  veve_tokensToken_id Int?
 
   @@index([token_id, timestamp])
 }
 
 model veve_collectibles {
-  collectible_id                       String    @id
+  collectible_id                       String        @id
   name                                 String?
   rarity                               String?
-  description                          String?   @db.Text
+  description                          String?       @db.Text
   edition_type                         String?
-  store_price                          Decimal?  @db.Decimal(10, 2)
+  store_price                          Decimal?      @db.Decimal(10, 2)
   drop_date                            DateTime?
-  market_fee                           Decimal?  @db.Decimal(10, 2)
-  createdAt                            DateTime  @default(now())
+  market_fee                           Decimal?      @db.Decimal(10, 2)
+  createdAt                            DateTime      @default(now())
   updatedAt                            DateTime?
   background_image_direction           String?
   background_image_full_resolution_url String?
@@ -282,7 +272,7 @@ model veve_collectibles {
   image_med_resolution_url             String?
   image_thumbnail_url                  String?
   image_url                            String?
-  is_unlimited                         Boolean?  @default(false)
+  is_unlimited                         Boolean?      @default(false)
   total_available                      Int?
   total_issued                         Int?
   total_likes                          Int?
@@ -291,21 +281,21 @@ model veve_collectibles {
   licensor_id                          String?
   series_id                            String?
   drop_method                          String?
-  is_free                              Boolean?  @default(false)
+  is_free                              Boolean?      @default(false)
   total_store_allocation               Int?
-  all_time_high                        Decimal?  @db.Decimal(10, 2)
-  all_time_low                         Decimal?  @db.Decimal(10, 2)
-  floor_price                          Decimal?  @db.Decimal(10, 2)
-  market_cap                           Decimal?  @db.Decimal(10, 2)
-  one_day_change                       Decimal?  @db.Decimal(10, 2)
-  one_mo_change                        Decimal?  @db.Decimal(10, 2)
-  one_wk_change                        Decimal?  @db.Decimal(10, 2)
-  one_year_change                      Decimal?  @db.Decimal(10, 2)
-  six_mo_change                        Decimal?  @db.Decimal(10, 2)
-  three_mo_change                      Decimal?  @db.Decimal(10, 2)
+  all_time_high                        Decimal?      @db.Decimal(10, 2)
+  all_time_low                         Decimal?      @db.Decimal(10, 2)
+  floor_price                          Decimal?      @db.Decimal(10, 2)
+  market_cap                           Decimal?      @db.Decimal(10, 2)
+  one_day_change                       Decimal?      @db.Decimal(10, 2)
+  one_mo_change                        Decimal?      @db.Decimal(10, 2)
+  one_wk_change                        Decimal?      @db.Decimal(10, 2)
+  one_year_change                      Decimal?      @db.Decimal(10, 2)
+  six_mo_change                        Decimal?      @db.Decimal(10, 2)
+  three_mo_change                      Decimal?      @db.Decimal(10, 2)
   total_listings                       Int?
-  all_time_change                      Decimal?  @db.Decimal(10, 2)
-  users                                users[]
+  all_time_change                      Decimal?      @db.Decimal(10, 2)
+  veve_tokens                          veve_tokens[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -474,6 +464,9 @@ model odb_tokens {
   last_updated    DateTime? @db.DateTime(0)
   created_at      DateTime? @db.DateTime(0)
   to_process      Int?      @db.TinyInt
+  licensor_id     String?   @db.VarChar(255)
+  brand_id        String?   @db.VarChar(255)
+  series_id       String?   @db.VarChar(255)
 
   @@index([edition], map: "edition")
   @@index([last_updated], map: "last_updated")

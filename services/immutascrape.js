@@ -75,10 +75,8 @@ export const Immutascrape = () => {
         })
             .then(imxTransactions => imxTransactions.json())
             .then(async imxTransactions => {
-                // console.log('[RECEIVED] Got transactions from IMX.', imxTransactions)
 
-                // const nextToken = imxTransactions.data.listTransactionsV2.nextToken
-                // console.log('nextToken is: ', nextToken)
+                const nextToken = imxTransactions.data.listTransactionsV2.nextToken
 
                 let imxTransArr = []
                 await imxTransactions.data.listTransactionsV2.items.map((transaction) => {
