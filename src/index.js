@@ -132,22 +132,4 @@ const main = async () => {
     console.log(`Server is now running on http://localhost:${PORT}/graphql`);
 };
 
-const ffs = async () => {
-    const test = await prisma.veve_tokens.findUnique({
-        where: {
-            token_id: 2
-        },
-        // data: {
-        //   veve_collectibles: {
-        //       connect: {
-        //           collectible_id: "c3df7496-e8e7-4507-b80a-5c2b5d996645"
-        //       }
-        //   }
-        // },
-        include: {
-            veve_collectibles: true
-        }
-    })
-    console.log('test is: ', test)
-}
 main()
