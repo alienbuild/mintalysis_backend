@@ -26,6 +26,7 @@ const resolvers = {
                 })
 
             } catch (err) {
+                console.log('error getitng conversations: ', err)
                 throw new GraphQLError('Unable to get conversations')
             }
 

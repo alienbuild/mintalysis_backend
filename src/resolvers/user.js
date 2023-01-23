@@ -1,6 +1,5 @@
-import {validateVeveUsername} from "../utils/validateVeveUsername.js"
 import * as cloudinary from "cloudinary"
-import { GraphQLError } from "graphql"
+import {GraphQLError} from "graphql"
 import {decodeCursor, encodeCursor} from "../utils/index.js";
 
 const resolvers = {
@@ -64,16 +63,14 @@ const resolvers = {
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
 
-            const test = await prisma.users.findUnique({
+            return await prisma.users.findUnique({
                 where: {
                     id: userInfo.userId,
                 },
                 select: {
                     following: true
                 },
-            });
-
-            return test
+            })
         }
     },
     Mutation: {
