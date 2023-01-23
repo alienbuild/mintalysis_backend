@@ -24,7 +24,7 @@ const getVeveComicFloorsQuery = () => {
             node{
                 image {
                     id
-                }
+                } 
                 comicType {
                     storePrice
                     name
@@ -508,7 +508,7 @@ const updateMintalysis = async (comic) => {
     ])
     comicMetrics = comicMetrics[0]
 
-    let total_issued = await prisma.veve_comics.findUnique({where: {uniqueCoverId: comic.image.id}})
+    let total_issued = await prisma.veve_comics.findUnique({where: {unique_cover_id: comic.image.id}})
     total_issued = total_issued?.total_issued ? total_issued.total_issued : 0
 
     const market_cap = Number(comic.floorMarketPrice) * Number(total_issued)
@@ -542,7 +542,7 @@ const updateMintalysis = async (comic) => {
                     market_cap,
                 },
                 where: {
-                    uniqueCoverId: comic.image.id
+                    unique_cover_id: comic.image.id
                 }
             })
         } catch (e) {

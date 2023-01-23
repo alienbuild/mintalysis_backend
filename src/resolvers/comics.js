@@ -33,7 +33,7 @@ const resolvers = {
             }
             queryParams = { ...queryParams, take: limit, orderBy: [sortParams], where: { ...whereParams } }
 
-            const tokens = await prisma.tokens.findMany(queryParams)
+            const tokens = await prisma.veve_tokens.findMany(queryParams)
 
             return {
                 edges: tokens,

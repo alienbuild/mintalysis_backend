@@ -46,7 +46,7 @@ export const veveVaultResolvers = {
 
         const { username, edition, collectible_id, project_id } = payload
 
-        const token = await prisma.tokens.findFirst({
+        const token = await prisma.veve_tokens.findFirst({
             where: {
                 collectibleId: collectible_id,
                 edition: edition
@@ -86,12 +86,11 @@ export const veveVaultResolvers = {
         console.log('All tokens gathered: ', tokenCount.length)
 
             const userAssets = await prisma.$transaction(tokenItems.map((token) =>
-                prisma.tokens.upsert({
+                prisma.veve_tokens.upsert({
                         create: {
                             token_id: token,
                             toProcess: true
                         },
-                        update: {},
                         where: {
                             token_id: token
                         },

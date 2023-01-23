@@ -100,7 +100,7 @@ const resolvers = {
     },
     VeveTransfer: {
         token: async ({ token_id }, __, { prisma }) => {
-            return await prisma.tokens.findUnique({
+            return await prisma.veve_tokens.findUnique({
                 where: {
                     token_id: token_id
                 }

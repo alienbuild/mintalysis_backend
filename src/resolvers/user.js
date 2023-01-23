@@ -13,7 +13,7 @@ const resolvers = {
                 },
                 include: {
                     projects: true,
-                    following: true,
+                    // following: true, // TODO: Check why i need to uncomment this for it to work now?
                     // veve_collectibles: true
                 }
             })

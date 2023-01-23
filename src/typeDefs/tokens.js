@@ -3,7 +3,8 @@ import gql from 'graphql-tag'
 const typeDefs = gql`
     
     type Query {
-        tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectibleId: String, uniqueCoverId: String, kraken: Boolean) : TokensConnection
+        tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
+        getUsersVeveTokens(grouped: Boolean, token_id: ID, editionNumber: Int, type: String, userId: String, search: String, pagingOptions: pagingOptions, collectible_id: String, unique_cover_id: String) : TokensConnection
     }
 
     type TokensConnection {
@@ -19,8 +20,8 @@ const typeDefs = gql`
         edition: Int
         mint_date: String
         rarity: String
-        collectibleId: String
-        uniqueCoverId: String
+        collectible_id: String
+        unique_cover_id: String
         type: String
         last_updated: String
         brand_id: String
