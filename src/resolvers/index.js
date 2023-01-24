@@ -5,7 +5,6 @@ import userResolvers from './user.js'
 import projectResolvers from './projects.js'
 import tokenResolvers from './tokens.js'
 import transferResolvers from './transfers.js'
-import collectibleResolvers from './collectibles.js'
 import comicResolvers from './comics.js'
 import conversationResolvers from './conversations.js'
 import messageResolvers from './message.js'
@@ -18,7 +17,6 @@ const resolvers = merge({},
     projectResolvers,
     tokenResolvers,
     transferResolvers,
-    collectibleResolvers,
     comicResolvers,
     conversationResolvers,
     messageResolvers,
