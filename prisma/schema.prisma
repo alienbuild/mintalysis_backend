@@ -231,7 +231,8 @@ model veve_tokens {
   last_updated      DateTime?           @default(now()) @db.Timestamp(0)
   brand_id          String?             @db.Text
   licensor_id       String?             @db.Text
-  series_id         String?             @db.Text
+  series_id         String?
+  series            veve_series?        @relation(fields: [series_id], references: [series_id])
   user_id           String?
   users             users?              @relation(fields: [user_id], references: [id])
   clown_transfers   clown_transfers[]
@@ -285,6 +286,7 @@ model veve_collectibles {
   brand_id                             String?
   licensor_id                          String?
   series_id                            String?
+  series                               veve_series?  @relation(fields: [series_id], references: [series_id])
   drop_method                          String?
   is_free                              Boolean?      @default(false)
   total_store_allocation               Int?
@@ -395,11 +397,11 @@ model veve_licensors {
 }
 
 model veve_series {
-  series_id                                  String   @id
+  series_id                                  String              @id
   name                                       String?
-  description                                String?  @db.Text
+  description                                String?             @db.Text
   season                                     Int?
-  is_blindbox                                Boolean? @default(false)
+  is_blindbox                                Boolean?            @default(false)
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_low_resolution_url        String?
@@ -437,6 +439,8 @@ model veve_series {
   square_image_direction                     String?
   licensor_id                                String
   brand_id                                   String
+  veve_collectibles                          veve_collectibles[]
+  veve_tokens                                veve_tokens[]
 
   @@index([brand_id], map: "series_brand_id_fkey")
   @@index([licensor_id], map: "series_licensor_id_fkey")

@@ -6,6 +6,7 @@ const typeDefs = gql`
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
         veveCollectibles(collectibleId: String, search: String, limit: Int, after: String): CollectiblesConnection
+        getUserMagicSet(seriesId: String) : [Temp]
     }
     
     type Mutation {
@@ -16,6 +17,21 @@ const typeDefs = gql`
     type Subscription {
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
+    }
+    
+    type Temp {
+        set: [VeveSet]
+        count: Float
+        edition: Float
+        series_name: String
+        season: Float
+        setTotal: Float
+    }
+    
+    type VeveSet {
+        name: String
+        edition: Float
+        rarity: String
     }
     
     type VeveCollectiblePriceDataPayload { 

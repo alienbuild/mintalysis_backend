@@ -102,13 +102,13 @@ const resolvers = {
             if (!userInfo) throw new GraphQLError('Not authorised')
 
             let limit = 25
-            if (pagingOptions.limit) limit = pagingOptions.limit
+            if (pagingOptions?.limit) limit = pagingOptions.limit
 
 
             let queryParams = { take: limit }
             let whereParams = { user_id: userInfo.userId }
 
-            if (pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(pagingOptions.after)) } }
+            if (pagingOptions?.after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(pagingOptions.after)) } }
             if (search) whereParams = { ...whereParams, name: { contains: search } }
 
             if (grouped) queryParams = { ...queryParams, distinct: ['collectible_id', 'unique_cover_id']}
