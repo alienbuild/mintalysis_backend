@@ -144,6 +144,64 @@ const resolvers = {
             }
 
         },
+        getUserMagicSet: async (_, { seriesId }, { prisma, userInfo }) => {
+
+            const setTotal = await prisma.veve_collectibles.count({
+                where: {
+                    series_id: seriesId
+                },
+            })
+
+            const groupBy = await prisma.veve_tokens.groupBy({
+                by: ['edition'],
+                where: {
+                    user_id: userInfo.userId,
+                    series_id: seriesId
+                },
+                _count: {
+                    edition: true,
+                },
+                orderBy: {
+                    _count: {
+                        edition: 'desc',
+                    },
+                },
+            })
+
+            let magicSets = []
+            await Promise.all(
+                groupBy.map(async (groupedToken, index) => {
+                    if (groupedToken._count.edition > 1) {
+                        const edition = groupedToken.edition
+
+                        const set = await prisma.veve_tokens.findMany({
+                            where: {
+                                edition: edition,
+                                series_id: seriesId,
+                                user_id: userInfo.userId,
+                            },
+                            select: {
+                                name: true,
+                                edition: true,
+                                rarity: true,
+                                series: {
+                                    select: {
+                                        name: true,
+                                        season: true
+                                    }
+                                },
+                            },
+                        })
+                        magicSets.push({ set, edition, count: set.length, series_name: set[0].series.name, season: set[0].series.season, setTotal })
+                    }
+                })
+            )
+
+            magicSets.sort((a,b) => b.count - a.count)
+
+            return magicSets
+
+        }
     },
     Mutation: {
         veveVaultImport: async (_, { payload }, { userInfo, prisma, pubsub }) => {
@@ -189,6 +247,17 @@ const resolvers = {
                     complete: false
                 }
             })
+
+            console.log('clearing wallet')
+            await prisma.veve_tokens.updateMany({
+                where: {
+                    user_id: userId
+                },
+                data: {
+                    user_id: null
+                }
+            })
+            console.log('wallet cleared.')
 
             await prisma.veve_tokens.updateMany({
                 data: {
