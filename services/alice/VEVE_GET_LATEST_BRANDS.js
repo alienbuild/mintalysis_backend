@@ -155,4 +155,3 @@ export const VEVE_GET_LATEST_BRANDS = async () => {
         .catch(err => console.log('[ERROR][VEVE][BRANDS] Unable to get latest brands. ', err))
 
 }
-

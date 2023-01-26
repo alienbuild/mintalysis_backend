@@ -1,12 +1,15 @@
 import validator from "validator"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import {GraphQLError} from "graphql";
 
 const resolvers = {
     Mutation: {
         signup: async (_, { credentials }, { prisma }) => {
 
             const { email, password, username } = credentials
+
+            console.log(`email is: ${email}, password is: ${password}. username is: ${username}`)
 
             const isEmail = validator.isEmail(email)
             if (!isEmail) {
@@ -36,37 +39,44 @@ const resolvers = {
                 }
             }
 
-            if (!validator.isEmpty(username) || !validator.matches(username, '^[a-zA-Z0-9_.-]*$')){
+            const isValidUsername = validator.isLength(username, { min: 3 })
+            if (!isValidUsername){
                 return {
-                    userErrors: [{message: "Username can only contain alphanumerical characters and can not be empty."}],
+                    userErors: [{message: "Username must be at least 3 characters in length."}],
                     token: null
                 }
             }
 
             const hashedPassword = await bcrypt.hash(password, 10)
 
-            const user = await prisma.users.create({
-                data: {
-                    email,
-                    username,
-                    password: hashedPassword
-                }
-            })
+            try {
 
-            await prisma.profile.create({
-                data: {
-                    user_id: user.id
-                }
-            })
+                const user = await prisma.users.create({
+                    data: {
+                        email,
+                        username,
+                        password: hashedPassword
+                    }
+                })
 
-            return {
-                userErrors: [],
-                token: jwt.sign({ userId: user.id, username: user.username }, process.env.JSON_SIGNATURE, { expiresIn: "3d" }),
-                user: {
-                    id: user.id,
-                    username: user.username
+                await prisma.profile.create({
+                    data: {
+                        user_id: user.id
+                    }
+                })
+
+                return {
+                    userErrors: [],
+                    token: jwt.sign({ userId: user.id, username: user.username }, process.env.JSON_SIGNATURE, { expiresIn: "3d" }),
+                    user: {
+                        id: user.id,
+                        username: user.username
+                    }
                 }
+            } catch (e) {
+                throw new GraphQLError('Unable to register the user.')
             }
+
 
         },
         signin: async (_, { credentials }, { prisma }) => {
