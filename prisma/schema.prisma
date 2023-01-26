@@ -223,14 +223,16 @@ model veve_tokens {
   token_id          Int                 @id
   name              String?             @db.Text
   edition           Int?
-  mint_date         DateTime?           @default(now()) @db.Timestamp(0)
+  mint_date         DateTime?
   rarity            String?             @db.Text
   collectible_id    String?
   unique_cover_id   String?
   type              String?             @db.Text
   last_updated      DateTime?           @default(now()) @db.Timestamp(0)
-  brand_id          String?             @db.Text
-  licensor_id       String?             @db.Text
+  brand_id          String?
+  brand             veve_brands?        @relation(fields: [brand_id], references: [brand_id])
+  licensor_id       String?
+  licensor          veve_licensors?     @relation(fields: [licensor_id], references: [licensor_id])
   series_id         String?
   series            veve_series?        @relation(fields: [series_id], references: [series_id])
   user_id           String?
@@ -311,9 +313,9 @@ model veve_collectibles {
 }
 
 model veve_brands {
-  brand_id                                   String  @id
+  brand_id                                   String        @id
   name                                       String?
-  description                                String? @db.Text
+  description                                String?       @db.Text
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_low_resolution_url        String?
@@ -350,14 +352,15 @@ model veve_brands {
   square_image_high_resolution_url           String?
   square_image_direction                     String?
   licensor_id                                String
+  veve_tokens                                veve_tokens[]
 
   @@index([licensor_id], map: "brands_licensor_id_fkey")
 }
 
 model veve_licensors {
-  licensor_id                                String   @id
+  licensor_id                                String        @id
   name                                       String?
-  description                                String?  @db.Text
+  description                                String?       @db.Text
   landscape_image_direction                  String?
   landscape_image_full_resolution_url        String?
   landscape_image_high_resolution_url        String?
@@ -365,7 +368,7 @@ model veve_licensors {
   landscape_image_med_resolution_url         String?
   landscape_image_thumbnail_url              String?
   landscape_image_url                        String?
-  market_fee                                 Decimal? @db.Decimal(10, 2)
+  market_fee                                 Decimal?      @db.Decimal(10, 2)
   square_image_direction                     String?
   square_image_full_resolution_url           String?
   square_image_high_resolution_url           String?
@@ -394,6 +397,7 @@ model veve_licensors {
   theme_logo_image_med_resolution_url        String?
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_url                       String?
+  veve_tokens                                veve_tokens[]
 }
 
 model veve_series {
@@ -457,7 +461,7 @@ model odb_tokens {
   edition_type    String?   @db.VarChar(10)
   edition         Int?
   total_editions  Int?
-  mint_date       DateTime  @default(now()) @db.Timestamp(0)
+  mint_date       DateTime
   drop_date       DateTime? @db.DateTime(0)
   comic_number    Int?
   image_url       String?   @db.Text
