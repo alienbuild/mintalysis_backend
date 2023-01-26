@@ -248,7 +248,6 @@ const resolvers = {
                 }
             })
 
-            console.log('clearing wallet')
             await prisma.veve_tokens.updateMany({
                 where: {
                     user_id: userId
@@ -257,7 +256,6 @@ const resolvers = {
                     user_id: null
                 }
             })
-            console.log('wallet cleared.')
 
             await prisma.veve_tokens.updateMany({
                 data: {
