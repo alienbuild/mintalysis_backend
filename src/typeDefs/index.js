@@ -3,7 +3,6 @@ import inputDefs from './inputs.js'
 import authTypeDefs from './auth.js'
 import userTypeDefs from './user.js'
 import comicTypeDefs from './comics.js'
-import tokenTypeDefs from './tokens.js'
 import transferTypeDefs from './transfers.js'
 import projectTypeDefs from './projects.js'
 import conversationTypeDefs from './conversations.js'
@@ -16,7 +15,6 @@ const typeDefs = [
     authTypeDefs,
     userTypeDefs,
     comicTypeDefs,
-    tokenTypeDefs,
     transferTypeDefs,
     projectTypeDefs,
     conversationTypeDefs,

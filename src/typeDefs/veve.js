@@ -6,7 +6,9 @@ const typeDefs = gql`
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
         veveCollectibles(collectibleId: String, search: String, limit: Int, after: String): CollectiblesConnection
-        getUserMagicSet(seriesId: String) : [Temp]
+        getUserMagicSet(seriesId: String) : [MagicMintSet]
+        getUsersVeveTokens(grouped: Boolean, token_id: ID, editionNumber: Int, type: String, userId: String, search: String, pagingOptions: pagingOptions, collectible_id: String, unique_cover_id: String) : TokensConnection
+        tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
     }
     
     type Mutation {
@@ -18,8 +20,41 @@ const typeDefs = gql`
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
     }
+
+    type TokensConnection {
+        edges: [Token]!
+        totalCount: Int
+        pageInfo: PageInfo!
+        summary: WalletSummary
+    }
+
+    type Token {
+        token_id: ID!
+        name: String
+        edition: Int
+        mint_date: String
+        rarity: String
+        collectible_id: String
+        unique_cover_id: String
+        type: String
+        last_updated: String
+        brand_id: String
+        licensor_id: String
+        series_id: String
+        transfers(walletId: String): [Transfers]
+        collectible: Collectible 
+        comic: Comic
+    }
+
+    type Transfers {
+        id: Int
+        from_wallet: String
+        to_wallet: String
+        timestamp: DateTime
+        token_id: String
+    }
     
-    type Temp {
+    type MagicMintSet {
         set: [VeveSet]
         count: Float
         edition: Float

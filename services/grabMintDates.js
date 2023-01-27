@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 let fullCapture = false
 
-let updateCount = 3090600
-const initCursor = "eyJpZCI6IjB4ZWJjNTVjN2UyYzc4YTFjNmM4NGE1ZjI2MDZmNDYzYjhiNjRlMGVjZjM5MGY5NGVmNTA5NGRjMTBmYWQ1ZmNlYSIsIm5hbWUiOiJLcnJzYW50YW46IFN0YXIgV2FycyBUYWxlcyIsInVwZGF0ZWRfYXQiOiIyMDIyLTEwLTE4VDE3OjIyOjQ5LjM2OTc1NloifQ"
+let updateCount = 7026800
+const initCursor = "eyJpZCI6IjB4NjY4NjY2YWNiNWFmMDM0Y2IwOWY0YmNmZGM5YmY1ZWMxZmM1Y2IzYzdiZGM2ODg0MmYyZDBiYmEzOGZlMTYxMSIsIm5hbWUiOiJCb3JnIEN1YmUgKDE6MTAwMCkiLCJ1cGRhdGVkX2F0IjoiMjAyMi0xMi0wNVQwNTozNzowMi42MTY4MDRaIn0"
 let endCursor
 let remaining
 
