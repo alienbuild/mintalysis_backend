@@ -57,6 +57,26 @@ model transfers {
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model veve_transfers {
+  id          Int          @id
+  from_wallet String
+  to_wallet   String
+  timestamp   DateTime?
+  token_id    Int
+  veve_tokens veve_tokens? @relation(fields: [token_id], references: [token_id])
+
+  @@index([token_id, from_wallet, to_wallet])
+}
+
+model veve_wallets {
+  id        String    @id
+  user_id   String?
+  users     users?    @relation(fields: [user_id], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model transfers_daily {
   date      DateTime @db.Date
   transfers Int
@@ -84,6 +104,7 @@ model users {
   projects      nft_projects[]
   conversations conversation_participant[]
   messages      message[]
+  veve_wallets  veve_wallets[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -237,22 +258,10 @@ model veve_tokens {
   series            veve_series?        @relation(fields: [series_id], references: [series_id])
   user_id           String?
   users             users?              @relation(fields: [user_id], references: [id])
-  clown_transfers   clown_transfers[]
+  transfers         veve_transfers[]
   veve_collectibles veve_collectibles[]
 
   @@index([token_id])
-}
-
-model clown_transfers {
-  id                  String       @id @default(uuid())
-  from_user           String       @db.Text
-  to_user             String       @db.Text
-  timestamp           DateTime     @default(now()) @db.Timestamp(0)
-  token_id            Int
-  veve_tokens         veve_tokens? @relation(fields: [veve_tokensToken_id], references: [token_id])
-  veve_tokensToken_id Int?
-
-  @@index([token_id, timestamp])
 }
 
 model veve_collectibles {
