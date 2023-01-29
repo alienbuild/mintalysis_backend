@@ -56,24 +56,24 @@ model transfers {
   @@ignore
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model veve_transfers {
-  id          Int          @id
+  id          Int     @id
   from_wallet String
   to_wallet   String
-  timestamp   DateTime?
+  timestamp   String? @db.Text
   token_id    Int
-  veve_tokens veve_tokens? @relation(fields: [token_id], references: [token_id])
+  //  veve_tokens veve_tokens? @relation(fields: [token_id], references: [token_id])
 
   @@index([token_id, from_wallet, to_wallet])
 }
 
 model veve_wallets {
-  id        String    @id
-  user_id   String?
-  users     users?    @relation(fields: [user_id], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime? @updatedAt
+  id            String    @id
+  user_id       String?
+  users         users?    @relation(fields: [user_id], references: [id])
+  veve_username String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -91,7 +91,8 @@ model transfers_daily {
 model users {
   id            String                     @id @default(uuid())
   email         String                     @unique
-  password      String
+  password      String?
+  activated     Boolean                    @default(false)
   createdAt     DateTime                   @default(now())
   updatedAt     DateTime                   @updatedAt
   role          Role                       @default(BASIC)
@@ -258,7 +259,7 @@ model veve_tokens {
   series            veve_series?        @relation(fields: [series_id], references: [series_id])
   user_id           String?
   users             users?              @relation(fields: [user_id], references: [id])
-  transfers         veve_transfers[]
+  //  transfers         veve_transfers[]
   veve_collectibles veve_collectibles[]
 
   @@index([token_id])

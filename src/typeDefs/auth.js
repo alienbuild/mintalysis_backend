@@ -9,8 +9,8 @@ const typeDefs = gql`
 
     type AuthPayload {
         userErrors: [UserError!]!
-        token: String,
-        user: User
+        success: Boolean!
+        domain: String!
     }
 
 #    Generic shit
