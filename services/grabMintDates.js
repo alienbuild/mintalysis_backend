@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 let fullCapture = false
 
-let updateCount = 7026800
-const initCursor = "eyJpZCI6IjB4NjY4NjY2YWNiNWFmMDM0Y2IwOWY0YmNmZGM5YmY1ZWMxZmM1Y2IzYzdiZGM2ODg0MmYyZDBiYmEzOGZlMTYxMSIsIm5hbWUiOiJCb3JnIEN1YmUgKDE6MTAwMCkiLCJ1cGRhdGVkX2F0IjoiMjAyMi0xMi0wNVQwNTozNzowMi42MTY4MDRaIn0"
+let updateCount = 9818400
+const initCursor = "eyJpZCI6IjB4Zjc1YTU1ODcyODViZmUxMmNjYTY3NDJiNmUzYTk3ZWQ5NzQ4ZmQ1MGQ5OWZjNzQxMzg5MTUyYzQyYzM2YTM2NiIsIm5hbWUiOiJTcGlkZXItTWFuIiwidXBkYXRlZF9hdCI6IjIwMjItMTAtMTlUMjA6MTY6NDEuMjc5MTc0WiJ9"
 let endCursor
 let remaining
 
@@ -22,32 +22,38 @@ const fetchInitialData = async () => {
 
         console.log(`[SAVING] ${tokens.result.length} tokens...`)
 
-        await tokens.result.map(async (token, index) => {
+        try {
 
-            await prisma.veve_tokens.upsert({
-                where: {
-                    token_id: Number(token.token_id)
-                },
-                update: {
-                    mint_date: new Date(token.metadata.mintDate)
-                },
-                create: {
-                    token_id: Number(token.token_id),
-                    mint_date: new Date(token.metadata.mintDate)
-                },
+            await tokens.result.map(async (token, index) => {
+
+                await prisma.veve_tokens.upsert({
+                    where: {
+                        token_id: Number(token.token_id)
+                    },
+                    update: {
+                        mint_date: new Date(token.metadata.mintDate)
+                    },
+                    create: {
+                        token_id: Number(token.token_id),
+                        mint_date: new Date(token.metadata.mintDate)
+                    },
+                })
+
+                updateCount += 200
+                console.log(`[SUCCESS][SAVED] ${tokens.result.length} tokens. [TOTAL] ${updateCount}`)
+                //  await prisma.veve_tokens.update({
+                //     where: {
+                //         token_id: Number(token.token_id)
+                //     },
+                //     data: {
+                //         mint_date: new Date(token.metadata.mintDate)
+                //     }
+                // })
             })
 
-            //  await prisma.veve_tokens.update({
-            //     where: {
-            //         token_id: Number(token.token_id)
-            //     },
-            //     data: {
-            //         mint_date: new Date(token.metadata.mintDate)
-            //     }
-            // })
-        })
-        updateCount += 200
-        console.log(`[SUCCESS][SAVED] ${tokens.result.length} tokens. [TOTAL] ${updateCount}`)
+        } catch (e) {
+            console.log('Did not save: ', e)
+        }
 
         if (remaining > 0) fullCapture = false
         if (!fullCapture) {
@@ -72,33 +78,37 @@ const keepFetchingData = async (endCursor) => {
 
         console.log(`[SAVING] ${tokens.result.length} tokens...`)
 
-        await tokens.result.map(async (token, index) => {
+        try {
+            await tokens.result.map(async (token, index) => {
 
-            await prisma.veve_tokens.upsert({
-                where: {
-                    token_id: Number(token.token_id)
-                },
-                update: {
-                    mint_date: new Date(token.metadata.mintDate)
-                },
-                create: {
-                    token_id: Number(token.token_id),
-                    mint_date: new Date(token.metadata.mintDate)
-                },
+                await prisma.veve_tokens.upsert({
+                    where: {
+                        token_id: Number(token.token_id)
+                    },
+                    update: {
+                        mint_date: new Date(token.metadata.mintDate)
+                    },
+                    create: {
+                        token_id: Number(token.token_id),
+                        mint_date: new Date(token.metadata.mintDate)
+                    },
+                })
+
+                // await prisma.veve_tokens.update({
+                //     where: {
+                //         token_id: Number(token.token_id)
+                //     },
+                //     data: {
+                //         mint_date: new Date(token.metadata.mintDate)
+                //     }
+                // })
             })
 
-            // await prisma.veve_tokens.update({
-            //     where: {
-            //         token_id: Number(token.token_id)
-            //     },
-            //     data: {
-            //         mint_date: new Date(token.metadata.mintDate)
-            //     }
-            // })
-        })
-
-        updateCount += 200
-        console.log(`[SUCCESS][SAVED] ${tokens.result.length} tokens. [TOTAL] ${updateCount}`)
+            updateCount += 200
+            console.log(`[SUCCESS][SAVED] ${tokens.result.length} tokens. [TOTAL] ${updateCount}`)
+        } catch (e) {
+            console.log('Nah did not save: ', e)
+        }
 
         if (remaining > 0) fullCapture = false
         if (!fullCapture) {

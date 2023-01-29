@@ -49,8 +49,6 @@ const typeDefs = gql`
 
     input CredentialsInput {
         email: String!
-        username: String
-        password: String!
     }
 
 `

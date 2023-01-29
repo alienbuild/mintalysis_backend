@@ -1,15 +1,14 @@
 import validator from "validator"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import {GraphQLError} from "graphql";
+import {GraphQLError} from "graphql"
+import {sendMagicLink} from "../utils/sendMagicLink.js"
 
 const resolvers = {
     Mutation: {
         signup: async (_, { credentials }, { prisma }) => {
 
-            const { email, password, username } = credentials
-
-            console.log(`email is: ${email}, password is: ${password}. username is: ${username}`)
+            const { email } = credentials
 
             const isEmail = validator.isEmail(email)
             if (!isEmail) {
@@ -31,31 +30,11 @@ const resolvers = {
                 }
             }
 
-            const isValidPassword = validator.isLength(password, { min: 7 })
-            if (!isValidPassword){
-                return {
-                    userErrors: [{message: "Invalid password. Please provide a password greater than 7 characters."}],
-                    token: null
-                }
-            }
-
-            const isValidUsername = validator.isLength(username, { min: 3 })
-            if (!isValidUsername){
-                return {
-                    userErors: [{message: "Username must be at least 3 characters in length."}],
-                    token: null
-                }
-            }
-
-            const hashedPassword = await bcrypt.hash(password, 10)
-
             try {
 
                 const user = await prisma.users.create({
                     data: {
                         email,
-                        username,
-                        password: hashedPassword
                     }
                 })
 
@@ -65,22 +44,22 @@ const resolvers = {
                     }
                 })
 
+                const token = jwt.sign({ userId: user.id }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
+                await sendMagicLink({ email, token })
+
                 return {
                     userErrors: [],
-                    token: jwt.sign({ userId: user.id, username: user.username }, process.env.JSON_SIGNATURE, { expiresIn: "3d" }),
-                    user: {
-                        id: user.id,
-                        username: user.username
-                    }
+                    success: true,
+                    domain: email.match(/(?<=@)[^.]+(?=\.)/g)[0]
                 }
+
             } catch (e) {
                 throw new GraphQLError('Unable to register the user.')
             }
 
-
         },
         signin: async (_, { credentials }, { prisma }) => {
-            const { email, password } = credentials
+            const { email } = credentials
 
             const user = await prisma.users.findUnique({
                 where: {
@@ -95,19 +74,21 @@ const resolvers = {
                 }
             }
 
-            const isMatch = await bcrypt.compare(password, user.password)
-            if (!isMatch) {
+            try {
+
+                const token = jwt.sign({ userId: user.id }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
+                await sendMagicLink({ email, token })
+
                 return {
-                    userErrors: [{message: "Invalid credentials."}],
-                    token: null
+                    userErrors: [],
+                    success: true,
+                    domain: email.match(/(?<=@)[^.]+(?=\.)/g)[0]
                 }
+
+            } catch (e) {
+                throw new GraphQLError('Unable to login in the user.')
             }
 
-            return {
-                userErrors: [],
-                token: jwt.sign({ userId: user.id, username: user.username }, process.env.JSON_SIGNATURE, { expiresIn: '3d' }),
-                user: user
-            }
         }
     },
 }
