@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 let fullCapture = false
 
-let updateCount = 11135400
-const initCursor = "eyJpZCI6IjB4YzFmMjFjOGRlZTA2NTdhZTljZTQzYjc0MjZlODVhZjYxN2NmNjAyOWM2NGMyNWZjOTNhZTE4ZTQyMTBlYzE4ZiIsIm5hbWUiOiJXaGF0IElmPyIsInVwZGF0ZWRfYXQiOiIyMDIyLTExLTA5VDEzOjM3OjM5LjY4NzI1NVoifQ"
+let updateCount = 11909200
+const initCursor = "eyJpZCI6IjB4YjRkNDVmOWQ1OWY0YzNmN2U4NDk2OGRjNGYzZGJkZGExYTVmNmFhMjg5N2M5ZDA2ZTY5ZjlhNzhlNWQ3Yjg2YiIsIm5hbWUiOiJBbWF6aW5nIFNwaWRlci1NYW4iLCJ1cGRhdGVkX2F0IjoiMjAyMi0xMi0wNFQyMzo0MTozMS4xNDYyMDFaIn0"
 let endCursor
 let remaining
 
@@ -35,7 +35,8 @@ const fetchInitialData = async () => {
                     },
                     create: {
                         token_id: Number(token.token_id),
-                        mint_date: new Date(token.metadata.mintDate)
+                        mint_date: new Date(token.metadata.mintDate),
+                        edition: Number(token.metadata.edition)
                     },
                 })
 
@@ -90,7 +91,8 @@ const keepFetchingData = async (endCursor) => {
                     },
                     create: {
                         token_id: Number(token.token_id),
-                        mint_date: new Date(token.metadata.mintDate)
+                        mint_date: new Date(token.metadata.mintDate),
+                        edition: Number(token.metadata.edition)
                     },
                 })
 
