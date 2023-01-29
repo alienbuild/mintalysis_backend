@@ -3,14 +3,13 @@ import gql from 'graphql-tag'
 const typeDefs = gql`
 
     type Mutation {
-        signup(credentials: CredentialsInput!) : AuthPayload!
-        signin(credentials: CredentialsInput!) : AuthPayload
+        auth(credentials: CredentialsInput!) : AuthPayload!
     }
 
     type AuthPayload {
         userErrors: [UserError!]!
-        success: Boolean!
-        domain: String!
+        success: Boolean
+        domain: String
     }
 
 #    Generic shit

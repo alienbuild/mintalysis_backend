@@ -397,7 +397,7 @@ export const sendMagicLink = ({ email, token }) => {
         to: email,
         subject: 'Finish signing in to Mintalysis.',
         html: html(token),
-        text: `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/user/dashboard?kraken=${token}`,
+        text: `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/verify?k=${token}`,
     };
 
     console.log(`Sending email to: ${email}`)
