@@ -71,7 +71,8 @@ model veve_wallets {
   id            String    @id
   user_id       String?
   users         users?    @relation(fields: [user_id], references: [id])
-  veve_username String?
+  veve_username String?   @unique
+  veve_id       String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime? @updatedAt
 }
