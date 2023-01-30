@@ -197,96 +197,193 @@ const imxComicLookup = async (user, index) => {
 
 }
 
+const veveComicLookupQuery = () => {
+    return `query MarketByComicTypeQuery {
+  marketListingByComicTypeV2(
+    first: 1000
+    sortOptions: { sortBy: CREATED_AT, sortDirection: DESCENDING }
+    filterOptions: {}
+  ) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      node {
+        ...MarketComicType
+      }
+    }
+  }
+}
+
+fragment MarketComicType on MarketListingByComicTypeObject {
+  id
+  name
+  totalMarketListings
+  startYear
+  comicNumber
+  cover {
+    id
+    rarity
+    image {
+      id
+      url
+      direction
+    }
+  }
+  covers {
+    id
+    rarity
+    totalMarketListings
+  }
+}
+`
+}
+
+const fetchComics = async () => {
+    await fetch(`https://web.api.prod.veve.me/graphql`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'client-name': 'alice-backend',
+            'client-version': '...',
+            'user-agent': 'alice-requests',
+            'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+        },
+        body: JSON.stringify({
+            query: veveComicLookupQuery(),
+        }),
+    })
+        .then(comics => comics.json())
+        .then(async comics => {
+            return comics
+        })
+        .catch(e => console.log('error: ', e))
+}
+
 const GetWalletUsernamesFromVeveComics = async () => {
 
     try {
-        const comics = await Comic.find({}).select('cover.id cover.rarity comicSeries.name comicNumber')
 
-        console.log('comics is: ', comics.length)
+        await fetch(`https://web.api.prod.veve.me/graphql`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'client-name': 'alice-backend',
+                'client-version': '...',
+                'user-agent': 'alice-requests',
+                'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+            },
+            body: JSON.stringify({
+                query: veveComicLookupQuery(),
+            }),
+        })
+            .then(comics => comics.json())
+            .then(async comics => {
+                const comicsItems = comics.data.marketListingByComicTypeV2.edges
 
-        await comics.map(async (comic, index) => {
-            // if (index > 0) return
-            await setTimeout(5000 * index)
-            console.log(`[FETCHING]: ${comic.comicSeries.name} #${comic.comicNumber}`)
+                await comicsItems.map(async (comic, index) => {
+                        // if (index > 0) return
+                        await setTimeout(5000 * index)
+                        await comic.node.covers.map(async (cover, index) => {
 
-            const coverId = comic.cover.id
+                            await setTimeout(2000 * index)
+                            console.log(`[FETCHING]: ${comic.node.name} #${comic.node.comicNumber}`)
 
-            await fetch(`https://web.api.prod.veve.me/graphql`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'client-name': 'alice-backend',
-                    'client-version': '...',
-                    'user-agent': 'alice-requests',
-                    'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
-                },
-                body: JSON.stringify({
-                    query: getComicMarketListings(coverId),
-                }),
-            })
-                .then(market_listings => market_listings.json())
-                .then(async market_listings => {
-                    console.log('[VEVE] RECEIVED DATA')
+                            const coverId = cover.id
 
-                    const listings = market_listings.data.marketListingFromComicCover.edges
-                    const userLookup = []
+                            await fetch(`https://web.api.prod.veve.me/graphql`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'client-name': 'alice-backend',
+                                    'client-version': '...',
+                                    'user-agent': 'alice-requests',
+                                    'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+                                },
+                                body: JSON.stringify({
+                                    query: getComicMarketListings(coverId),
+                                }),
+                            })
+                                .then(market_listings => market_listings.json())
+                                .then(async market_listings => {
+                                    console.log('[VEVE] RECEIVED DATA')
 
-                    await listings.map(async (listing, index) => {
-                        // if (index > 2) return
-                        const { sellerId, sellerName, issueNumber } = listing.node
-                        userLookup.push({sellerId, sellerName, issueNumber, unique_cover_id: listing.node.image.id})
-                    })
+                                    const listings = market_listings.data.marketListingFromComicCover.edges
+                                    const userLookup = []
 
-                    console.log('[VEVE] Found users to lookup: ', userLookup.length)
+                                    await listings.map(async (listing, index) => {
+                                        // if (index > 2) return
+                                        const {sellerId, sellerName, issueNumber} = listing.node
+                                        userLookup.push({
+                                            sellerId,
+                                            sellerName,
+                                            issueNumber,
+                                            unique_cover_id: listing.node.image.id
+                                        })
+                                    })
 
-                    userLookup.map(async (user, index) => {
-                        await setTimeout(1000 * index)
+                                    console.log('[VEVE] Found users to lookup: ', userLookup.length)
 
-                        const exisitingUser = await prisma.veve_wallets.findUnique({
-                            where: {
-                                veve_username: user.sellerName
-                            }
+                                    userLookup.map(async (user, index) => {
+                                        await setTimeout(1000 * index)
+
+                                        const exisitingUser = await prisma.veve_wallets.findUnique({
+                                            where: {
+                                                veve_username: user.sellerName
+                                            }
+                                        })
+
+                                        if (!exisitingUser) {
+                                            await setTimeout(1000 * index)
+                                            const wallet_address = await imxComicLookup(user, index)
+
+                                            if (wallet_address && wallet_address.length > 1) {
+                                                await setTimeout(1000 * index)
+                                                console.log(`[NEW USER] - ${wallet_address}`)
+                                                try {
+                                                    await prisma.veve_wallets.upsert({
+                                                        where: {
+                                                            id: wallet_address
+                                                        },
+                                                        update: {
+                                                            veve_username: user.sellerName,
+                                                            veve_id: user.sellerId
+                                                        },
+                                                        create: {
+                                                            id: wallet_address,
+                                                            veve_username: user.sellerName,
+                                                            veve_id: user.sellerId
+                                                        }
+                                                    })
+                                                    console.log(`[SUCCESS] USER ${user.sellerName}`)
+                                                } catch (e) {
+
+                                                }
+
+                                            }
+
+                                        }
+
+                                    })
+
+
+                                })
+                                .catch(e => console.log('[ERROR] ', e))
+
                         })
 
-                        if (!exisitingUser) {
-                            await setTimeout(1000 * index)
-                            const wallet_address = await imxComicLookup(user, index)
-
-                            if (wallet_address && wallet_address.length > 1){
-                                await setTimeout(1000 * index)
-                                console.log(`[NEW USER] - ${wallet_address}`)
-                                try {
-                                    await prisma.veve_wallets.upsert({
-                                        where: {
-                                            id: wallet_address
-                                        },
-                                        update: {
-                                            veve_username: user.sellerName,
-                                            veve_id: user.sellerId
-                                        },
-                                        create: {
-                                            id: wallet_address,
-                                            veve_username: user.sellerName,
-                                            veve_id: user.sellerId
-                                        }
-                                    })
-                                    console.log(`[SUCCESS] USER ${user.sellerName}`)
-                                } catch (e) {
-                                    
-                                }
-
-                            }
-
-                        } 
-
                     })
 
 
-                })
-                .catch(e => console.log('[ERROR] ', e))
+            })
+            .catch(e => console.log('error: ', e))
 
-        })
+        // const comics = await Comic.find({}).select('cover.id cover.rarity comicSeries.name comicNumber')
+
 
     } catch (e) {
         console.log('lol no. ', e)
