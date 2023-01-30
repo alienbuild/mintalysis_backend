@@ -1,10 +1,17 @@
 import fetch from 'node-fetch'
 import {PrismaClient} from "@prisma/client"
 import { setTimeout } from 'node:timers/promises'
+import Comic from '../models/_LgeacyComic.js'
+import mongoose from "mongoose";
 
 const prisma = new PrismaClient();
 
-const getMarketListings = (collectibleId) => {
+// MongoDB Database
+mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((e) => console.log('Error connecting to MongoDB', e))
+
+const getCollectibleMarketListings = (collectibleId) => {
     return `query MarketFromCollectibleTypeQuery {
   marketListingFromCollectibleType(
     first: 1000
@@ -23,7 +30,7 @@ const getMarketListings = (collectibleId) => {
 } `
 }
 
-    const imxLookup = async (user, index) => {
+const imxCollectibleLookup = async (user, index) => {
     await setTimeout(1000 * index)
     try {
         const token = await prisma.veve_tokens.findFirst({
@@ -47,7 +54,7 @@ const getMarketListings = (collectibleId) => {
 
 }
 
-const GetWalletUsernamesFromVeve = async () => {
+const GetWalletUsernamesFromVeveCollectibles = async () => {
 
     const collectibles = await prisma.veve_collectibles.findMany({
         orderBy: [
@@ -76,7 +83,7 @@ const GetWalletUsernamesFromVeve = async () => {
                 'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
             },
             body: JSON.stringify({
-                query: getMarketListings(collectibleId),
+                query: getCollectibleMarketListings(collectibleId),
             }),
         })
             .then(market_listings => market_listings.json())
@@ -105,7 +112,7 @@ const GetWalletUsernamesFromVeve = async () => {
 
                     if (!exisitingUser) {
                         await setTimeout(1000 * index)
-                        const wallet_address = await imxLookup(user, index)
+                        const wallet_address = await imxCollectibleLookup(user, index)
                         if (wallet_address && wallet_address.length > 1){
                             await setTimeout(1000 * index)
                             console.log(`[NEW USER] - ${wallet_address}`)
@@ -142,4 +149,150 @@ const GetWalletUsernamesFromVeve = async () => {
 
 }
 
-GetWalletUsernamesFromVeve()
+const getComicMarketListings = (coverId) => {
+    return `query MarketFromComicCoverQuery{
+  marketListingFromComicCover(
+    first: 1000
+    filterOptions: { comicCoverId: "${coverId}", listingType: FIXED }
+    sortOptions: { sortBy: PRICE, sortDirection: ASCENDING }
+  ) {
+    edges {
+      node {
+        id
+        sellerId
+        sellerName
+        issueNumber
+        image {
+            id
+        }
+      }
+    }
+  }
+}`
+}
+
+const imxComicLookup = async (user, index) => {
+    await setTimeout(1000 * index)
+
+    try {
+
+        const token = await prisma.veve_tokens.findFirst({
+            where: {
+                unique_cover_id: user.unique_cover_id,
+                edition: user.issueNumber
+            },
+            select: {
+                token_id: true,
+            },
+        })
+
+        const { token_id } = token
+        const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
+        const imxOwner = await getImxOwner.json()
+        return imxOwner.user
+
+    } catch (e) {
+        console.log(`Error geting wallet address: `, e )
+    }
+
+}
+
+const GetWalletUsernamesFromVeveComics = async () => {
+
+    try {
+        const comics = await Comic.find({}).select('cover.id cover.rarity comicSeries.name comicNumber')
+
+        console.log('comics is: ', comics.length)
+
+        await comics.map(async (comic, index) => {
+            // if (index > 0) return
+            await setTimeout(5000 * index)
+            console.log(`[FETCHING]: ${comic.comicSeries.name} #${comic.comicNumber}`)
+
+            const coverId = comic.cover.id
+
+            await fetch(`https://web.api.prod.veve.me/graphql`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'client-name': 'alice-backend',
+                    'client-version': '...',
+                    'user-agent': 'alice-requests',
+                    'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+                },
+                body: JSON.stringify({
+                    query: getComicMarketListings(coverId),
+                }),
+            })
+                .then(market_listings => market_listings.json())
+                .then(async market_listings => {
+                    console.log('[VEVE] RECEIVED DATA')
+
+                    const listings = market_listings.data.marketListingFromComicCover.edges
+                    const userLookup = []
+
+                    await listings.map(async (listing, index) => {
+                        // if (index > 2) return
+                        const { sellerId, sellerName, issueNumber } = listing.node
+                        userLookup.push({sellerId, sellerName, issueNumber, unique_cover_id: listing.node.image.id})
+                    })
+
+                    console.log('[VEVE] Found users to lookup: ', userLookup.length)
+
+                    userLookup.map(async (user, index) => {
+                        await setTimeout(1000 * index)
+
+                        const exisitingUser = await prisma.veve_wallets.findUnique({
+                            where: {
+                                veve_username: user.sellerName
+                            }
+                        })
+
+                        if (!exisitingUser) {
+                            await setTimeout(1000 * index)
+                            const wallet_address = await imxComicLookup(user, index)
+
+                            if (wallet_address && wallet_address.length > 1){
+                                await setTimeout(1000 * index)
+                                console.log(`[NEW USER] - ${wallet_address}`)
+                                try {
+                                    await prisma.veve_wallets.upsert({
+                                        where: {
+                                            id: wallet_address
+                                        },
+                                        update: {
+                                            veve_username: user.sellerName,
+                                            veve_id: user.sellerId
+                                        },
+                                        create: {
+                                            id: wallet_address,
+                                            veve_username: user.sellerName,
+                                            veve_id: user.sellerId
+                                        }
+                                    })
+                                    console.log(`[SUCCESS] USER ${user.sellerName}`)
+                                } catch (e) {
+                                    
+                                }
+
+                            }
+
+                        } 
+
+                    })
+
+
+                })
+                .catch(e => console.log('[ERROR] ', e))
+
+        })
+
+    } catch (e) {
+        console.log('lol no. ', e)
+    }
+
+}
+
+// GetWalletUsernamesFromVeveCollectibles()
+GetWalletUsernamesFromVeveComics()
