@@ -6,7 +6,7 @@ import HttpsProxyAgent from "https-proxy-agent"
 import {cookieRotator} from "./cookieRotator.js"
 
 import { prisma } from "../../src/index.js"
-import {pubsub} from "../../src/index.js"
+import { pubsub } from "../../src/index.js"
 
 // Setup proxy
 const proxy_string = process.env.PROXY
