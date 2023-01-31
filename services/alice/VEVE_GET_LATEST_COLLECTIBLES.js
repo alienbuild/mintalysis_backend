@@ -13,7 +13,7 @@ const password = proxy_parts[3]
 
 const getVevelatestCollectiblesQuery = () => {
     return `query collectibleTypeList {
-        collectibleTypeList(first: 50, sortOptions: {sortBy: DROP_DATE, sortDirection: DESCENDING} ){
+        collectibleTypeList(first: 5, sortOptions: {sortBy: DROP_DATE, sortDirection: DESCENDING} ){
             pageInfo {
                 hasNextPage
                 hasPreviousPage
@@ -129,12 +129,12 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
                             image_direction: collectible.node.image?.direction,
                             licensor_id: collectible.node.licensor?.id,
                             brand_id: collectible.node.brand?.id,
-                            series_id: collectible.node.series?.id
+                            // series_id: collectible.node.series?.id
                         }
                     })
                     console.log(`[SUCCESS][VEVE]: ${collectible.node.name} added to prisma db.`)
                 } catch (e) {
-                    console.log(`[FAIL][VEVE]: ${collectible.node.name} was not added to prisma db.`)
+                    console.log(`[FAIL][VEVE]: ${collectible.node.name} was not added to prisma db.`, e)
 
                 }
 
@@ -144,3 +144,4 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
         .catch(err => console.log('[ERROR][VEVE] Unable to get latest collectibles. ', err))
 
 }
+
