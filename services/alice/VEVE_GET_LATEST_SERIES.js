@@ -152,7 +152,7 @@ export const VEVE_GET_LATEST_SERIES = async () => {
                             brand_id: series.node.brand?.id
                         }
                     })
-                    console.log(`[FAIL][VEVE][SERIES]: ${series.node.name} was added to prisma db.`)
+                    console.log(`[SUCCESS][VEVE][SERIES]: ${series.node.name} was added to prisma db.`)
                 } catch (e) {
                     console.log(`[FAIL][VEVE][SERIES]: ${series.node.name} was not added to prisma db.`)
                 }

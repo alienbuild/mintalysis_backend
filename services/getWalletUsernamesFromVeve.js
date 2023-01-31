@@ -201,7 +201,7 @@ const veveComicLookupQuery = () => {
     return `query MarketByComicTypeQuery {
   marketListingByComicTypeV2(
     first: 1000
-    sortOptions: { sortBy: CREATED_AT, sortDirection: DESCENDING }
+    sortOptions: { sortBy: CREATED_AT, sortDirection: ASCENDING }
     filterOptions: {}
   ) {
     pageInfo {
@@ -288,6 +288,7 @@ const GetWalletUsernamesFromVeveComics = async () => {
                         // if (index > 0) return
                         await setTimeout(5000 * index)
                         await comic.node.covers.map(async (cover, index) => {
+                            if (cover.rarity === "COMMON") return
 
                             await setTimeout(2000 * index)
                             console.log(`[FETCHING]: ${comic.node.name} #${comic.node.comicNumber}`)
@@ -392,4 +393,4 @@ const GetWalletUsernamesFromVeveComics = async () => {
 }
 
 // GetWalletUsernamesFromVeveCollectibles()
-GetWalletUsernamesFromVeveComics()
+// GetWalletUsernamesFromVeveComics()

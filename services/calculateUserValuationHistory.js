@@ -12,16 +12,21 @@ mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopolo
     .catch((e) => console.log('Error connecting to MongoDB', e))
 
 const getCollectibleId = async (token_id) => {
-    const collectible = await prisma.veve_tokens.findUnique({
-        where: {
-            token_id
-        },
-        select: {
-            collectible_id: true
-        }
-    })
+    try {
+        const collectible = await prisma.veve_tokens.findUnique({
+            where: {
+                token_id
+            },
+            select: {
+                collectible_id: true
+            }
+        })
 
-    return collectible.collectible_id
+        return collectible.collectible_id
+    } catch (e) {
+        return null
+    }
+
 }
 
 const getTransactions = async (wallet_address) => {
@@ -60,9 +65,10 @@ const getTransactions = async (wallet_address) => {
     })
 
     user_vault.map(async (item, index) => {
-        await setTimeout(200 * index)
+        await setTimeout(150 * index)
 
         const collectibleId = await getCollectibleId(item.token_id)
+        if (!collectibleId) return
 
         if (!item.sale_date) {
 
@@ -180,7 +186,7 @@ const getTransactions = async (wallet_address) => {
             ])
 
             floorPrices.map(async floor_price => {
-                await setTimeout(200 * index)
+                await setTimeout(150 * index)
                 const currentValuation = await UserValuation.findOne({ 'user_id': "18e126fe-1c77-4f70-b687-f029140303ea", date: floor_price.date })
 
                 if (currentValuation && currentValuation.user_id){

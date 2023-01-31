@@ -157,4 +157,3 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
         .catch(err => console.log('[ERROR][VEVE][LICENSORS] Unable to get latest licensors. ', err))
 
 }
-

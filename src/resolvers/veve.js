@@ -343,6 +343,28 @@ const resolvers = {
             //     take: limit
             // })
 
+        },
+        veveDropDates: async (_, { startDate, endDate }, { prisma }) => {
+
+            return await prisma.veve_collectibles.findMany({
+                where: {
+                    drop_date: {
+                        gte: new Date(startDate).toISOString(),
+                        lte: new Date(endDate).toISOString(),
+                    },
+                },
+                // distinct: ['drop_date'],
+                select: {
+                    collectible_id: true,
+                    name: true,
+                    rarity: true,
+                    store_price: true,
+                    image_thumbnail_url: true,
+                    total_issued: true,
+                    drop_date: true
+                }
+            })
+
         }
     },
     Mutation: {
