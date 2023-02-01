@@ -170,33 +170,34 @@ model nft_projects {
 }
 
 model veve_comics {
-  unique_cover_id           String                  @id
+  unique_cover_id           String       @id
   name                      String
+  slug                      String?      @unique
   rarity                    String?
-  description               String?                 @db.Text
+  description               String?      @db.Text
   comic_series_id           String?
   drop_date                 DateTime?
-  store_price               Decimal?                @db.Decimal(10, 2)
+  store_price               Decimal?     @db.Decimal(10, 2)
   publisher_id              String?
-  market_fee                Decimal?                @db.Decimal(10, 2)
-  createdAt                 DateTime                @default(now())
-  updatedAt                 DateTime                @updatedAt
-  all_time_high             Decimal?                @db.Decimal(10, 2)
-  all_time_low              Decimal?                @db.Decimal(10, 2)
+  market_fee                Decimal?     @db.Decimal(10, 2)
+  createdAt                 DateTime     @default(now())
+  updatedAt                 DateTime     @updatedAt
+  all_time_high             Decimal?     @db.Decimal(10, 2)
+  all_time_low              Decimal?     @db.Decimal(10, 2)
   comic_number              Int?
   drop_method               String?
-  floor_price               Decimal?                @db.Decimal(10, 2)
-  is_free                   Boolean?                @default(false)
-  is_unlimited              Boolean?                @default(false)
-  market_cap                Decimal?                @db.Decimal(10, 2)
-  one_day_change            Decimal?                @db.Decimal(10, 2)
-  one_mo_change             Decimal?                @db.Decimal(10, 2)
-  one_wk_change             Decimal?                @db.Decimal(10, 2)
-  one_year_change           Decimal?                @db.Decimal(10, 2)
+  floor_price               Decimal?     @db.Decimal(10, 2)
+  is_free                   Boolean?     @default(false)
+  is_unlimited              Boolean?     @default(false)
+  market_cap                Decimal?     @db.Decimal(10, 2)
+  one_day_change            Decimal?     @db.Decimal(10, 2)
+  one_mo_change             Decimal?     @db.Decimal(10, 2)
+  one_wk_change             Decimal?     @db.Decimal(10, 2)
+  one_year_change           Decimal?     @db.Decimal(10, 2)
   page_count                Int?
-  six_mo_change             Decimal?                @db.Decimal(10, 2)
+  six_mo_change             Decimal?     @db.Decimal(10, 2)
   start_year                Int?
-  three_mo_change           Decimal?                @db.Decimal(10, 2)
+  three_mo_change           Decimal?     @db.Decimal(10, 2)
   total_available           Int?
   total_issued              Int?
   total_listings            Int?
@@ -206,30 +207,33 @@ model veve_comics {
   image_low_resolution_url  String?
   image_med_resolution_url  String?
   image_thumbnail           String?
-  all_time_change           Decimal?                @db.Decimal(10, 2)
-  artists                   veve_comic_artists[]
-  characters                veve_comic_characters[]
-  writers                   veve_comic_writers[]
+  all_time_change           Decimal?     @db.Decimal(10, 2)
+  artists                   artists[]
+  characters                characters[]
+  writers                   writers[]
 
   @@index([unique_cover_id], map: "unique_cover_id")
 }
 
-model veve_comic_writers {
-  author_id String        @id
-  name      String
-  comics    veve_comics[]
+model writers {
+  author_id   String        @id
+  name        String
+  slug        String?       @unique
+  veve_comics veve_comics[]
 }
 
-model veve_comic_artists {
-  artist_id String        @id
-  name      String
-  comics    veve_comics[]
+model artists {
+  artist_id   String        @id
+  name        String
+  slug        String?       @unique
+  veve_comics veve_comics[]
 }
 
-model veve_comic_characters {
+model characters {
   character_id String        @id
   name         String
-  comics       veve_comics[]
+  slug         String?       @unique
+  veve_comics  veve_comics[]
 }
 
 model veve_publishers {
@@ -269,6 +273,7 @@ model veve_tokens {
 model veve_collectibles {
   collectible_id                       String        @id
   name                                 String?
+  slug                                 String?       @unique
   rarity                               String?
   description                          String?       @db.Text
   edition_type                         String?
@@ -326,6 +331,7 @@ model veve_collectibles {
 model veve_brands {
   brand_id                                   String        @id
   name                                       String?
+  slug                                       String?       @unique
   description                                String?       @db.Text
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
@@ -371,6 +377,7 @@ model veve_brands {
 model veve_licensors {
   licensor_id                                String        @id
   name                                       String?
+  slug                                       String?       @unique
   description                                String?       @db.Text
   landscape_image_direction                  String?
   landscape_image_full_resolution_url        String?
@@ -414,6 +421,7 @@ model veve_licensors {
 model veve_series {
   series_id                                  String              @id
   name                                       String?
+  slug                                       String?             @unique
   description                                String?             @db.Text
   season                                     Int?
   is_blindbox                                Boolean?            @default(false)

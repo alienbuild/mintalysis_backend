@@ -8,6 +8,9 @@ import projectTypeDefs from './projects.js'
 import conversationTypeDefs from './conversations.js'
 import messageTypeDefs from './messages.js'
 import veveTypeDefs from './veve.js'
+import characterTypeDefs from './characters.js'
+import artistTypeDefs from './artists.js'
+import writerTypeDefs from './writers.js'
 
 const typeDefs = [
     scalarDefs,
@@ -19,7 +22,10 @@ const typeDefs = [
     projectTypeDefs,
     conversationTypeDefs,
     messageTypeDefs,
-    veveTypeDefs
+    veveTypeDefs,
+    characterTypeDefs,
+    artistTypeDefs,
+    writerTypeDefs
 ]
 
 export default typeDefs
