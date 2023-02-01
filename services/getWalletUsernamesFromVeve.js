@@ -393,4 +393,4 @@ const GetWalletUsernamesFromVeveComics = async () => {
 }
 
 // GetWalletUsernamesFromVeveCollectibles()
-// GetWalletUsernamesFromVeveComics()
+GetWalletUsernamesFromVeveComics()
