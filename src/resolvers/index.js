@@ -8,6 +8,9 @@ import comicResolvers from './comics.js'
 import conversationResolvers from './conversations.js'
 import messageResolvers from './message.js'
 import veveResolvers from './veve.js'
+import characterResolvers from './characters.js'
+import artistResolvers from './artists.js'
+import writerResolvers from './writers.js'
 
 const resolvers = merge({},
     DateTime,
@@ -18,7 +21,10 @@ const resolvers = merge({},
     comicResolvers,
     conversationResolvers,
     messageResolvers,
-    veveResolvers
+    veveResolvers,
+    characterResolvers,
+    artistResolvers,
+    writerResolvers
 )
 
 export default resolvers

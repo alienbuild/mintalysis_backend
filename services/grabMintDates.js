@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 
 let fullCapture = false
 
-let updateCount = 14636000
-const initCursor = "eyJpZCI6IjB4YzI0MGI1Nzg5MThhYTU4M2I4ZTQ4MWE3Nzc0NGIwZGZiODA4YzY3ZmUxYTE5MWY5ZTU1YTY1YjA1ZTU0NzNiMyIsIm5hbWUiOiJOaWdodCBOdXJzZSIsInVwZGF0ZWRfYXQiOiIyMDIyLTExLTA5VDExOjM3OjQxLjc0Nzk4NloifQ"
+let updateCount = 15604800
+const initCursor = "eyJpZCI6IjB4NWMyMDkyM2U5YmQ0ZjI3ZDcxZDFjNzU4YjRhYzRiOTU5MjRlNzQ4ZTU1NzczNzZmNTZiYmQ4YjA5MDIzY2M2MiIsIm5hbWUiOiJUYWtlIE1lIE91dCB0byB0aGUgQmFsbCBHYW1lIiwidXBkYXRlZF9hdCI6IjIwMjItMTItMDlUMDk6MjY6MDEuMDA4MDg4WiJ9"
 let endCursor
 let remaining
 
@@ -25,6 +25,7 @@ const fetchInitialData = async () => {
         try {
 
             await tokens.result.map(async (token, index) => {
+                await setTimeout(200 * index)
 
                 await prisma.veve_tokens.upsert({
                     where: {
@@ -71,7 +72,7 @@ const keepFetchingData = async (endCursor) => {
     console.log('***[FETCHING]***')
     try {
 
-        await setTimeout(1500)
+        await setTimeout(1000)
 
         const data = await fetch(`https://api.x.immutable.com/v1/assets?page_size=200&collection=0xa7aefead2f25972d80516628417ac46b3f2604af&sell_orders=true&order_by=name&direction=asc&status=imx&cursor=${endCursor}`)
         const tokens = await data.json()
