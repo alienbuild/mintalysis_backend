@@ -10,6 +10,7 @@ const typeDefs = gql`
         getUsersVeveTokens(grouped: Boolean, token_id: ID, editionNumber: Int, type: String, userId: String, search: String, pagingOptions: pagingOptions, collectible_id: String, unique_cover_id: String) : TokensConnection
         tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
+        veveValuations : VeveValuationsPayload
     }
     
     type Mutation {
@@ -20,6 +21,12 @@ const typeDefs = gql`
     type Subscription {
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
+    }
+    
+    type VeveValuationsPayload {
+        collectibles: Float
+        comics: Float
+        total: Float
     }
 
     type VeveDropDatePayload {

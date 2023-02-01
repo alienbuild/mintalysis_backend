@@ -365,6 +365,50 @@ const resolvers = {
                 }
             })
 
+        },
+        veveValuations: async (_, __, { prisma, userInfo }) => {
+
+            const groupedCollectibles = await prisma.veve_tokens.groupBy({
+                by: ['collectible_id'],
+                where: {
+                    user_id: userInfo.userId
+                },
+                _count: {
+                    collectible_id: true,
+                },
+            })
+
+            const collectibleIds = groupedCollectibles.map(collectible => collectible.collectible_id)
+            collectibleIds.shift()
+
+            const collectibleValues = await prisma.veve_collectibles.findMany({
+                where: {
+                    collectible_id: { in: collectibleIds }
+                },
+                select: {
+                    collectible_id: true,
+                    floor_price: true,
+                    market_fee: true
+                }
+            })
+
+            let collectiblesValuation = 0
+
+            await collectibleValues.map((collectible) => {
+                const match = groupedCollectibles.filter(obj => obj.collectible_id === collectible.collectible_id)
+                if (match && match.length > 0){
+                    collectiblesValuation += collectible.floor_price * match[0]._count.collectible_id
+                }
+            })
+
+            let comicsValuation = 0
+
+            return {
+                "comics": comicsValuation,
+                "collectibles": collectiblesValuation,
+                "total": collectiblesValuation + comicsValuation
+            }
+
         }
     },
     Mutation: {
