@@ -117,7 +117,7 @@ const main = async () => {
         .then(() => console.log('Connected to MongoDB'))
         .catch((e) => console.log('Error connecting to MongoDB', e))
 
-    const PORT = 4007;
+    const PORT = process.env.PORT || 8001
 
     // Now that our HTTP server is fully set up, we can listen to it.
     await new Promise((resolve) =>

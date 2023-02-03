@@ -200,7 +200,7 @@ const imxComicLookup = async (user, index) => {
 const veveComicLookupQuery = () => {
     return `query MarketByComicTypeQuery {
   marketListingByComicTypeV2(
-    first: 1000
+    first: 3000
     sortOptions: { sortBy: CREATED_AT, sortDirection: ASCENDING }
     filterOptions: {}
   ) {
