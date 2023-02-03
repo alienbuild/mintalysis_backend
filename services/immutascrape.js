@@ -134,7 +134,7 @@ export const Immutascrape = () => {
                 // Send imxTransArr to gql mutation (createTransfer)
                 try {
                     // console.log('Sending: ', imxTransArr)
-                    await fetch(`http://localhost:4007/graphql`, {
+                    await fetch(`http://localhost:8001/graphql`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
