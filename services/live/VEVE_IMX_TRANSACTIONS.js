@@ -81,6 +81,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                 let imxTransArr = []
                 let imxTokenArr = []
+                let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction) => {
 
@@ -98,6 +99,8 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     })
 
                     imxTokenArr.push({token_id: Number(transaction.transfers[0].token.token_id)})
+                    imxWalletIds.push({id: transaction.transfers[0].to_address })
+                    imxWalletIds.push({id: transaction.transfers[0].from_address })
 
                     // Check if transactions already exist
                     // Push transactions into the database
@@ -137,6 +140,11 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
+                    })
+
+                    await prisma.veve_wallets.createMany({
+                        data: imxWalletIds,
+                        skipDuplicates:true
                     })
 
                     await prisma.veve_tokens.createMany({
