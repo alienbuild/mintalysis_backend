@@ -77,6 +77,8 @@ export const VEVE_IMX_TRANSACTIONS = () => {
             .then(imxTransactions => imxTransactions.json())
             .then(async imxTransactions => {
 
+                console.log('got transactions')
+
                 const nextToken = imxTransactions.data.listTransactionsV2.nextToken
 
                 let imxTransArr = []
@@ -94,7 +96,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         id: transaction.txn_id,
                         from_wallet: transaction.transfers[0].from_address,
                         to_wallet: transaction.transfers[0].to_address,
-                        timestamp: moment.unix(transaction.txn_time / 1000).format(),
+                        timestamp: moment.unix(Number(transaction.txn_time) / 1000).format(),
                         token_id: Number(transaction.transfers[0].token.token_id)
                     })
 
@@ -136,11 +138,20 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                 })
 
+                console.log('finished pushing transactions into an array')
+
+
                 try {
-                    await prisma.veve_transfers.createMany({
+                    const transfers = await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
                     })
+
+                    if (transfers.count > 0 ) {
+                        console.log('transfers saved: ', transfers.count)
+                    } else {
+                        console.log('no transfers were saved... hmm...: ', transfers)
+                    }
 
                     await prisma.veve_wallets.createMany({
                         data: imxWalletIds,
