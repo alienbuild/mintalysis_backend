@@ -3,6 +3,7 @@ import HttpsProxyAgent from "https-proxy-agent"
 import moment from 'moment'
 
 import Twit from 'twit'
+import { prisma } from "../../src/index.js"
 
 const T = new Twit({
     consumer_key:         process.env.TWITTER_API_KEY,
@@ -55,7 +56,7 @@ const getImxTransactions = () => (`query listTransactionsV2($address: String!, $
   }
 }`)
 
-export const Immutascrape = () => {
+export const VEVE_IMX_TRANSACTIONS = () => {
     try {
         fetch(`https://3vkyshzozjep5ciwsh2fvgdxwy.appsync-api.us-west-2.amazonaws.com/graphql`, {
             method: 'POST',
@@ -68,7 +69,7 @@ export const Immutascrape = () => {
                 query: getImxTransactions(),
                 variables: {
                     address: "0xa7aefead2f25972d80516628417ac46b3f2604af",
-                    pageSize: 30, // 2673 is max?
+                    pageSize: 40, // 2673 is max?
                     txnType: "transfer"
                 }
             })
@@ -79,40 +80,41 @@ export const Immutascrape = () => {
                 const nextToken = imxTransactions.data.listTransactionsV2.nextToken
 
                 let imxTransArr = []
-                await imxTransactions.data.listTransactionsV2.items.map((transaction) => {
+                let imxTokenArr = []
 
-                    const alertTweet = ``
-                    T.post('statuses/update', {status: alertTweet}, (err, data, response) => {
-                        if (!err) console.log('Twitter notification sent to user.')
+                await imxTransactions.data.listTransactionsV2.items.map(async (transaction) => {
+
+                    // const alertTweet = ``
+                    // T.post('statuses/update', {status: alertTweet}, (err, data, response) => {
+                    //     if (!err) console.log('Twitter notification sent to user.')
+                    // })
+
+                    imxTransArr.push({
+                        id: transaction.txn_id,
+                        from_wallet: transaction.transfers[0].from_address,
+                        to_wallet: transaction.transfers[0].to_address,
+                        timestamp: moment.unix(transaction.txn_time / 1000).format(),
+                        token_id: Number(transaction.transfers[0].token.token_id)
                     })
 
-                    const imxTransObj = {
-                        id: transaction.txn_id.toString(),
-                        from_user: transaction.transfers[0].from_address,
-                        to_user: transaction.transfers[0].to_address,
-                        timestamp: moment.unix(transaction.txn_time/1000).format(),
-                        token_id: Number(transaction.transfers[0].token.token_id)
-                    }
-
-                    imxTransArr.push(imxTransObj)
+                    imxTokenArr.push({token_id: Number(transaction.transfers[0].token.token_id)})
 
                     // Check if transactions already exist
-
                     // Push transactions into the database
                     // try {
-                    //     const upsertTokens = await prisma.clown_transfers.upsert({
+                    //     const upsertTokens = await prisma.veve_transfers.upsert({
                     //         where: {
-                    //             id: transaction.txn_id.toString()
+                    //             id: transaction.txn_id
                     //         },
                     //         update: {},
                     //         create: {
                     //             id: transaction.txn_id.toString(),
-                    //             from_user: transaction.transfers[0].from_address,
-                    //             to_user: transaction.transfers[0].to_address,
-                    //             timestamp: moment.unix(transaction.txn_time/1000).format(),
+                    //             from_wallet: transaction.transfers[0].from_address,
+                    //             to_wallet: transaction.transfers[0].to_address,
+                    //             timestamp: moment.unix(transaction.txn_time / 1000).format(),
                     //             token: {
                     //                 connectOrCreate: {
-                    //                     where: { token_id: Number(transaction.transfers[0].token.token_id) },
+                    //                     where: {token_id: Number(transaction.transfers[0].token.token_id)},
                     //                     create: {
                     //                         token_id: Number(transaction.transfers[0].token.token_id),
                     //                         toProcess: true
@@ -131,9 +133,23 @@ export const Immutascrape = () => {
 
                 })
 
+                try {
+                    await prisma.veve_transfers.createMany({
+                        data: imxTransArr,
+                        skipDuplicates: true
+                    })
+
+                    await prisma.veve_tokens.createMany({
+                        data: imxTokenArr,
+                        skipDuplicates: true
+                    })
+
+                }catch (e) {
+                    console.log('fail clown: ', e)
+                }
+
                 // Send imxTransArr to gql mutation (createTransfer)
                 try {
-                    // console.log('Sending: ', imxTransArr)
                     await fetch(`http://localhost:8001/graphql`, {
                         method: 'POST',
                         headers: {
@@ -156,30 +172,11 @@ export const Immutascrape = () => {
                     console.log('[ERROR] Unable to send transactions through mutation. ', e)
                 }
 
-                // try {
-                //     const saveImxTransactions = await prisma.clown_transfers.createMany({
-                //         data: imxTransArr,
-                //         skipDuplicates: true
-                //     })
-                //
-                //     if (saveImxTransactions.count > 0){
-                //         const transfers = await prisma.clown_transfers.findMany()
-                //         console.log('ALERTING PUBSUB')
-                //         await pubsub.publish('VEVE_IMX_TRANSFERS_UPDATED', {
-                //             imxVeveTransfersUpdated: transfers
-                //         })
-                //     }
-                //
-                // }catch (e) {
-                //     console.log('fail clown: ', e)
-                // }
-
-
             })
             .catch(error => console.log('[ERROR] Unable to fetch IMX transactions.', error))
 
     } catch (e){
-        console.log('[ERROR] Immutascrape: ', e)
+        console.log('[ERROR] VEVE_IMX_TRANSACTIONS: ', e)
     }
 
 }

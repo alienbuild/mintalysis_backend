@@ -49,7 +49,7 @@ const imxCollectibleLookup = async (user, index) => {
         return imxOwner.user
 
     } catch (e) {
-        console.log(`Error token_id: collectible_id: ${user.collectibleId} - edition: ${user.issueNumber} : `, e )
+        // console.log(`Error token_id: collectible_id: ${user.collectibleId} - edition: ${user.issueNumber} : `, e )
     }
 
 }
@@ -64,11 +64,11 @@ const GetWalletUsernamesFromVeveCollectibles = async () => {
         ]
     })
 
-    console.log('collectibles is: ', collectibles.length)
+    // console.log('collectibles is: ', collectibles.length)
 
     await collectibles.map(async (collectible, index) => {
         await setTimeout(5000 * index)
-        console.log(`[FETCHING] - ${collectible.name}`)
+        // console.log(`[FETCHING] - ${collectible.name}`)
         // if (index > 0) return
         const collectibleId = collectible.collectible_id
 
@@ -89,7 +89,7 @@ const GetWalletUsernamesFromVeveCollectibles = async () => {
             .then(market_listings => market_listings.json())
             .then(async market_listings =>
             {
-                console.log('[VEVE] RECEIVED DATA')
+                // console.log('[VEVE] RECEIVED DATA')
 
                 const listings = market_listings.data.marketListingFromCollectibleType.edges
                 const userLookup = []
@@ -100,7 +100,7 @@ const GetWalletUsernamesFromVeveCollectibles = async () => {
                     userLookup.push({sellerId, sellerName, issueNumber, collectibleId})
                 })
 
-                console.log('[VEVE] Found users to lookup: ', userLookup.length)
+                // console.log('[VEVE] Found users to lookup: ', userLookup.length)
 
                 userLookup.map(async (user, index) => {
                     await setTimeout(1000 * index)
@@ -143,7 +143,7 @@ const GetWalletUsernamesFromVeveCollectibles = async () => {
             })
             .catch(e => console.log('[ERROR] getting veve usernames. ', e))
 
-        console.log(`[FINISHED]: ${collectible.collectible_id} - ${collectible.name}`)
+        // console.log(`[FINISHED]: ${collectible.collectible_id} - ${collectible.name}`)
     })
 
 
@@ -291,7 +291,7 @@ const GetWalletUsernamesFromVeveComics = async () => {
                             if (cover.rarity === "COMMON") return
 
                             await setTimeout(2000 * index)
-                            console.log(`[FETCHING]: ${comic.node.name} #${comic.node.comicNumber}`)
+                            // console.log(`[FETCHING]: ${comic.node.name} #${comic.node.comicNumber}`)
 
                             const coverId = cover.id
 
@@ -311,7 +311,7 @@ const GetWalletUsernamesFromVeveComics = async () => {
                             })
                                 .then(market_listings => market_listings.json())
                                 .then(async market_listings => {
-                                    console.log('[VEVE] RECEIVED DATA')
+                                    // console.log('[VEVE] RECEIVED DATA')
 
                                     const listings = market_listings.data.marketListingFromComicCover.edges
                                     const userLookup = []
@@ -327,7 +327,7 @@ const GetWalletUsernamesFromVeveComics = async () => {
                                         })
                                     })
 
-                                    console.log('[VEVE] Found users to lookup: ', userLookup.length)
+                                    // console.log('[VEVE] Found users to lookup: ', userLookup.length)
 
                                     userLookup.map(async (user, index) => {
                                         await setTimeout(1000 * index)
@@ -344,7 +344,7 @@ const GetWalletUsernamesFromVeveComics = async () => {
 
                                             if (wallet_address && wallet_address.length > 1) {
                                                 await setTimeout(1000 * index)
-                                                console.log(`[NEW USER] - ${wallet_address}`)
+                                                // console.log(`[NEW USER] - ${wallet_address}`)
                                                 try {
                                                     await prisma.veve_wallets.upsert({
                                                         where: {
@@ -392,5 +392,5 @@ const GetWalletUsernamesFromVeveComics = async () => {
 
 }
 
-GetWalletUsernamesFromVeveCollectibles()
+// GetWalletUsernamesFromVeveCollectibles()
 // GetWalletUsernamesFromVeveComics()

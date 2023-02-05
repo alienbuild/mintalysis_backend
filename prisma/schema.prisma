@@ -57,24 +57,25 @@ model transfers {
 }
 
 model veve_transfers {
-  id          Int     @id
+  id          Int       @id
   from_wallet String
   to_wallet   String
-  timestamp   String? @db.Text
+  timestamp   String?   @db.Text
   token_id    Int
-  //  veve_tokens veve_tokens? @relation(fields: [token_id], references: [token_id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @updatedAt
 
   @@index([token_id, from_wallet, to_wallet])
 }
 
 model veve_wallets {
-  id            String    @id
+  id            String       @id
   user_id       String?
-  users         users?    @relation(fields: [user_id], references: [id])
-  veve_username String?   @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime?    @updatedAt
+  veve_username String?      @unique
   veve_id       String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime? @updatedAt
+  veve_mints    veve_mints[]
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -90,23 +91,20 @@ model transfers_daily {
 }
 
 model users {
-  id            String                     @id @default(uuid())
-  email         String                     @unique
-  password      String?
-  activated     Boolean                    @default(false)
-  createdAt     DateTime                   @default(now())
-  updatedAt     DateTime                   @updatedAt
-  role          Role                       @default(BASIC)
-  username      String                     @unique
-  avatar        String?
-  tokens        veve_tokens[]
-  last_seen     DateTime?                  @updatedAt
-  followedBy    users[]                    @relation("user_follows")
-  following     users[]                    @relation("user_follows")
-  projects      nft_projects[]
-  conversations conversation_participant[]
-  messages      message[]
-  veve_wallets  veve_wallets[]
+  id        String         @id @default(uuid())
+  email     String         @unique
+  password  String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  role      Role           @default(BASIC)
+  username  String         @unique
+  avatar    String?
+  last_seen DateTime?      @updatedAt
+  activated Boolean        @default(false)
+  tokens    veve_tokens[]
+  projects  nft_projects[]
+  users_B   users[]        @relation("user_follows")
+  users_A   users[]        @relation("user_follows")
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -125,40 +123,32 @@ model profile {
 }
 
 model conversation {
-  id                String                     @id @default(uuid())
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-  latest_message_id String?                    @unique
-  latest_message    message?                   @relation(name: "latest_conversation_message", fields: [latest_message_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
-  participants      conversation_participant[]
-  messages          message[]
+  id                String   @id @default(uuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  latest_message_id String?  @unique
 
   @@index([latest_message_id], map: "latest_message_id")
 }
 
 model conversation_participant {
-  id                      String       @id @default(uuid())
+  id                      String   @id @default(uuid())
   user_id                 String
-  user                    users        @relation(fields: [user_id], references: [id])
   conversation_id         String
-  conversation            conversation @relation(fields: [conversation_id], references: [id])
+  createdAt               DateTime @default(now())
   has_seen_latest_message Boolean
-  createdAt               DateTime     @default(now())
-  updatedAt               DateTime     @updatedAt
+  updatedAt               DateTime @updatedAt
 
   @@index([has_seen_latest_message], map: "has_seen_latest_message")
 }
 
 model message {
-  id             String        @id @default(uuid())
+  id             String   @id @default(uuid())
   conversationId String
-  conversation   conversation  @relation(fields: [conversationId], references: [id])
   senderId       String
-  sender         users         @relation(fields: [senderId], references: [id])
-  is_latest_in   conversation? @relation(name: "latest_conversation_message")
-  body           String        @db.Text
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  body           String   @db.Text
 }
 
 model nft_projects {
@@ -172,7 +162,6 @@ model nft_projects {
 model veve_comics {
   unique_cover_id           String       @id
   name                      String
-  slug                      String?      @unique
   rarity                    String?
   description               String?      @db.Text
   comic_series_id           String?
@@ -208,6 +197,7 @@ model veve_comics {
   image_med_resolution_url  String?
   image_thumbnail           String?
   all_time_change           Decimal?     @db.Decimal(10, 2)
+  slug                      String?      @unique
   artists                   artists[]
   characters                characters[]
   writers                   writers[]
@@ -257,23 +247,25 @@ model veve_tokens {
   type              String?             @db.Text
   last_updated      DateTime?           @default(now()) @db.Timestamp(0)
   brand_id          String?
-  brand             veve_brands?        @relation(fields: [brand_id], references: [brand_id])
   licensor_id       String?
-  licensor          veve_licensors?     @relation(fields: [licensor_id], references: [licensor_id])
   series_id         String?
-  series            veve_series?        @relation(fields: [series_id], references: [series_id])
   user_id           String?
+  brand             veve_brands?        @relation(fields: [brand_id], references: [brand_id])
+  licensor          veve_licensors?     @relation(fields: [licensor_id], references: [licensor_id])
+  series            veve_series?        @relation(fields: [series_id], references: [series_id])
   users             users?              @relation(fields: [user_id], references: [id])
-  //  transfers         veve_transfers[]
   veve_collectibles veve_collectibles[]
 
   @@index([token_id])
+  @@index([brand_id], map: "veve_tokens_brand_id_fkey")
+  @@index([licensor_id], map: "veve_tokens_licensor_id_fkey")
+  @@index([series_id], map: "veve_tokens_series_id_fkey")
+  @@index([user_id], map: "veve_tokens_user_id_fkey")
 }
 
 model veve_collectibles {
   collectible_id                       String        @id
   name                                 String?
-  slug                                 String?       @unique
   rarity                               String?
   description                          String?       @db.Text
   edition_type                         String?
@@ -304,7 +296,6 @@ model veve_collectibles {
   brand_id                             String?
   licensor_id                          String?
   series_id                            String?
-  series                               veve_series?  @relation(fields: [series_id], references: [series_id])
   drop_method                          String?
   is_free                              Boolean?      @default(false)
   total_store_allocation               Int?
@@ -320,6 +311,8 @@ model veve_collectibles {
   three_mo_change                      Decimal?      @db.Decimal(10, 2)
   total_listings                       Int?
   all_time_change                      Decimal?      @db.Decimal(10, 2)
+  slug                                 String?       @unique
+  series                               veve_series?  @relation(fields: [series_id], references: [series_id])
   veve_tokens                          veve_tokens[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
@@ -331,7 +324,6 @@ model veve_collectibles {
 model veve_brands {
   brand_id                                   String        @id
   name                                       String?
-  slug                                       String?       @unique
   description                                String?       @db.Text
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
@@ -369,6 +361,7 @@ model veve_brands {
   square_image_high_resolution_url           String?
   square_image_direction                     String?
   licensor_id                                String
+  slug                                       String?       @unique
   veve_tokens                                veve_tokens[]
 
   @@index([licensor_id], map: "brands_licensor_id_fkey")
@@ -377,7 +370,6 @@ model veve_brands {
 model veve_licensors {
   licensor_id                                String        @id
   name                                       String?
-  slug                                       String?       @unique
   description                                String?       @db.Text
   landscape_image_direction                  String?
   landscape_image_full_resolution_url        String?
@@ -415,13 +407,13 @@ model veve_licensors {
   theme_logo_image_med_resolution_url        String?
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_url                       String?
+  slug                                       String?       @unique
   veve_tokens                                veve_tokens[]
 }
 
 model veve_series {
   series_id                                  String              @id
   name                                       String?
-  slug                                       String?             @unique
   description                                String?             @db.Text
   season                                     Int?
   is_blindbox                                Boolean?            @default(false)
@@ -462,6 +454,7 @@ model veve_series {
   square_image_direction                     String?
   licensor_id                                String
   brand_id                                   String
+  slug                                       String?             @unique
   veve_collectibles                          veve_collectibles[]
   veve_tokens                                veve_tokens[]
 
@@ -511,6 +504,17 @@ model tmp_ids {
   image_full_resolution_url String?
 
   @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model veve_mints {
+  id        Int           @id
+  wallet_id String?
+  wallet    veve_wallets? @relation(fields: [wallet_id], references: [id])
+  timestamp String?       @db.Text
+  token_id  Int
+  createdAt DateTime      @default(now())
+  updatedAt DateTime?     @updatedAt
 }
 
 enum Role {
