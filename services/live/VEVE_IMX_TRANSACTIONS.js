@@ -134,14 +134,10 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 })
 
                 try {
-                    const test = await prisma.veve_transfers.createMany({
+                    await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
                     })
-
-                    if (test.count > 0){
-                        console.log(`saved ${test.count} transfers..`)
-                    }
 
                     await prisma.veve_tokens.createMany({
                         data: imxTokenArr,

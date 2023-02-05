@@ -506,7 +506,6 @@ model tmp_ids {
   @@ignore
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model veve_mints {
   id        Int           @id
   wallet_id String?
