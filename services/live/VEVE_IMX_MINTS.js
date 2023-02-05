@@ -87,7 +87,7 @@ export const VEVE_IMX_MINTS = () => {
                     imxMintsArr.push({
                         id: mint.txn_id,
                         wallet_id: mint.transfers[0].to_address,
-                        timestamp: moment.unix(mint.txn_time / 1000).format(),
+                        timestamp: moment.unix(Number(mint.txn_time) / 1000).format(),
                         token_id: Number(mint.transfers[0].token.token_id)
                     })
 
