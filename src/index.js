@@ -91,7 +91,7 @@ const main = async () => {
     await server.start();
 
     const corsOptions = {
-        origin: process.env.BASE_URL,
+        origin: [process.env.BASE_URL, '67.225.248.251', '81.136.110.55'],
         credentials: true,
     };
 
@@ -122,10 +122,10 @@ const main = async () => {
     // Now that our HTTP server is fully set up, we can listen to it.
     await new Promise((resolve) =>
             httpServer.listen(PORT, () => {
-                scheduledRapidJobs()
+                // scheduledRapidJobs()
                 scheduledHourlyJobs()
                 scheduledDailyJobs()
-                // scheduledLiveJobs()
+                scheduledLiveJobs()
                 resolve()
             })
     );

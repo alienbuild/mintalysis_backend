@@ -16,7 +16,7 @@ const getCollectibleMarketListings = (collectibleId) => {
   marketListingFromCollectibleType(
     first: 1000
     filterOptions: {collectibleTypeId: "${collectibleId}", listingType: FIXED}
-    sortOptions: {sortBy: PRICE, sortDirection: ASCENDING}
+    sortOptions: {sortBy: PRICE, sortDirection: DESCENDING}
   ) {
     edges {
       node {
@@ -201,7 +201,7 @@ const veveComicLookupQuery = () => {
     return `query MarketByComicTypeQuery {
   marketListingByComicTypeV2(
     first: 3000
-    sortOptions: { sortBy: CREATED_AT, sortDirection: ASCENDING }
+    sortOptions: { sortBy: CREATED_AT, sortDirection: DESCENDING }
     filterOptions: {}
   ) {
     pageInfo {
@@ -392,5 +392,5 @@ const GetWalletUsernamesFromVeveComics = async () => {
 
 }
 
-// GetWalletUsernamesFromVeveCollectibles()
+GetWalletUsernamesFromVeveCollectibles()
 // GetWalletUsernamesFromVeveComics()
