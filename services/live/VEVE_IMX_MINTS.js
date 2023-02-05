@@ -96,10 +96,14 @@ export const VEVE_IMX_MINTS = () => {
 
                 try {
 
-                    await prisma.veve_mints.createMany({
+                    const test = await prisma.veve_mints.createMany({
                         data: imxMintsArr,
                         skipDuplicates: true
                     })
+
+                    if (test.count > 0){
+                        console.log(`saved ${test.count} mints..`)
+                    }
 
                     await prisma.veve_tokens.createMany({
                         data: imxTokenArr,
