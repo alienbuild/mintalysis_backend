@@ -77,8 +77,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
             .then(imxTransactions => imxTransactions.json())
             .then(async imxTransactions => {
 
-                console.log('got transactions')
-
                 const nextToken = imxTransactions.data.listTransactionsV2.nextToken
 
                 let imxTransArr = []
@@ -86,11 +84,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction) => {
-
-                    // const alertTweet = ``
-                    // T.post('statuses/update', {status: alertTweet}, (err, data, response) => {
-                    //     if (!err) console.log('Twitter notification sent to user.')
-                    // })
 
                     imxTransArr.push({
                         id: transaction.txn_id,
@@ -138,20 +131,11 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                 })
 
-                console.log('finished pushing transactions into an array')
-
-
                 try {
                     const transfers = await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
                     })
-
-                    if (transfers.count > 0 ) {
-                        console.log('transfers saved: ', transfers.count)
-                    } else {
-                        console.log('no transfers were saved... hmm...: ', transfers)
-                    }
 
                     await prisma.veve_wallets.createMany({
                         data: imxWalletIds,
