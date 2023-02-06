@@ -91,7 +91,7 @@ const main = async () => {
     await server.start();
 
     const corsOptions = {
-        origin: [process.env.BASE_URL, '67.225.248.251', '81.136.110.55'],
+        origin: [process.env.BASE_URL, '67.225.248.251', '81.136.110.55', 'http://localhost:3002'],
         credentials: true,
     };
 
