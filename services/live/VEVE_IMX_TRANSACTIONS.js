@@ -132,7 +132,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 })
 
                 try {
-                    const transfers = await prisma.veve_transfers.createMany({
+                    await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
                     })
@@ -151,7 +151,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     console.log('fail clown: ', e)
                 }
 
-                // Send imxTransArr to gql mutation (createTransfer)
                 try {
                     await fetch(`http://localhost:8001/graphql`, {
                         method: 'POST',
