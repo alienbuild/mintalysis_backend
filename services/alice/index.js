@@ -6,6 +6,7 @@ import {VEVE_GET_LATEST_COMICS} from "./VEVE_GET_LATEST_COMICS.js"
 import {VEVE_GET_LATEST_BRANDS} from "./VEVE_GET_LATEST_BRANDS.js"
 import {VEVE_GET_LATEST_LICENSORS} from "./VEVE_GET_LATEST_LICENSORS.js"
 import {VEVE_GET_LATEST_SERIES} from "./VEVE_GET_LATEST_SERIES.js"
+import {GetWalletUsernamesFromVeveCollectibles} from "../getWalletUsernamesFromVeve.js";
 
 const scheduledHourlyJobs = () => {
     schedule.scheduleJob('05 * * * *', () => {
@@ -13,6 +14,9 @@ const scheduledHourlyJobs = () => {
     })
     schedule.scheduleJob('08 * * * *', () => {
         VEVE_GET_COMIC_FLOORS()
+    })
+    schedule.scheduleJob('20 * * * *', () => {
+        GetWalletUsernamesFromVeveCollectibles()
     })
 }
 

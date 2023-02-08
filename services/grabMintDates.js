@@ -132,4 +132,4 @@ export const grabMintDates = async () => {
 }
 
 
-grabMintDates()
+// grabMintDates()

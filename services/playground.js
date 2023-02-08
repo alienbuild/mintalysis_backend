@@ -2,9 +2,12 @@ import {PrismaClient} from "@prisma/client"
 import { customAlphabet } from 'nanoid'
 const nanoid = customAlphabet('1234567890abcdef', 5)
 import slugify from 'slugify'
+import fetch from "node-fetch";
+import {cookieRotator} from "./alice/cookieRotator.js";
+import {setTimeout} from "node:timers/promises";
+import moment from "moment";
 
 const prisma = new PrismaClient()
-
 
 const generateCollectibleSlugs = async () => {
 
@@ -240,4 +243,306 @@ const generateWriterSlugs = async () => {
 
 }
 
-generateWriterSlugs()
+// Scrape username/wallets from veve
+const getVeveSuggestedUsers = (fragment) => {
+    return `query  {
+    suggestUsers(fragment: "${fragment}", limit: 20, showHiddenOrDisabledAccounts: false){
+        id
+        username
+        profileCollectibles(first: 1){
+            edges{
+                node{
+                    issueNumber
+                    blockchainId
+                    collectibleType {
+                        id
+                    }
+                }
+            }
+        }
+    }
+}`
+}
+
+const lookupUserWallet = async (token_id) => {
+    const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
+    const imxOwner = await getImxOwner.json()
+    return imxOwner.user
+}
+
+export const scrapeVeveSuggestedUsers = async () => {
+    console.log('[STARTING] Getting suggested users from VEVE')
+
+    const cookieToUse = cookieRotator()
+
+    const fragment = "garyv"
+
+    await fetch(`https://web.api.prod.veve.me/graphql`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'cookie': cookieToUse,
+            'client-name': 'veve-web-app',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'client-operation': 'AuthUserDetails',
+        },
+        body: JSON.stringify({
+            query: getVeveSuggestedUsers(fragment)
+        }),
+    })
+        .then(suggested_users => suggested_users.json())
+        .then(suggested_users => {
+            const suggestedUsers = suggested_users?.data?.suggestUsers
+
+            suggestedUsers.map(async (user, index) => {
+                if (user?.profileCollectibles?.edges.length > 0) {
+                    const wallet_address = await lookupUserWallet(user.profileCollectibles.edges[0].node.blockchainId)
+                    try {
+
+                        const exisitingUser = await prisma.veve_wallets.findUnique({
+                            where: {
+                                veve_username: user.username
+                            }
+                        })
+
+                        if (!exisitingUser){
+                            const saved_wallets = await prisma.veve_wallets.upsert({
+                                where: {
+                                    id: wallet_address
+                                },
+                                update: {
+                                    veve_username: user.username,
+                                    veve_id: user.id
+                                },
+                                create: {
+                                    id: wallet_address,
+                                    veve_username: user.username,
+                                    veve_id: user.id
+                                },
+                                select: {
+                                    veve_username: true
+                                }
+                            })
+                            console.log('saved wallets is: ', saved_wallets)
+                        } else {
+                            console.log('No new wallets/users to save :(')
+                        }
+
+
+                    } catch (e) {
+                        console.log('[ERROR]: Unable to save username and wallet.')
+                    }
+
+                }
+            })
+
+        })
+        .catch(e => console.log('[ERROR] Unable to get suggested users. ', e))
+
+
+}
+
+// Aggregate usernames from veve feed... oy gonna take a while...
+const getVeveFeedUsernames = (startTime) => {
+    console.log('querying using the start time of: ', new Date(startTime).toISOString())
+    return `query {
+        feedPostList(filterOptions: { startTimeLessThan : "${new Date(startTime).toISOString()}" }){
+             pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+            }
+            edges{
+                node {
+                    startTime
+                    user{
+                        id  
+                        username
+                        profileCollectibles(first: 1){
+                            edges{
+                                node{
+                                    issueNumber
+                                    blockchainId
+                                    collectibleType {
+                                        id
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            totalCount
+        }
+    }`
+}
+
+const keepFetchingFeedPosts = async (cursor) => {
+    const cookieToUse = cookieRotator()
+    console.log('[FETCHING DATA] Using cursor: ', cursor)
+    try {
+        await setTimeout(1500)
+
+        await fetch(`https://web.api.prod.veve.me/graphql`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'cookie': cookieToUse,
+                'client-name': 'veve-web-app',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+                'client-operation': 'AuthUserDetails',
+            },
+            body: JSON.stringify({
+                query: getVeveFeedUsernames(cursor)
+            }),
+        }).then(veve_feed_usernames => veve_feed_usernames.json())
+            .then(async veve_feed_usernames => {
+                const pageInfo = veve_feed_usernames.data.feedPostList.pageInfo
+                const feedPosts = veve_feed_usernames.data.feedPostList.edges
+
+                const lastStartTime = feedPosts[feedPosts.length - 1].node.startTime
+                console.log('lastStartTime is: ', lastStartTime)
+
+                await feedPosts.map(async post => {
+                    if (post.node?.user?.profileCollectibles?.edges.length > 0) {
+                        const username = post.node.user.username
+                        const id = post.node.user.id
+                        try {
+
+                            const wallet_address = await lookupUserWallet(post.node.user.profileCollectibles.edges[0].node.blockchainId)
+
+                            const exisitingUser = await prisma.veve_wallets.findUnique({
+                                where: {
+                                    veve_username: username
+                                }
+                            })
+                            if (!exisitingUser) {
+                                const saved_wallets = await prisma.veve_wallets.upsert({
+                                    where: {
+                                        id: wallet_address
+                                    },
+                                    update: {
+                                        veve_username: username,
+                                        veve_id: id
+                                    },
+                                    create: {
+                                        id: wallet_address,
+                                        veve_username: username,
+                                        veve_id: id
+                                    },
+                                    select: {
+                                        veve_username: true
+                                    }
+                                })
+                                console.log('saved wallets is: ', saved_wallets)
+                            }
+
+
+                        } catch (e) {
+                            console.log('No new wallets/users to save :(')
+                        }
+
+                    }
+                })
+
+                if (pageInfo.endCursor) {
+                    console.log('[AWAITING] Found more feed posts to grab.')
+                    await setTimeout(2500)
+                    await keepFetchingFeedPosts(lastStartTime)
+                }
+
+            })
+            .catch(e => console.log('[ERROR] Unable to get usernames from the veve feed.', e))
+
+    } catch (e) {
+        console.log('[ERROR]: Something went wrong fetching more feed data.', e)
+    }
+}
+
+const getVeveUsernamesFromFeed = async () => {
+    const cookieToUse = cookieRotator()
+
+    await fetch(`https://web.api.prod.veve.me/graphql`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'cookie': cookieToUse,
+            'client-name': 'veve-web-app',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'client-operation': 'AuthUserDetails',
+        },
+        body: JSON.stringify({
+            query: getVeveFeedUsernames("2023-02-08T00:48:57.207Z")
+        }),
+    })
+        .then(veve_feed_usernames => veve_feed_usernames.json())
+        .then(async veve_feed_usernames => {
+            const pageInfo = veve_feed_usernames.data.feedPostList.pageInfo
+            const feedPosts = veve_feed_usernames.data.feedPostList.edges
+            console.log('page info is: ', pageInfo)
+            console.log('[RETRIEVED] posts: ', veve_feed_usernames.data.feedPostList.totalCount)
+
+            const lastStartTime = feedPosts[feedPosts.length - 1].node.startTime
+            console.log('lastStartTime is: ', lastStartTime)
+
+            await feedPosts.map(async post => {
+                if (post.node?.user?.profileCollectibles?.edges.length > 0) {
+                    const username = post.node.user.username
+                    const id = post.node.user.id
+                    try {
+                        console.log(`User posted is: ${username}`)
+
+                        const wallet_address = await lookupUserWallet(post.node.user.profileCollectibles.edges[0].node.blockchainId)
+
+                        const exisitingUser = await prisma.veve_wallets.findUnique({
+                            where: {
+                                veve_username: username
+                            }
+                        })
+                        if (!exisitingUser) {
+                            const saved_wallets = await prisma.veve_wallets.upsert({
+                                where: {
+                                    id: wallet_address
+                                },
+                                update: {
+                                    veve_username: username,
+                                    veve_id: id
+                                },
+                                create: {
+                                    id: wallet_address,
+                                    veve_username: username,
+                                    veve_id: id
+                                },
+                                select: {
+                                    veve_username: true
+                                }
+                            })
+                            console.log('saved wallets is: ', saved_wallets)
+                        }
+
+
+                    } catch (e) {
+                        console.log('No new wallets/users to save :(', e)
+                    }
+
+                }
+            })
+
+            if (pageInfo.endCursor) {
+                console.log('[AWAITING] Found more feed posts to grab.')
+                await setTimeout(2000)
+                await keepFetchingFeedPosts(lastStartTime)
+            }
+
+        })
+        .catch(e => console.log('[ERROR] Unable to get usernames from the veve feed.', e))
+}
+
+getVeveUsernamesFromFeed()
+
+// generateWriterSlugs()
+// scrapeVeveSuggestedUsers()

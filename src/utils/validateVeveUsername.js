@@ -27,6 +27,8 @@ export const validateVeveUsername = async (username) => {
         },
         body: JSON.stringify({query: getUsernameQuery(username)}),
     })
+    console.log('veveresis: ', veveResponse)
+
     const veveResponse = await callVeveApi.json()
 
     return veveResponse.data.userList

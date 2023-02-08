@@ -54,7 +54,7 @@ const imxCollectibleLookup = async (user, index) => {
 
 }
 
-const GetWalletUsernamesFromVeveCollectibles = async () => {
+export const GetWalletUsernamesFromVeveCollectibles = async () => {
 
     const collectibles = await prisma.veve_collectibles.findMany({
         orderBy: [
@@ -392,5 +392,5 @@ const GetWalletUsernamesFromVeveComics = async () => {
 
 }
 
-GetWalletUsernamesFromVeveCollectibles()
+// GetWalletUsernamesFromVeveCollectibles()
 // GetWalletUsernamesFromVeveComics()

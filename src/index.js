@@ -125,7 +125,7 @@ const main = async () => {
                 // scheduledRapidJobs()
                 scheduledHourlyJobs()
                 scheduledDailyJobs()
-                scheduledLiveJobs()
+                // scheduledLiveJobs()
                 resolve()
             })
     );
