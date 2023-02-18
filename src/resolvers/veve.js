@@ -1,5 +1,6 @@
 import {validateVeveUsername} from "../utils/validateVeveUsername.js"
 import CollectiblePrice from "../../models/CollectiblePrices.js"
+import ComicPrice from "../../models/ComicPrices.js"
 import {GraphQLError} from "graphql"
 import fetch from "node-fetch"
 import {setTimeout} from "node:timers/promises"
@@ -30,7 +31,7 @@ const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
     try {
         await setTimeout(2500)
         // if (tokenCount <= 200) pageSize = tokenCount
-        const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&cursor=${cursor}`)
+        const getWalletItems = await fetch(`https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}`)
         const walletItems = await getWalletItems.json()
 
         await walletItems.result.map(async item => {
@@ -79,53 +80,149 @@ const resolvers = {
                     break
             }
 
-            return await CollectiblePrice.aggregate([
-                {
-                    "$match": {
-                        collectibleId: collectibleId,
-                        // "date": {
-                        //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
-                        // }
-                    }
-                },
-                {
-                    "$group": {
-                        _id: {
-                            symbol: "$collectibleId",
-                            date: {
-                                $dateTrunc: {
-                                    date: "$date",
-                                    unit: "day",
-                                    binSize: 1
-                                },
-                            },
+            switch (type){
+                case 'collectible':
+                    return await CollectiblePrice.aggregate([
+                        {
+                            "$match": {
+                                collectibleId: collectibleId,
+                                // "date": {
+                                //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
+                                // }
+                            }
                         },
-                        value: { $avg: "$value" },
-                        high: { $max: "$value" },
-                        low: { $min: "$value" },
-                        open: { $first: "$value" },
-                        close: { $last: "$value" },
-                        volume: { $avg: "$volume" },
-                    }
-                },
-                {
-                    "$set": {
-                        date: "$_id.date",
-                    }
-                },
-                {
-                    $sort : { "date": 1 }
-                }
-            ])
-                .then(data => {
-                    return data
-                })
-                .catch(err => {
-                    throw new GraphQLError('Unable to get collectible data.')
-                })
+                        {
+                            "$group": {
+                                _id: {
+                                    symbol: "$collectibleId",
+                                    date: {
+                                        $dateTrunc: {
+                                            date: "$date",
+                                            unit: "day",
+                                            binSize: 1
+                                        },
+                                    },
+                                },
+                                value: { $avg: "$value" },
+                                high: { $max: "$value" },
+                                low: { $min: "$value" },
+                                open: { $first: "$value" },
+                                close: { $last: "$value" },
+                                volume: { $avg: "$volume" },
+                            }
+                        },
+                        {
+                            "$set": {
+                                date: "$_id.date",
+                            }
+                        },
+                        {
+                            $sort : { "date": 1 }
+                        }
+                    ])
+                        .then(data => {
+                            return data
+                        })
+                        .catch(err => {
+                            throw new GraphQLError('Unable to get collectible data.')
+                        })
+                case 'comic':
+                    return await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: collectibleId,
+                                // "date": {
+                                //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
+                                // }
+                            }
+                        },
+                        {
+                            "$group": {
+                                _id: {
+                                    symbol: "$uniqueCoverId",
+                                    date: {
+                                        $dateTrunc: {
+                                            date: "$date",
+                                            unit: "day",
+                                            binSize: 1
+                                        },
+                                    },
+                                },
+                                value: { $avg: "$value" },
+                                high: { $max: "$value" },
+                                low: { $min: "$value" },
+                                open: { $first: "$value" },
+                                close: { $last: "$value" },
+                                volume: { $avg: "$volume" },
+                            }
+                        },
+                        {
+                            "$set": {
+                                date: "$_id.date",
+                            }
+                        },
+                        {
+                            $sort : { "date": 1 }
+                        }
+                    ])
+                        .then(data => {
+                            return data
+                        })
+                        .catch(err => {
+                            throw new GraphQLError('Unable to get collectible data.')
+                        })
+                default:
+                    return await CollectiblePrice.aggregate([
+                        {
+                            "$match": {
+                                collectibleId: collectibleId,
+                                // "date": {
+                                //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
+                                // }
+                            }
+                        },
+                        {
+                            "$group": {
+                                _id: {
+                                    symbol: "$collectibleId",
+                                    date: {
+                                        $dateTrunc: {
+                                            date: "$date",
+                                            unit: "day",
+                                            binSize: 1
+                                        },
+                                    },
+                                },
+                                value: { $avg: "$value" },
+                                high: { $max: "$value" },
+                                low: { $min: "$value" },
+                                open: { $first: "$value" },
+                                close: { $last: "$value" },
+                                volume: { $avg: "$volume" },
+                            }
+                        },
+                        {
+                            "$set": {
+                                date: "$_id.date",
+                            }
+                        },
+                        {
+                            $sort : { "date": 1 }
+                        }
+                    ])
+                        .then(data => {
+                            return data
+                        })
+                        .catch(err => {
+                            throw new GraphQLError('Unable to get collectible data.')
+                        })
+            }
 
         },
-        veveCollectibles: async (_, { collectibleId, search, limit = 5, after }, { prisma }) => {
+        veveCollectibles: async (_, { collectibleId, search, pagingOptions, after }, { prisma }) => {
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
 
             if (limit > 100) return null
 
@@ -134,7 +231,7 @@ const resolvers = {
 
             if (collectibleId) whereParams = {...whereParams, collectible_id: collectibleId }
             if (after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(after) } }
-            if (search) whereParams = {...whereParams, name: { contains: search} }
+            if (search) whereParams = {...whereParams, name: { contains: search } }
 
             queryParams = { ...queryParams, where: { ...whereParams } }
 
@@ -145,6 +242,98 @@ const resolvers = {
                 pageInfo: {
                     endCursor: collectibles.length > 1 ? encodeCursor(collectibles[collectibles.length - 1].collectible_id) : null,
                 }
+            }
+
+        },
+        veveComics: async (_, { uniqueCoverId, search, pagingOptions, after }, { prisma }) => {
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 100) return null
+
+            let queryParams = { take: limit, orderBy: [{ createdAt: 'desc' }] }
+            let whereParams = {}
+
+            if (uniqueCoverId) whereParams = {...whereParams, unique_cover_id: uniqueCoverId }
+            if (after) queryParams = { ...queryParams, skip: 1, cursor: { unique_cover_id: decodeCursor(after) } }
+            if (search) whereParams = {...whereParams, name: { contains: search } }
+
+            queryParams = { ...queryParams, where: { ...whereParams } }
+
+            const comics = await prisma.veve_comics.findMany(queryParams)
+
+            return {
+                edges: comics,
+                pageInfo: {
+                    endCursor: comics.length > 1 ? encodeCursor(comics[comics.length - 1].unique_cover_id) : null,
+                }
+            }
+
+        },
+        veveDropDates: async (_, { startDate, endDate }, { prisma }) => {
+
+            return await prisma.veve_collectibles.findMany({
+                where: {
+                    drop_date: {
+                        gte: new Date(startDate).toISOString(),
+                        lte: new Date(endDate).toISOString(),
+                    },
+                },
+                // distinct: ['drop_date'],
+                select: {
+                    collectible_id: true,
+                    name: true,
+                    rarity: true,
+                    store_price: true,
+                    image_thumbnail_url: true,
+                    total_issued: true,
+                    drop_date: true
+                }
+            })
+
+        },
+        veveValuations: async (_, __, { prisma, userInfo }) => {
+
+            const groupedCollectibles = await prisma.veve_tokens.groupBy({
+                by: ['collectible_id'],
+                where: {
+                    user_id: userInfo.userId
+                },
+                _count: {
+                    collectible_id: true,
+                },
+            })
+
+            const collectibleIds = groupedCollectibles.map(collectible => collectible.collectible_id)
+            collectibleIds.shift()
+
+            const collectibleValues = await prisma.veve_collectibles.findMany({
+                where: {
+                    collectible_id: { in: collectibleIds }
+                },
+                select: {
+                    collectible_id: true,
+                    floor_price: true,
+                    market_fee: true
+                }
+            })
+
+            let collectiblesValuation = 0
+
+            await collectibleValues.map((collectible) => {
+                const match = groupedCollectibles.filter(obj => obj.collectible_id === collectible.collectible_id)
+                if (match && match.length > 0){
+                    collectiblesValuation += collectible.floor_price * match[0]._count.collectible_id
+                }
+            })
+
+            let comicsValuation = 0
+
+            return {
+                "comics": comicsValuation,
+                "collectibles": collectiblesValuation,
+                "total": collectiblesValuation + comicsValuation
             }
 
         },
@@ -206,7 +395,104 @@ const resolvers = {
             return magicSets
 
         },
-        tokens: async (_, { token_id, type, search, limit = 15, after, grouped, userId, editionNumber, collectible_id, unique_cover_id, kraken }, { prisma }) => {
+        getUsersVeveTokens: async (_, { token_id, grouped, type, search, pagingOptions, editionNumber, collectible_id, unique_cover_id }, { userInfo, prisma }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised')
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            const user_wallet = await prisma.veve_wallets.findFirst({
+                where: {
+                    user_id: userInfo.userId
+                },
+                select: {
+                    id: true
+                }
+            })
+            let queryParams = { take: limit }
+            let whereParams = { wallet_id: user_wallet.id }
+
+            if (pagingOptions?.after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(pagingOptions.after)) } }
+            if (search) whereParams = { ...whereParams, name: { contains: search } }
+
+            if (grouped) queryParams = { ...queryParams, distinct: ['collectible_id', 'unique_cover_id']}
+            if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
+            if (collectible_id) whereParams = { ...whereParams, collectible_id: collectible_id }
+            if (unique_cover_id) whereParams = { ...whereParams, unique_cover_id: unique_cover_id }
+
+            let tokens
+
+            queryParams = { ...queryParams, where: { ...whereParams } }
+
+            if (token_id) {
+                tokens = [await prisma.veve_tokens.findUnique({where: {token_id: Number(token_id)}})]
+            } else {
+                tokens = await prisma.veve_tokens.findMany(queryParams)
+            }
+
+            return {
+                edges: tokens,
+                pageInfo: {
+                    endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
+                }
+            }
+
+            // return await prisma.veve_tokens.findMany({
+            //     where: {
+            //         user_id: userInfo.userId
+            //     },
+            //     distinct: ['collectible_id'],
+            //     take: limit
+            // })
+
+        },
+        getCollectibleWatchlist: async (_,__, { userInfo, prisma }) => {
+            const collectibles = await prisma.veve_watchlist.findMany({
+                where:{
+                    user_id: userInfo.userId,
+                    NOT: [{ collectible_id: null }]
+                }
+            })
+
+            console.log('watchlist collectibles is: ', collectibles)
+
+            return {
+                edges: [],
+                totalCount: 1,
+                pageInfo: {
+                    endCursor: "123"
+                }
+            }
+        },
+        getComicWatchlist: async (_,{ after, search, pagingOptions }, { userInfo, prisma }) => {
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 100) return null
+
+            let queryParams = { take: limit, select: { comic: true } }
+            let whereParams = { user_id: userInfo.userId, NOT: [{ unique_cover_id: null }] }
+            if (after) queryParams = { ...queryParams, skip: 1, cursor: { unique_cover_id: decodeCursor(after) } }
+            if (search) whereParams = {...whereParams, name: { contains: search } }
+
+            queryParams = { ...queryParams, where: { ...whereParams } }
+
+            let comicsArr = []
+            const comics = await prisma.veve_watchlist.findMany(queryParams)
+
+            await comics.map(comic => {
+                comicsArr.push(comic.comic)
+            })
+
+            return {
+                edges: comicsArr,
+                pageInfo: {
+                    endCursor: comicsArr.length > 1 ? encodeCursor(comicsArr[comicsArr.length - 1].unique_cover_id) : null,
+                }
+            }
+        },
+        tokens: async (_, { token_id, type, search, limit = 15, after, grouped, userId, editionNumber, collectible_id, unique_cover_id, kraken }, { prisma, userInfo }) => {
             if (kraken) limit = 10000
             let queryParams = { take: limit }
             let whereParams = {}
@@ -216,7 +502,12 @@ const resolvers = {
             if (search) whereParams = { ...whereParams, name: { contains: search } }
             if (type) whereParams = { ...whereParams, type: type }
             if (userId) {
-                whereParams = { ...whereParams, user_id: userId }
+                const user_wallet = await prisma.veve_wallets.findUnique({
+                    where: {
+                        user_id: userId
+                    }
+                })
+                whereParams = { ...whereParams, wallet_id: user_wallet }
             }
             if (grouped) queryParams = { ...queryParams, distinct: ['collectible_id', 'unique_cover_id']}
             if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
@@ -301,123 +592,14 @@ const resolvers = {
             }
 
         },
-        getUsersVeveTokens: async (_, { token_id, grouped, type, search, pagingOptions, editionNumber, collectible_id, unique_cover_id }, { userInfo, prisma }) => {
-            if (!userInfo) throw new GraphQLError('Not authorised')
 
-            let limit = 25
-            if (pagingOptions?.limit) limit = pagingOptions.limit
-
-
-            let queryParams = { take: limit }
-            let whereParams = { user_id: userInfo.userId }
-
-            if (pagingOptions?.after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(pagingOptions.after)) } }
-            if (search) whereParams = { ...whereParams, name: { contains: search } }
-
-            if (grouped) queryParams = { ...queryParams, distinct: ['collectible_id', 'unique_cover_id']}
-            if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
-            if (collectible_id) whereParams = { ...whereParams, collectible_id: collectible_id }
-            if (unique_cover_id) whereParams = { ...whereParams, unique_cover_id: unique_cover_id }
-
-            let tokens
-
-            queryParams = { ...queryParams, where: { ...whereParams } }
-
-            if (token_id) {
-                tokens = [await prisma.veve_tokens.findUnique({where: {token_id: Number(token_id)}})]
-            } else {
-                tokens = await prisma.veve_tokens.findMany(queryParams)
-            }
-
-            return {
-                edges: tokens,
-                pageInfo: {
-                    endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
-                }
-            }
-
-            // return await prisma.veve_tokens.findMany({
-            //     where: {
-            //         user_id: userInfo.userId
-            //     },
-            //     distinct: ['collectible_id'],
-            //     take: limit
-            // })
-
-        },
-        veveDropDates: async (_, { startDate, endDate }, { prisma }) => {
-
-            return await prisma.veve_collectibles.findMany({
-                where: {
-                    drop_date: {
-                        gte: new Date(startDate).toISOString(),
-                        lte: new Date(endDate).toISOString(),
-                    },
-                },
-                // distinct: ['drop_date'],
-                select: {
-                    collectible_id: true,
-                    name: true,
-                    rarity: true,
-                    store_price: true,
-                    image_thumbnail_url: true,
-                    total_issued: true,
-                    drop_date: true
-                }
-            })
-
-        },
-        veveValuations: async (_, __, { prisma, userInfo }) => {
-
-            const groupedCollectibles = await prisma.veve_tokens.groupBy({
-                by: ['collectible_id'],
-                where: {
-                    user_id: userInfo.userId
-                },
-                _count: {
-                    collectible_id: true,
-                },
-            })
-
-            const collectibleIds = groupedCollectibles.map(collectible => collectible.collectible_id)
-            collectibleIds.shift()
-
-            const collectibleValues = await prisma.veve_collectibles.findMany({
-                where: {
-                    collectible_id: { in: collectibleIds }
-                },
-                select: {
-                    collectible_id: true,
-                    floor_price: true,
-                    market_fee: true
-                }
-            })
-
-            let collectiblesValuation = 0
-
-            await collectibleValues.map((collectible) => {
-                const match = groupedCollectibles.filter(obj => obj.collectible_id === collectible.collectible_id)
-                if (match && match.length > 0){
-                    collectiblesValuation += collectible.floor_price * match[0]._count.collectible_id
-                }
-            })
-
-            let comicsValuation = 0
-
-            return {
-                "comics": comicsValuation,
-                "collectibles": collectiblesValuation,
-                "total": collectiblesValuation + comicsValuation
-            }
-
-        }
     },
     Mutation: {
         veveVaultImport: async (_, { payload }, { userInfo, prisma, pubsub }) => {
 
             const { userId } = userInfo
 
-            const { username, edition, collectible_id, project_id } = payload
+            const { username, edition, collectible_id } = payload
 
             const token = await prisma.veve_tokens.findFirst({
                 where: {
@@ -443,64 +625,91 @@ const resolvers = {
                 }
             })
 
-            // TODO: Check if the wallet address is already assigned to a user
-            // If the wallet is already assigned throw new error
-            // Prompt user to use extension to validate their ownership
-
-            await fetchInitialData(tokenItems.length, wallet_address, userId, username, prisma, pubsub, userInfo)
-
-            await pubsub.publish('VEVE_VAULT_IMPORT', {
-                veveVaultImport: {
-                    user_id: userInfo.userId,
-                    message: `${tokenItems.length} tokens have been found. Saving...`,
-                    complete: false
+            const walletClaimed = await prisma.veve_wallets.findUnique({
+                where: {
+                    id: wallet_address,
+                },
+                select: {
+                    user_id: true
                 }
             })
 
-            await prisma.veve_tokens.updateMany({
-                where: {
-                    user_id: userId
-                },
-                data: {
-                    user_id: null
-                }
-            })
-
-            await prisma.veve_tokens.updateMany({
-                data: {
-                    user_id: userId
-                },
-                where: {
-                    token_id: { in: tokenItems }
-                },
-            })
-
-            await prisma.profile.update({
-                data: {
-                    onboarded: true,
-                    veve_username: username,
-                    veve_wallet_imported: true,
-                    veve_wallet_address: wallet_address
-                },
+            const userHasExisitingWallet = await prisma.veve_wallets.count({
                 where: {
                     user_id: userId
                 }
             })
 
-            await pubsub.publish('VEVE_VAULT_IMPORT', {
-                veveVaultImport: {
-                    user_id: userInfo.userId,
-                    message: `Your vault has been successfully imported, thank you.`,
-                    complete: true
-                }
-            })
+            if (userHasExisitingWallet > 0){
+                await prisma.veve_wallets.updateMany({
+                    where: {
+                        user_id: userId
+                    },
+                    data: {
+                        user_id: null
+                    }
+                })
+            }
 
-            return {
-                "wallet_address": wallet_address,
-                "token_count": tokenItems.length
+            if (!walletClaimed.user_id){
+                await prisma.veve_wallets.update({
+                    where: {
+                        id: wallet_address
+                    },
+                    data: {
+                        user_id: userId
+                    }
+                })
+
+                const tokens = await prisma.veve_tokens.count({
+                    where: {
+                        wallet_id: wallet_address
+                    }
+                })
+
+                // await prisma.profile.update({
+                //     data: {
+                //         onboarded: true,
+                //         veve_username: username,
+                //         veve_wallet_imported: true,
+                //         veve_wallet_address: wallet_address
+                //     },
+                //     where: {
+                //         user_id: userId
+                //     }
+                // })
+
+                await pubsub.publish('VEVE_VAULT_IMPORT', {
+                    veveVaultImport: {
+                        user_id: userInfo.userId,
+                        message: `Your vault has been successfully imported, thank you.`,
+                        complete: true
+                    }
+                })
+
+                return {
+                    "wallet_address": wallet_address,
+                    "token_count": tokens
+                }
+
+            } else {
+                throw new GraphQLError('Wallet is already claimed.')
             }
 
         },
+        addToWatchlist: async (_, { collectibleId, uniqueCoverId }, { userInfo, prisma }) => {
+
+            const test = await prisma.veve_watchlist.create({
+                data:{
+                    user_id: userInfo.userId,
+                    unique_cover_id: uniqueCoverId
+                }
+            })
+
+            console.log('watchlist test is : ', test)
+
+            return true
+        }
     },
     Subscription: {
         veveVaultImport: {
@@ -543,10 +752,18 @@ const resolvers = {
         },
         quantity: async ({ collectible_id }, __, { prisma, userInfo }) => {
             try {
+                const user_wallet = await prisma.veve_wallets.findFirst({
+                    where: {
+                        user_id: userInfo.userId
+                    },
+                    select: {
+                        id: true
+                    }
+                })
                 return await prisma.veve_tokens.count({
                     where: {
                         collectible_id: collectible_id,
-                        user_id: userInfo.userId
+                        wallet_id: user_wallet.id
                     },
                 })
             } catch(err) {
@@ -624,6 +841,136 @@ const resolvers = {
                     ])]
             }
         }
+    },
+    Comic: {
+        tokens: async ({uniqueCoverId}, {sortOptions, pagingOptions}, { prisma }) => {
+            let limit = 15
+            let sortParams = { edition: 'asc' }
+            let queryParams = {}
+            let whereParams = { "uniqueCoverId" : uniqueCoverId }
+            if (sortOptions) sortParams = { [sortOptions.sortField]: sortOptions.sortDirection }
+            if (pagingOptions){
+                if (pagingOptions.limit) limit = pagingOptions.limit
+                if (pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(pagingOptions.after)) }}
+            }
+            queryParams = { ...queryParams, take: limit, orderBy: [sortParams], where: { ...whereParams } }
+
+            const tokens = await prisma.veve_tokens.findMany(queryParams)
+
+            return {
+                edges: tokens,
+                pageInfo: {
+                    endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
+                }
+            }
+
+        },
+        quantity: async ({ unique_cover_id }, __, { prisma, userInfo }) => {
+            try {
+                const user_wallet = await prisma.veve_wallets.findFirst({
+                    where: {
+                        user_id: userInfo.userId
+                    },
+                    select: {
+                        id: true
+                    }
+                })
+                return await prisma.veve_tokens.count({
+                    where: {
+                        unique_cover_id: unique_cover_id,
+                        wallet_id: user_wallet.id
+                    },
+                })
+            } catch(err) {
+                throw new GraphQLError('Could not count comics.')
+            }
+        },
+        valuations: async ({ unique_cover_id }, { period }, { prisma }) => {
+            switch (period){
+                case 1:
+                    return [await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: unique_cover_id,
+                                "date": {
+                                    $gte: new Date(new Date().getTime() - (24 * 60 * 60 * 1000))
+                                }
+                            }
+                        },
+                    ])]
+                case 2:
+                    return [await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: unique_cover_id,
+                                "date": {
+                                    $gte: new Date(new Date().getTime() - (48 * 60 * 60 * 1000))
+                                }
+                            }
+                        },
+                    ])]
+                case 7:
+                    console.log('7 day period...')
+                    return [await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: unique_cover_id,
+                                "date": {
+                                    $gte: new Date(new Date().getTime() - (7 * 24 * 60 * 60 * 1000))
+                                }
+                            }
+                        },
+                    ])]
+                case 28 || 30:
+                    return [await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: unique_cover_id,
+                                "date": {
+                                    $gte: new Date(new Date().getTime() - (30 * 24 * 60 * 60 * 1000))
+                                }
+                            }
+                        },
+                    ])]
+                case 90:
+                    return [await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: unique_cover_id,
+                                "date": {
+                                    $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
+                                }
+                            }
+                        },
+                    ])]
+                default:
+                    return [await ComicPrice.aggregate([
+                        {
+                            "$match": {
+                                uniqueCoverId: unique_cover_id,
+                                "date": {
+                                    $gte: new Date(new Date().getTime() - (24 * 60 * 60 * 1000))
+                                }
+                            }
+                        },
+                    ])]
+            }
+        },
+        watching: async ({ unique_cover_id }, __, { prisma, userInfo }) => {
+            try {
+                const watching = await prisma.veve_watchlist.findFirst({
+                    where: {
+                        user_id: userInfo.userId,
+                        unique_cover_id: unique_cover_id
+                    }
+                })
+                console.log('watching is: ', watching)
+                console.log(`unique: ${unique_cover_id}. watching is: ${watching}`)
+                return !!watching
+            } catch (e) {
+                throw new GraphQLError('Could not determine watchlist.')
+            }
+        },
     },
     Token: {
         collectible: async (args, __, { prisma }) => {

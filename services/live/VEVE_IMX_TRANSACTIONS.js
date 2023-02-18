@@ -97,37 +97,52 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     imxWalletIds.push({id: transaction.transfers[0].to_address })
                     imxWalletIds.push({id: transaction.transfers[0].from_address })
 
-                    // Check if transactions already exist
-                    // Push transactions into the database
-                    // try {
-                    //     const upsertTokens = await prisma.veve_transfers.upsert({
-                    //         where: {
-                    //             id: transaction.txn_id
-                    //         },
-                    //         update: {},
-                    //         create: {
-                    //             id: transaction.txn_id.toString(),
-                    //             from_wallet: transaction.transfers[0].from_address,
-                    //             to_wallet: transaction.transfers[0].to_address,
-                    //             timestamp: moment.unix(transaction.txn_time / 1000).format(),
-                    //             token: {
-                    //                 connectOrCreate: {
-                    //                     where: {token_id: Number(transaction.transfers[0].token.token_id)},
-                    //                     create: {
-                    //                         token_id: Number(transaction.transfers[0].token.token_id),
-                    //                         toProcess: true
-                    //                     },
-                    //                 }
-                    //             }
-                    //         }
-                    //     })
-                    //
-                    //     // Notify pubsub of updates
-                    //     console.log('upsertTokens is: ', upsertTokens)
-                    //
-                    // } catch (e) {
-                    //     console.log('clown fail: ', e)
-                    // }
+                    try {
+                        await prisma.veve_tokens.upsert({
+                            where: {
+                                token_id: Number(transaction.transfers[0].token.token_id)
+                            },
+                            update:{
+                                wallet_id: transaction.transfers[0].to_address
+                            },
+                            create: {
+                                token_id: Number(transaction.transfers[0].token.token_id)
+                            }
+                        })
+                        // Check if transactions already exist
+                        // Push transactions into the database
+                        // try {
+                        //     const upsertTokens = await prisma.veve_transfers.upsert({
+                        //         where: {
+                        //             id: transaction.txn_id
+                        //         },
+                        //         update: {},
+                        //         create: {
+                        //             id: transaction.txn_id.toString(),
+                        //             from_wallet: transaction.transfers[0].from_address,
+                        //             to_wallet: transaction.transfers[0].to_address,
+                        //             timestamp: moment.unix(transaction.txn_time / 1000).format(),
+                        //             token: {
+                        //                 connectOrCreate: {
+                        //                     where: {token_id: Number(transaction.transfers[0].token.token_id)},
+                        //                     create: {
+                        //                         token_id: Number(transaction.transfers[0].token.token_id),
+                        //                         toProcess: true
+                        //                     },
+                        //                 }
+                        //             }
+                        //         }
+                        //     })
+                        //
+                        //     // Notify pubsub of updates
+                        //     console.log('upsertTokens is: ', upsertTokens)
+                        //
+                        // } catch (e) {
+                        //     console.log('clown fail: ', e)
+                        // }
+                    } catch (e) {
+                        console.log('[ERROR] Unable to upsert token.')
+                    }
 
                 })
 
@@ -142,10 +157,10 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         skipDuplicates:true
                     })
 
-                    await prisma.veve_tokens.createMany({
-                        data: imxTokenArr,
-                        skipDuplicates: true
-                    })
+                    // await prisma.veve_tokens.createMany({
+                    //     data: imxTokenArr,
+                    //     skipDuplicates: true
+                    // })
 
                 }catch (e) {
                     console.log('fail clown: ', e)
