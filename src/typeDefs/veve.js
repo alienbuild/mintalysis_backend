@@ -6,21 +6,35 @@ const typeDefs = gql`
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
         veveCollectibles(collectibleId: String, search: String, limit: Int, after: String): CollectiblesConnection
+        veveComics(uniqueCoverId: String, search: String, limit: Int, after: String): ComicsConnection
+        veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
+        veveValuations : VeveValuationsPayload
+        getCollectibleWatchlist(pagingOptions: pagingOptions): CollectibleWatchlistConnection
+        getComicWatchlist(pagingOptions: pagingOptions): ComicWatchlistConnection
         getUserMagicSet(seriesId: String) : [MagicMintSet]
         getUsersVeveTokens(grouped: Boolean, token_id: ID, editionNumber: Int, type: String, userId: String, search: String, pagingOptions: pagingOptions, collectible_id: String, unique_cover_id: String) : TokensConnection
         tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
-        veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
-        veveValuations : VeveValuationsPayload
     }
     
     type Mutation {
         veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
         updateLastSeen(last_seen: String) : Boolean
+        addToWatchlist(collectibleId: String, uniqueCoverId: String, type: String!) : Boolean
     }
     
     type Subscription {
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
+    }
+
+    type ComicWatchlistConnection {
+        edges: [Comic]!
+        pageInfo: PageInfo!
+    }
+    
+    type CollectibleWatchlistConnection {
+        edges: [Collectible]!
+        pageInfo: PageInfo!
     }
     
     type VeveValuationsPayload {
@@ -111,6 +125,53 @@ const typeDefs = gql`
         user_id: String
         message: String
         complete: Boolean
+    }
+
+    type ComicsConnection {
+        edges: [Comic!]!
+        totalCount: Int
+        pageInfo: PageInfo!
+    }
+
+    type Comic {
+        unique_cover_id: String!
+        name: String!
+        rarity: String!
+        description: String!
+        comic_number: Int!
+        comic_series_id: String!
+        image_thumbnail: String!
+        image_low_resolution_url: String
+        image_med_resolution_url: String
+        image_full_resolution_url: String
+        image_high_resolution_url: String
+        image_direction: String
+        drop_date: String
+        drop_method: String
+        start_year: Int
+        page_count: Int
+        store_price: Float
+        publisher_id: String
+        market_fee: Float
+        total_issued: Int
+        total_available: Int
+        is_free: Boolean
+        is_unlimited: Boolean
+        all_time_high: Float
+        all_time_low: Float
+        floor_price: Float
+        market_cap: Float
+        one_day_change: Float
+        one_mo_change: Float
+        one_wk_change: Float
+        one_year_change: Float
+        six_mo_change: Float
+        three_mo_change: Float
+        total_listings: Int
+        quantity: Int
+        tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
+        valuations(period: Int) : [[VEVEValuationObj]]
+        watching: Boolean
     }
 
     type CollectiblesConnection {

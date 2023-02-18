@@ -31,7 +31,7 @@ const getCollectibleMarketListings = (collectibleId) => {
 }
 
 const imxCollectibleLookup = async (user, index) => {
-    await setTimeout(1000 * index)
+    await setTimeout(Math.floor(Math.random() * 2500) + 14000)
     try {
         const token = await prisma.veve_tokens.findFirst({
             where: {
@@ -55,6 +55,7 @@ const imxCollectibleLookup = async (user, index) => {
 }
 
 export const GetWalletUsernamesFromVeveCollectibles = async () => {
+    console.log(`[FETCHING USERNAMES FROM VEVE COLLECTIBLES MARKETPLACE]`)
 
     const collectibles = await prisma.veve_collectibles.findMany({
         orderBy: [
@@ -67,7 +68,7 @@ export const GetWalletUsernamesFromVeveCollectibles = async () => {
     // console.log('collectibles is: ', collectibles.length)
 
     await collectibles.map(async (collectible, index) => {
-        await setTimeout(5000 * index)
+        await setTimeout(Math.floor(Math.random() * 2500) + 14000)
         // console.log(`[FETCHING] - ${collectible.name}`)
         // if (index > 0) return
         const collectibleId = collectible.collectible_id
@@ -103,7 +104,7 @@ export const GetWalletUsernamesFromVeveCollectibles = async () => {
                 // console.log('[VEVE] Found users to lookup: ', userLookup.length)
 
                 userLookup.map(async (user, index) => {
-                    await setTimeout(1000 * index)
+                    await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                     const exisitingUser = await prisma.veve_wallets.findUnique({
                         where: {
                             veve_username: user.sellerName
@@ -111,10 +112,10 @@ export const GetWalletUsernamesFromVeveCollectibles = async () => {
                     })
 
                     if (!exisitingUser) {
-                        await setTimeout(1000 * index)
+                        await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                         const wallet_address = await imxCollectibleLookup(user, index)
                         if (wallet_address && wallet_address.length > 1){
-                            await setTimeout(1000 * index)
+                            await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                             console.log(`[NEW USER] - ${wallet_address}`)
                             try {
                                 await prisma.veve_wallets.upsert({
@@ -172,7 +173,7 @@ const getComicMarketListings = (coverId) => {
 }
 
 const imxComicLookup = async (user, index) => {
-    await setTimeout(1000 * index)
+    await setTimeout(Math.floor(Math.random() * 2500) + 14000)
 
     try {
 
@@ -192,7 +193,7 @@ const imxComicLookup = async (user, index) => {
         return imxOwner.user
 
     } catch (e) {
-        console.log(`Error geting wallet address: `, e )
+
     }
 
 }
@@ -262,7 +263,8 @@ const fetchComics = async () => {
         .catch(e => console.log('error: ', e))
 }
 
-const GetWalletUsernamesFromVeveComics = async () => {
+export const GetWalletUsernamesFromVeveComics = async () => {
+    console.log(`[FETCHING USERNAMES FROM VEVE COMICS MARKETPLACE]`)
 
     try {
 
@@ -286,11 +288,11 @@ const GetWalletUsernamesFromVeveComics = async () => {
 
                 await comicsItems.map(async (comic, index) => {
                         // if (index > 0) return
-                        await setTimeout(5000 * index)
-                        await comic.node.covers.map(async (cover, index) => {
+                    await setTimeout(Math.floor(Math.random() * 2500) + 14000)
+                    await comic.node.covers.map(async (cover, index) => {
                             if (cover.rarity === "COMMON") return
 
-                            await setTimeout(2000 * index)
+                            await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                             // console.log(`[FETCHING]: ${comic.node.name} #${comic.node.comicNumber}`)
 
                             const coverId = cover.id
@@ -330,8 +332,7 @@ const GetWalletUsernamesFromVeveComics = async () => {
                                     // console.log('[VEVE] Found users to lookup: ', userLookup.length)
 
                                     userLookup.map(async (user, index) => {
-                                        await setTimeout(1000 * index)
-
+                                        await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                                         const exisitingUser = await prisma.veve_wallets.findUnique({
                                             where: {
                                                 veve_username: user.sellerName
@@ -339,11 +340,11 @@ const GetWalletUsernamesFromVeveComics = async () => {
                                         })
 
                                         if (!exisitingUser) {
-                                            await setTimeout(1000 * index)
+                                            await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                                             const wallet_address = await imxComicLookup(user, index)
 
                                             if (wallet_address && wallet_address.length > 1) {
-                                                await setTimeout(1000 * index)
+                                                await setTimeout(Math.floor(Math.random() * 2500) + 14000)
                                                 // console.log(`[NEW USER] - ${wallet_address}`)
                                                 try {
                                                     await prisma.veve_wallets.upsert({

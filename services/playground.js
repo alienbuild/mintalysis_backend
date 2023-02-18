@@ -476,7 +476,7 @@ const getVeveUsernamesFromFeed = async () => {
             'client-operation': 'AuthUserDetails',
         },
         body: JSON.stringify({
-            query: getVeveFeedUsernames("2023-02-08T00:48:57.207Z")
+            query: getVeveFeedUsernames("2021-12-24T01:05:00.692Z")
         }),
     })
         .then(veve_feed_usernames => veve_feed_usernames.json())
@@ -542,7 +542,136 @@ const getVeveUsernamesFromFeed = async () => {
         .catch(e => console.log('[ERROR] Unable to get usernames from the veve feed.', e))
 }
 
-getVeveUsernamesFromFeed()
+const getImxTransactions = () => (`query listTransactionsV2($address: String!, $pageSize: Int, $nextToken: String, $txnType: String, $maxTime: Float) {
+  listTransactionsV2(
+    address: $address
+    limit: $pageSize
+    nextToken: $nextToken
+    txnType: $txnType
+    maxTime: $maxTime
+  ) {
+    items {
+      txn_time
+      txn_id
+      txn_type
+      transfers {
+        from_address
+        to_address
+        token {
+          type
+          quantity
+          usd_rate
+          token_address
+          token_id
+        }
+      }
+    }
+    nextToken
+    lastUpdated
+    txnType
+    maxTime
+    scannedCount
+  }
+}`)
 
+let pageSize = 200
+let i = 0
+let tokenItems = []
+
+const fetchInitialData = async (wallet_address, fullCapture = false, endCursor) => {
+    let url = `https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}`
+    if (endCursor && endCursor.length > 1) url = `https://api.x.immutable.com/v1/assets?page_size=${pageSize}&user=${wallet_address}&cursor=${endCursor}`
+
+    const getWalletItems = await fetch(url)
+    const walletItems = await getWalletItems.json()
+
+    await walletItems.result.map(async item => {
+        await setTimeout(150)
+        i++
+        await tokenItems.push(Number(item.token_id))
+    })
+
+    if (!walletItems.cursor) fullCapture = true
+    if (!fullCapture) {
+        await setTimeout(1100)
+        await fetchInitialData(wallet_address, fullCapture, walletItems.cursor)
+    }
+}
+
+const getTokenWalletAddressOwners = async (skip = 130000, take = 10000) => {
+    console.log(`*****[FETCHING DATA FOR WALLETS]***** [SKIP]: ${skip}`)
+
+    let count = 0
+    try {
+
+        const wallets = await prisma.veve_wallets.findMany({
+            take: take,
+            skip: skip,
+            select:{
+                id: true
+            }
+        })
+
+        await wallets.map(async (wallet, index) => {
+            try {
+                await setTimeout(Math.floor(Math.random() * 10000) + 1000)
+
+                await fetchInitialData(wallet.id)
+                if (!tokenItems) {
+                    try {
+                        await prisma.veve_wallets.update({
+                            where: {
+                                id: wallet.id,
+                            },
+                            data: {
+                                active: false
+                            }
+                        })
+                        console.log(`[DEAD WALLET] https://immutascan.io/address/${wallet.id}. skip is ${skip}. count is ${count}`)
+                    } catch (e) {
+                        console.log('[PRISMA FAILED]')
+                    }
+                    tokenItems = []
+                } else if (tokenItems && tokenItems.length >= 0) {
+                    tokenItems.map(async (token, index) => {
+                        await setTimeout(300 + index)
+                        try {
+                            await prisma.veve_tokens.upsert({
+                                where: {
+                                    token_id: Number(token)
+                                },
+                                update: {
+                                    wallet_id: wallet.id
+                                },
+                                create: {
+                                    token_id: Number(token)
+                                }
+                            })
+                            console.log(`[SUCCESS] updated https://immutascan.io/address/${wallet.id} tokens. skip is ${skip}. count is ${count}`)
+
+                        } catch (e) {
+                            console.log('[PRISMA FAILED]')
+                        }
+                    })
+                    count++
+                    tokenItems = []
+                }
+            } catch (e) {
+                count++
+                console.log('ERROR GETTING FETCH INITIAL DATA', e)
+                console.log(`[COUNT] ${count}`)
+            }
+
+        })
+
+        // await getTokenWalletAddressOwners(take * 2, take)
+
+    } catch (e) {
+        console.log('[ERROR] Unable to get imx transactions to resolve the token holders.')
+    }
+}
+
+// getTokenWalletAddressOwners()
+getVeveUsernamesFromFeed() //
 // generateWriterSlugs()
 // scrapeVeveSuggestedUsers()

@@ -74,13 +74,25 @@ model veve_transfers {
 }
 
 model veve_wallets {
-  id            String       @id
-  user_id       String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime?    @updatedAt
-  veve_username String?      @unique
+  id            String    @id
+  user_id       String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
+  veve_username String?   @unique
   veve_id       String?
-  veve_mints    veve_mints[]
+  active        Boolean?  @default(true)
+
+  @@index([user_id])
+}
+
+model veve_watchlist {
+  id              String             @id @default(uuid())
+  user_id         String             @unique
+  user            users              @relation(fields: [user_id], references: [id])
+  collectible_id  String?
+  collectible     veve_collectibles? @relation(fields: [collectible_id], references: [collectible_id])
+  unique_cover_id String?
+  comic           veve_comics?       @relation(fields: [unique_cover_id], references: [unique_cover_id])
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -96,20 +108,20 @@ model transfers_daily {
 }
 
 model users {
-  id        String         @id @default(uuid())
-  email     String         @unique
-  password  String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  role      Role           @default(BASIC)
-  username  String         @unique
-  avatar    String?
-  last_seen DateTime?      @updatedAt
-  activated Boolean        @default(false)
-  tokens    veve_tokens[]
-  projects  nft_projects[]
-  users_B   users[]        @relation("user_follows")
-  users_A   users[]        @relation("user_follows")
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  role           Role            @default(BASIC)
+  username       String          @unique
+  avatar         String?
+  last_seen      DateTime?       @updatedAt
+  activated      Boolean         @default(false)
+  projects       nft_projects[]
+  users_B        users[]         @relation("user_follows")
+  users_A        users[]         @relation("user_follows")
+  veve_watchlist veve_watchlist?
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -165,33 +177,33 @@ model nft_projects {
 }
 
 model veve_comics {
-  unique_cover_id           String       @id
+  unique_cover_id           String           @id
   name                      String
   rarity                    String?
-  description               String?      @db.Text
+  description               String?          @db.Text
   comic_series_id           String?
   drop_date                 DateTime?
-  store_price               Decimal?     @db.Decimal(10, 2)
+  store_price               Decimal?         @db.Decimal(10, 2)
   publisher_id              String?
-  market_fee                Decimal?     @db.Decimal(10, 2)
-  createdAt                 DateTime     @default(now())
-  updatedAt                 DateTime     @updatedAt
-  all_time_high             Decimal?     @db.Decimal(10, 2)
-  all_time_low              Decimal?     @db.Decimal(10, 2)
+  market_fee                Decimal?         @db.Decimal(10, 2)
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  all_time_high             Decimal?         @db.Decimal(10, 2)
+  all_time_low              Decimal?         @db.Decimal(10, 2)
   comic_number              Int?
   drop_method               String?
-  floor_price               Decimal?     @db.Decimal(10, 2)
-  is_free                   Boolean?     @default(false)
-  is_unlimited              Boolean?     @default(false)
-  market_cap                Decimal?     @db.Decimal(10, 2)
-  one_day_change            Decimal?     @db.Decimal(10, 2)
-  one_mo_change             Decimal?     @db.Decimal(10, 2)
-  one_wk_change             Decimal?     @db.Decimal(10, 2)
-  one_year_change           Decimal?     @db.Decimal(10, 2)
+  floor_price               Decimal?         @db.Decimal(10, 2)
+  is_free                   Boolean?         @default(false)
+  is_unlimited              Boolean?         @default(false)
+  market_cap                Decimal?         @db.Decimal(10, 2)
+  one_day_change            Decimal?         @db.Decimal(10, 2)
+  one_mo_change             Decimal?         @db.Decimal(10, 2)
+  one_wk_change             Decimal?         @db.Decimal(10, 2)
+  one_year_change           Decimal?         @db.Decimal(10, 2)
   page_count                Int?
-  six_mo_change             Decimal?     @db.Decimal(10, 2)
+  six_mo_change             Decimal?         @db.Decimal(10, 2)
   start_year                Int?
-  three_mo_change           Decimal?     @db.Decimal(10, 2)
+  three_mo_change           Decimal?         @db.Decimal(10, 2)
   total_available           Int?
   total_issued              Int?
   total_listings            Int?
@@ -201,11 +213,12 @@ model veve_comics {
   image_low_resolution_url  String?
   image_med_resolution_url  String?
   image_thumbnail           String?
-  all_time_change           Decimal?     @db.Decimal(10, 2)
-  slug                      String?      @unique
+  all_time_change           Decimal?         @db.Decimal(10, 2)
+  slug                      String?          @unique
   artists                   artists[]
   characters                characters[]
   writers                   writers[]
+  veve_watchlist            veve_watchlist[]
 
   @@index([unique_cover_id], map: "unique_cover_id")
 }
@@ -254,30 +267,29 @@ model veve_tokens {
   brand_id          String?
   licensor_id       String?
   series_id         String?
-  user_id           String?
+  wallet_id         String?
   brand             veve_brands?        @relation(fields: [brand_id], references: [brand_id])
   licensor          veve_licensors?     @relation(fields: [licensor_id], references: [licensor_id])
   series            veve_series?        @relation(fields: [series_id], references: [series_id])
-  users             users?              @relation(fields: [user_id], references: [id])
   veve_collectibles veve_collectibles[]
 
   @@index([token_id])
+  @@index([wallet_id])
   @@index([brand_id], map: "veve_tokens_brand_id_fkey")
   @@index([licensor_id], map: "veve_tokens_licensor_id_fkey")
   @@index([series_id], map: "veve_tokens_series_id_fkey")
-  @@index([user_id], map: "veve_tokens_user_id_fkey")
 }
 
 model veve_collectibles {
-  collectible_id                       String        @id
+  collectible_id                       String           @id
   name                                 String?
   rarity                               String?
-  description                          String?       @db.Text
+  description                          String?          @db.Text
   edition_type                         String?
-  store_price                          Decimal?      @db.Decimal(10, 2)
+  store_price                          Decimal?         @db.Decimal(10, 2)
   drop_date                            DateTime?
-  market_fee                           Decimal?      @db.Decimal(10, 2)
-  createdAt                            DateTime      @default(now())
+  market_fee                           Decimal?         @db.Decimal(10, 2)
+  createdAt                            DateTime         @default(now())
   updatedAt                            DateTime?
   background_image_direction           String?
   background_image_full_resolution_url String?
@@ -293,7 +305,7 @@ model veve_collectibles {
   image_med_resolution_url             String?
   image_thumbnail_url                  String?
   image_url                            String?
-  is_unlimited                         Boolean?      @default(false)
+  is_unlimited                         Boolean?         @default(false)
   total_available                      Int?
   total_issued                         Int?
   total_likes                          Int?
@@ -302,23 +314,24 @@ model veve_collectibles {
   licensor_id                          String?
   series_id                            String?
   drop_method                          String?
-  is_free                              Boolean?      @default(false)
+  is_free                              Boolean?         @default(false)
   total_store_allocation               Int?
-  all_time_high                        Decimal?      @db.Decimal(10, 2)
-  all_time_low                         Decimal?      @db.Decimal(10, 2)
-  floor_price                          Decimal?      @db.Decimal(10, 2)
-  market_cap                           Decimal?      @db.Decimal(10, 2)
-  one_day_change                       Decimal?      @db.Decimal(10, 2)
-  one_mo_change                        Decimal?      @db.Decimal(10, 2)
-  one_wk_change                        Decimal?      @db.Decimal(10, 2)
-  one_year_change                      Decimal?      @db.Decimal(10, 2)
-  six_mo_change                        Decimal?      @db.Decimal(10, 2)
-  three_mo_change                      Decimal?      @db.Decimal(10, 2)
+  all_time_high                        Decimal?         @db.Decimal(10, 2)
+  all_time_low                         Decimal?         @db.Decimal(10, 2)
+  floor_price                          Decimal?         @db.Decimal(10, 2)
+  market_cap                           Decimal?         @db.Decimal(10, 2)
+  one_day_change                       Decimal?         @db.Decimal(10, 2)
+  one_mo_change                        Decimal?         @db.Decimal(10, 2)
+  one_wk_change                        Decimal?         @db.Decimal(10, 2)
+  one_year_change                      Decimal?         @db.Decimal(10, 2)
+  six_mo_change                        Decimal?         @db.Decimal(10, 2)
+  three_mo_change                      Decimal?         @db.Decimal(10, 2)
   total_listings                       Int?
-  all_time_change                      Decimal?      @db.Decimal(10, 2)
-  slug                                 String?       @unique
-  series                               veve_series?  @relation(fields: [series_id], references: [series_id])
+  all_time_change                      Decimal?         @db.Decimal(10, 2)
+  slug                                 String?          @unique
+  series                               veve_series?     @relation(fields: [series_id], references: [series_id])
   veve_tokens                          veve_tokens[]
+  veve_watchlist                       veve_watchlist[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -512,13 +525,36 @@ model tmp_ids {
 }
 
 model veve_mints {
-  id        Int           @id
+  id        Int       @id
   wallet_id String?
-  wallet    veve_wallets? @relation(fields: [wallet_id], references: [id])
-  timestamp String?       @db.Text
+  timestamp String?   @db.Text
   token_id  Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime?     @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+}
+
+model wallet_update {
+  token_id  Int     @unique(map: "token_id_UNIQUE")
+  wallet_id String? @default("Null") @db.VarChar(80)
+  max_id    String  @unique(map: "max_id_UNIQUE") @db.VarChar(45)
+
+  @@id([token_id, max_id])
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model wallet_update2 {
+  token_id  BigInt?
+  wallet_id String? @db.Text
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model wallet_update3 {
+  token_id  BigInt?
+  wallet_id String? @db.Text
+
+  @@ignore
 }
 
 enum Role {

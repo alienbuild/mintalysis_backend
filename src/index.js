@@ -130,6 +130,7 @@ const main = async () => {
             })
     );
     console.log(`Server is now running on http://localhost:${PORT}/graphql`);
+
 };
 
 main()
