@@ -73,7 +73,7 @@ const typeDefs = gql`
         brand_id: String
         licensor_id: String
         series_id: String
-        transfers(walletId: String): [Transfers]
+        transfers(type: String): [Transfers]
         collectible: Collectible 
         comic: Comic
     }
@@ -84,6 +84,8 @@ const typeDefs = gql`
         to_wallet: String
         timestamp: DateTime
         token_id: String
+        entry_price: Float
+        break_even: Float
     }
     
     type MagicMintSet {
@@ -230,6 +232,7 @@ const typeDefs = gql`
         quantity: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
         valuations(period: Int) : [[VEVEValuationObj]]
+        watching: Boolean
     }
     
 `
