@@ -295,10 +295,19 @@ const resolvers = {
         },
         veveValuations: async (_, __, { prisma, userInfo }) => {
 
+            const user_wallet = await prisma.veve_wallets.findFirst({
+                where: {
+                    user_id: userInfo.userId
+                },
+                select: {
+                    id: true
+                }
+            })
+
             const groupedCollectibles = await prisma.veve_tokens.groupBy({
                 by: ['collectible_id'],
                 where: {
-                    user_id: userInfo.userId
+                    wallet_id: user_wallet.id
                 },
                 _count: {
                     collectible_id: true,
@@ -446,23 +455,34 @@ const resolvers = {
             // })
 
         },
-        getCollectibleWatchlist: async (_,__, { userInfo, prisma }) => {
-            const collectibles = await prisma.veve_watchlist.findMany({
-                where:{
-                    user_id: userInfo.userId,
-                    NOT: [{ collectible_id: null }]
-                }
+        getCollectibleWatchlist: async (_,{ after, search, pagingOptions }, { userInfo, prisma }) => {
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 100) return null
+
+            let queryParams = { take: limit, select: { collectible: true } }
+            let whereParams = { user_id: userInfo.userId, NOT: [{ collectible_id: null }] }
+            if (after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(after) } }
+            if (search) whereParams = {...whereParams, name: { contains: search } }
+
+            queryParams = { ...queryParams, where: { ...whereParams } }
+
+            let collectiblesArr = []
+            const collectibles = await prisma.veve_watchlist.findMany(queryParams)
+
+            await collectibles.map(collectible => {
+                collectiblesArr.push(collectible.collectible)
             })
 
-            console.log('watchlist collectibles is: ', collectibles)
-
             return {
-                edges: [],
-                totalCount: 1,
+                edges: collectiblesArr,
                 pageInfo: {
-                    endCursor: "123"
+                    endCursor: collectiblesArr.length > 1 ? encodeCursor(collectiblesArr[collectiblesArr.length - 1].collectible_id) : null,
                 }
             }
+
         },
         getComicWatchlist: async (_,{ after, search, pagingOptions }, { userInfo, prisma }) => {
 
@@ -592,7 +612,6 @@ const resolvers = {
             }
 
         },
-
     },
     Mutation: {
         veveVaultImport: async (_, { payload }, { userInfo, prisma, pubsub }) => {
@@ -699,16 +718,32 @@ const resolvers = {
         },
         addToWatchlist: async (_, { collectibleId, uniqueCoverId }, { userInfo, prisma }) => {
 
-            const test = await prisma.veve_watchlist.create({
-                data:{
-                    user_id: userInfo.userId,
-                    unique_cover_id: uniqueCoverId
+            try {
+                if (uniqueCoverId){
+                    await prisma.veve_watchlist.create({
+                        data:{
+                            user_id: userInfo.userId,
+                            unique_cover_id: uniqueCoverId
+                        }
+                    })
+
+                    return true
                 }
-            })
 
-            console.log('watchlist test is : ', test)
+                if (collectibleId){
+                    await prisma.veve_watchlist.create({
+                        data:{
+                            user_id: userInfo.userId,
+                            collectible_id: collectibleId
+                        }
+                    })
 
-            return true
+                    return true
+                }
+            } catch (e) {
+                return false
+            }
+
         }
     },
     Subscription: {
@@ -840,7 +875,20 @@ const resolvers = {
                         },
                     ])]
             }
-        }
+        },
+        watching: async ({ collectible_id }, __, { prisma, userInfo }) => {
+            try {
+                const watching = await prisma.veve_watchlist.findFirst({
+                    where: {
+                        user_id: userInfo.userId,
+                        collectible_id: collectible_id
+                    }
+                })
+                return !!watching
+            } catch (e) {
+                throw new GraphQLError('Could not determine watchlist.')
+            }
+        },
     },
     Comic: {
         tokens: async ({uniqueCoverId}, {sortOptions, pagingOptions}, { prisma }) => {
@@ -964,8 +1012,6 @@ const resolvers = {
                         unique_cover_id: unique_cover_id
                     }
                 })
-                console.log('watching is: ', watching)
-                console.log(`unique: ${unique_cover_id}. watching is: ${watching}`)
                 return !!watching
             } catch (e) {
                 throw new GraphQLError('Could not determine watchlist.')
@@ -991,16 +1037,17 @@ const resolvers = {
                 }
             })
         },
-        transfers: async ({ token_id }, { walletId }, { prisma }) => {
+        transfers: async ({ token_id, wallet_id, type }, __, { prisma }) => {
             try {
                 return await prisma.veve_transfers.findMany({
                     where: {
                         token_id,
-                        to_wallet: walletId
+                        to_wallet: wallet_id
                     },
                 })
+
             } catch (e) {
-                throw new GraphQLError('Could not get user transfers for this token.')
+                throw new GraphQLError('Could not get user transfers for this token.', e)
             }
         }
     },

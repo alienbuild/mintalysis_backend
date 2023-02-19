@@ -67,6 +67,8 @@ model veve_transfers {
   to_wallet   String
   timestamp   String?   @db.Text
   token_id    Int
+  entry_price Float?
+  break_even  Float?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
 
@@ -87,7 +89,7 @@ model veve_wallets {
 
 model veve_watchlist {
   id              String             @id @default(uuid())
-  user_id         String             @unique
+  user_id         String
   user            users              @relation(fields: [user_id], references: [id])
   collectible_id  String?
   collectible     veve_collectibles? @relation(fields: [collectible_id], references: [collectible_id])
@@ -108,20 +110,20 @@ model transfers_daily {
 }
 
 model users {
-  id             String          @id @default(uuid())
-  email          String          @unique
+  id             String           @id @default(uuid())
+  email          String           @unique
   password       String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  role           Role            @default(BASIC)
-  username       String          @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  role           Role             @default(BASIC)
+  username       String           @unique
   avatar         String?
-  last_seen      DateTime?       @updatedAt
-  activated      Boolean         @default(false)
+  last_seen      DateTime?        @updatedAt
+  activated      Boolean          @default(false)
   projects       nft_projects[]
-  users_B        users[]         @relation("user_follows")
-  users_A        users[]         @relation("user_follows")
-  veve_watchlist veve_watchlist?
+  users_B        users[]          @relation("user_follows")
+  users_A        users[]          @relation("user_follows")
+  veve_watchlist veve_watchlist[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")

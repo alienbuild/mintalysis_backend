@@ -19,8 +19,8 @@ const scheduledHourlyJobs = () => {
         VEVE_GET_COMIC_FLOORS()
     })
     schedule.scheduleJob('18 * * * *', () => {
-        GetWalletUsernamesFromVeveCollectibles()
-        GetWalletUsernamesFromVeveComics()
+        // GetWalletUsernamesFromVeveCollectibles()
+        // GetWalletUsernamesFromVeveComics()
     })
 }
 
