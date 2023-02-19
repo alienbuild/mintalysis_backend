@@ -476,7 +476,7 @@ const getVeveUsernamesFromFeed = async () => {
             'client-operation': 'AuthUserDetails',
         },
         body: JSON.stringify({
-            query: getVeveFeedUsernames("2021-12-17T15:01:38.548Z")
+            query: getVeveFeedUsernames("2021-11-04T19:30:17.213Z")
         }),
     })
         .then(veve_feed_usernames => veve_feed_usernames.json())
