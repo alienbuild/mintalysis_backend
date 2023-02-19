@@ -1,9 +1,10 @@
 import fetch from 'node-fetch'
 import HttpsProxyAgent from "https-proxy-agent"
 import moment from 'moment'
+import {setTimeout} from "node:timers/promises";
 
 import Twit from 'twit'
-import { prisma } from "../../src/index.js"
+import {prisma} from "../../src/index.js"
 
 const T = new Twit({
     consumer_key:         process.env.TWITTER_API_KEY,
@@ -83,7 +84,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 let imxTokenArr = []
                 let imxWalletIds = []
 
-                await imxTransactions.data.listTransactionsV2.items.map(async (transaction) => {
+                await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
 
                     imxTransArr.push({
                         id: transaction.txn_id,
@@ -97,6 +98,43 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     imxWalletIds.push({id: transaction.transfers[0].to_address })
                     imxWalletIds.push({id: transaction.transfers[0].from_address })
 
+                    await setTimeout(Math.floor(Math.random() * 2000) + index * 1000 / 3)
+
+                    const checkMetaData = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${transaction.transfers[0].token.token_id}`)
+                    const metadata = await checkMetaData.json()
+
+                    let updateObj = {
+                        token_id: Number(transaction.transfers[0].token.token_id),
+                        wallet_id: transaction.transfers[0].to_address,
+                    }
+                    if (metadata && metadata.name){
+                        updateObj.mint_date = metadata.created_at
+                        if (metadata && metadata.metadata.editionType){
+                            let collectibleId = metadata.image_url.split('.')
+                            updateObj.edition = metadata.metadata.edition
+                            updateObj.collectible_id = collectibleId[3]
+                            updateObj.type = 'collectible'
+                        } else {
+                            try {
+                                const uniqueCoverId = await prisma.veve_comics.findFirst({
+                                    where: {
+                                        image_full_resolution_url: metadata.image_url
+                                    },
+                                    select: {
+                                        unique_cover_id: true
+                                    }
+                                })
+                                if (uniqueCoverId){
+                                    updateObj.unique_cover_id = uniqueCoverId.unique_cover_id
+                                    updateObj.edition = metadata.metadata.edition
+                                    updateObj.type = 'comic'
+                                }
+                            } catch (e) {
+                                console.log('[ERROR] could not look up comic ', e)
+                            }
+                        }
+                    }
+
                     try {
                         await prisma.veve_tokens.upsert({
                             where: {
@@ -105,43 +143,10 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                             update:{
                                 wallet_id: transaction.transfers[0].to_address
                             },
-                            create: {
-                                token_id: Number(transaction.transfers[0].token.token_id)
-                            }
+                            create: updateObj
                         })
-                        // Check if transactions already exist
-                        // Push transactions into the database
-                        // try {
-                        //     const upsertTokens = await prisma.veve_transfers.upsert({
-                        //         where: {
-                        //             id: transaction.txn_id
-                        //         },
-                        //         update: {},
-                        //         create: {
-                        //             id: transaction.txn_id.toString(),
-                        //             from_wallet: transaction.transfers[0].from_address,
-                        //             to_wallet: transaction.transfers[0].to_address,
-                        //             timestamp: moment.unix(transaction.txn_time / 1000).format(),
-                        //             token: {
-                        //                 connectOrCreate: {
-                        //                     where: {token_id: Number(transaction.transfers[0].token.token_id)},
-                        //                     create: {
-                        //                         token_id: Number(transaction.transfers[0].token.token_id),
-                        //                         toProcess: true
-                        //                     },
-                        //                 }
-                        //             }
-                        //         }
-                        //     })
-                        //
-                        //     // Notify pubsub of updates
-                        //     console.log('upsertTokens is: ', upsertTokens)
-                        //
-                        // } catch (e) {
-                        //     console.log('clown fail: ', e)
-                        // }
                     } catch (e) {
-                        console.log('[ERROR] Unable to upsert token.')
+                        console.log('[ERROR] Unable to upsert token.', e)
                     }
 
                 })
@@ -156,11 +161,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         data: imxWalletIds,
                         skipDuplicates:true
                     })
-
-                    // await prisma.veve_tokens.createMany({
-                    //     data: imxTokenArr,
-                    //     skipDuplicates: true
-                    // })
 
                 }catch (e) {
                     console.log('fail clown: ', e)
@@ -197,3 +197,5 @@ export const VEVE_IMX_TRANSACTIONS = () => {
     }
 
 }
+
+VEVE_IMX_TRANSACTIONS()
