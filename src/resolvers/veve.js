@@ -221,9 +221,6 @@ const resolvers = {
         },
         veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions }, { prisma }) => {
 
-            console.log('sortOptions for veve collectibles are: ', sortOptions)
-            if (sortOptions) console.log('yep sort options are here.')
-
             let limit = 25
             if (pagingOptions?.limit) limit = pagingOptions.limit
 

@@ -10,6 +10,7 @@ import veveResolvers from './veve.js'
 import characterResolvers from './characters.js'
 import artistResolvers from './artists.js'
 import writerResolvers from './writers.js'
+import ecologiResolvers from './ecologi.js'
 
 const resolvers = merge({},
     DateTime,
@@ -22,7 +23,8 @@ const resolvers = merge({},
     veveResolvers,
     characterResolvers,
     artistResolvers,
-    writerResolvers
+    writerResolvers,
+    ecologiResolvers
 )
 
 export default resolvers

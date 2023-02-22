@@ -110,20 +110,21 @@ model transfers_daily {
 }
 
 model users {
-  id             String           @id @default(uuid())
-  email          String           @unique
-  password       String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  role           Role             @default(BASIC)
-  username       String           @unique
-  avatar         String?
-  last_seen      DateTime?        @updatedAt
-  activated      Boolean          @default(false)
-  projects       nft_projects[]
-  users_B        users[]          @relation("user_follows")
-  users_A        users[]          @relation("user_follows")
-  veve_watchlist veve_watchlist[]
+  id                 String           @id @default(uuid())
+  email              String           @unique
+  password           String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  role               Role             @default(BASIC)
+  username           String           @unique
+  avatar             String?
+  last_seen          DateTime?        @updatedAt
+  activated          Boolean          @default(false)
+  stripe_customer_id String?
+  projects           nft_projects[]
+  users_B            users[]          @relation("user_follows")
+  users_A            users[]          @relation("user_follows")
+  veve_watchlist     veve_watchlist[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")

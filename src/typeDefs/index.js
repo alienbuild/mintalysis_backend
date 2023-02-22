@@ -10,6 +10,7 @@ import veveTypeDefs from './veve.js'
 import characterTypeDefs from './characters.js'
 import artistTypeDefs from './artists.js'
 import writerTypeDefs from './writers.js'
+import ecologiTypeDefs from './ecologi.js'
 
 const typeDefs = [
     scalarDefs,
@@ -23,7 +24,8 @@ const typeDefs = [
     veveTypeDefs,
     characterTypeDefs,
     artistTypeDefs,
-    writerTypeDefs
+    writerTypeDefs,
+    ecologiTypeDefs
 ]
 
 export default typeDefs
