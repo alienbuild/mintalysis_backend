@@ -37,14 +37,14 @@ const typeDefs = gql`
         text: String
     }
 
-    input sortOptions {
-        sortDirection: String!
-        sortField: String!
-    }
-
     input pagingOptions {
         limit: Int
         after: String
+    }
+    
+    input sortOptions {
+        sortBy: String
+        sortDirection: String
     }
 
     input CredentialsInput {

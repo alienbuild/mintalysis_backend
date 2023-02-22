@@ -219,7 +219,10 @@ const resolvers = {
             }
 
         },
-        veveCollectibles: async (_, { collectibleId, search, pagingOptions, after }, { prisma }) => {
+        veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions }, { prisma }) => {
+
+            console.log('sortOptions for veve collectibles are: ', sortOptions)
+            if (sortOptions) console.log('yep sort options are here.')
 
             let limit = 25
             if (pagingOptions?.limit) limit = pagingOptions.limit
@@ -230,7 +233,9 @@ const resolvers = {
             let whereParams = {}
 
             if (collectibleId) whereParams = {...whereParams, collectible_id: collectibleId }
-            if (after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(after) } }
+            if (sortOptions && sortOptions.sortBy) queryParams = { ...queryParams, orderBy: { [sortOptions.sortBy]: sortOptions.sortDirection } }
+            // if (sortOptions && sortOptions.sortDirection) queryParams = { ...queryParams}
+            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
             if (search) whereParams = {...whereParams, name: { contains: search } }
 
             queryParams = { ...queryParams, where: { ...whereParams } }

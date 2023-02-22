@@ -144,7 +144,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                     await prisma.veve_comics.create({
                         data: {
-                            uniqueCoverId: comic.node.image.id,
+                            unique_cover_id: comic.node.image.id,
                             name: comic.node.comicType.name,
                             rarity: comic.node.rarity,
                             description: comic.node.comicType.description,
@@ -180,7 +180,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
                     })
                     console.log(`[SUCCESS][VEVE][COMIC]: ${comic.node.comicType.name} added to prisma db.`)
                 } catch (e) {
-                    // console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`)
+                    // console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`, e)
                 }
 
             })

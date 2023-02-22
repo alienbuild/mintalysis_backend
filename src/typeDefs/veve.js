@@ -5,7 +5,7 @@ const typeDefs = gql`
     type Query {
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
-        veveCollectibles(collectibleId: String, search: String, limit: Int, after: String): CollectiblesConnection
+        veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
         veveComics(uniqueCoverId: String, search: String, limit: Int, after: String): ComicsConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
         veveValuations : VeveValuationsPayload
