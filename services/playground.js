@@ -682,7 +682,7 @@ const getTokenWalletAddressOwners = async (skip = 130000, take = 10000) => {
 // generateWriterSlugs()
 // scrapeVeveSuggestedUsers()
 
-const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjI0Mzk5OQ==") => {
+const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjQ0Mzk5OQ==") => {
     if (endCursor) {
         return `query OtherProfileQuery {
     collectibleList(first: 500, filterOptions: {rarity: RARE}, after: "${endCursor}"){
