@@ -4,7 +4,7 @@ import moment from 'moment'
 import {setTimeout} from "node:timers/promises";
 
 import Twit from 'twit'
-import {prisma} from "../../src/index.js"
+import {prisma, pubsub} from "../../src/index.js"
 
 const T = new Twit({
     consumer_key:         process.env.TWITTER_API_KEY,
@@ -81,7 +81,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 const nextToken = imxTransactions.data.listTransactionsV2.nextToken
 
                 let imxTransArr = []
-                let imxTokenArr = []
                 let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
@@ -98,7 +97,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                             token_id: Number(transaction.transfers[0].token.token_id)
                         })
 
-                        imxTokenArr.push({token_id: Number(transaction.transfers[0].token.token_id)})
                         imxWalletIds.push({id: transaction.transfers[0].to_address })
                         imxWalletIds.push({id: transaction.transfers[0].from_address })
 
@@ -153,8 +151,10 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                 })
 
+                const previousTransactionCount = await prisma.veve_transfers.count()
+
                 try {
-                    await prisma.veve_transfers.createMany({
+                    const transfers = await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
                     })
@@ -164,31 +164,30 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         skipDuplicates:true
                     })
 
-                }catch (e) {
-                    console.log('fail clown: ', e)
-                }
+                    await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
+                        createVeveTransfer: imxTransArr
+                    })
 
-                try {
-                    await fetch(`http://localhost:8001/graphql`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            query: `mutation($transferInput: [VeveTransferInput]) { createVeveTransfer(transferInput: $transferInput) }`,
-                            variables:{
-                                "transferInput": imxTransArr
+                    await pubsub.publish('IMX_VEVE_TRANSFERS_UPDATED', {
+                        imxVeveTxnsUpdated: imxTransArr
+                    })
+
+                    const currentTransactionCount = await prisma.veve_transfers.count()
+                    if (currentTransactionCount > previousTransactionCount) {
+                        const imxStats = await prisma.imx_stats.update({
+                            where: {
+                                project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d"
+                            }, data: {
+                                transaction_count: currentTransactionCount
                             }
                         })
-                    })
-                        .then(data => data.json())
-                        .then(data => {
-                            // console.log('Mutation res is: ', data)
+                        await pubsub.publish('IMX_VEVE_STATS_UPDATED', {
+                            imxVeveStatsUpdated: imxStats
                         })
-                        .catch(error => console.log('[ERROR] Mutation did not like transfers. ', error))
+                    }
+
                 } catch (e) {
-                    console.log('[ERROR] Unable to send transactions through mutation. ', e)
+                    console.log('[ERROR] Unable to send transactions: ', e)
                 }
 
             })
