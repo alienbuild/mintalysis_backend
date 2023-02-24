@@ -11,6 +11,7 @@ import characterResolvers from './characters.js'
 import artistResolvers from './artists.js'
 import writerResolvers from './writers.js'
 import ecologiResolvers from './ecologi.js'
+import immutablexResolvers from './immutablex.js'
 
 const resolvers = merge({},
     DateTime,
@@ -24,7 +25,8 @@ const resolvers = merge({},
     characterResolvers,
     artistResolvers,
     writerResolvers,
-    ecologiResolvers
+    ecologiResolvers,
+    immutablexResolvers
 )
 
 export default resolvers

@@ -7,6 +7,7 @@ import {cookieRotator} from "./alice/cookieRotator.js";
 import {setTimeout} from "node:timers/promises";
 import moment from "moment";
 import fs from 'fs'
+import * as https from "https";
 
 const prisma = new PrismaClient()
 
@@ -681,10 +682,10 @@ const getTokenWalletAddressOwners = async (skip = 130000, take = 10000) => {
 // generateWriterSlugs()
 // scrapeVeveSuggestedUsers()
 
-const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjQ0MDA5OQ==") => {
+const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjI0Mzk5OQ==") => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 400, filterOptions: {rarity: UNCOMMON}, after: "${endCursor}"){
+    collectibleList(first: 500, filterOptions: {rarity: RARE}, after: "${endCursor}"){
         pageInfo {
             hasNextPage
             endCursor
@@ -702,8 +703,6 @@ const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjQ0MDA5
                 transactions {
                     pageInfo {
                         hasNextPage
-                        hasPreviousPage
-                        startCursor
                         endCursor
                     }
                     edges{
@@ -720,7 +719,7 @@ const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjQ0MDA5
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: SECRET_RARE}){
+    collectibleList(first: 500, filterOptions: {rarity: RARE}){
         pageInfo {
             hasNextPage
             endCursor
@@ -738,8 +737,6 @@ const getVeveUsernamesFromSecretAPI = (endCursor = "YXJyYXljb25uZWN0aW9uOjQ0MDA5
                 transactions {
                     pageInfo {
                         hasNextPage
-                        hasPreviousPage
-                        startCursor
                         endCursor
                     }
                     edges{
@@ -769,8 +766,9 @@ export const scrapeUsersFromVeve = async (fullCapture = false, endCursor) => {
             'Accept': 'application/json',
             'cookie': cookieToUse,
             'client-name': 'veve-web-app',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
             'client-operation': 'AuthUserDetails',
+            'Connection': 'keep-alive'
         },
         body: JSON.stringify({
             query: getVeveUsernamesFromSecretAPI(endCursor)

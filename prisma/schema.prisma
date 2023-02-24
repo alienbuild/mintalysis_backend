@@ -83,8 +83,10 @@ model veve_wallets {
   veve_username String?   @unique
   veve_id       String?
   active        Boolean?  @default(true)
+  last_active   DateTime?
+  merged_to     String?
 
-  @@index([user_id])
+  @@index([user_id, veve_username])
 }
 
 model veve_watchlist {
@@ -112,7 +114,6 @@ model transfers_daily {
 model users {
   id                 String           @id @default(uuid())
   email              String           @unique
-  password           String?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   role               Role             @default(BASIC)
@@ -121,6 +122,7 @@ model users {
   last_seen          DateTime?        @updatedAt
   activated          Boolean          @default(false)
   stripe_customer_id String?
+  ecomiwiki_user     Boolean?         @default(false)
   projects           nft_projects[]
   users_B            users[]          @relation("user_follows")
   users_A            users[]          @relation("user_follows")
@@ -128,6 +130,7 @@ model users {
 
   @@index([email], map: "email")
   @@index([username], map: "username")
+  @@index([stripe_customer_id], map: "stripe_customer_id")
 }
 
 model profile {
@@ -172,11 +175,12 @@ model message {
 }
 
 model nft_projects {
-  id     String  @id @default(uuid())
-  name   String? @unique
-  abbr   String? @unique
-  active Boolean @default(false)
-  users  users[]
+  id        String     @id @default(uuid())
+  name      String?    @unique
+  abbr      String?    @unique
+  active    Boolean    @default(false)
+  users     users[]
+  imx_stats imx_stats?
 }
 
 model veve_comics {
@@ -534,6 +538,15 @@ model veve_mints {
   token_id  Int
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
+}
+
+model imx_stats {
+  project_id          String        @unique
+  project             nft_projects? @relation(fields: [project_id], references: [id])
+  token_count         Int
+  wallet_count        Int
+  transaction_count   Int
+  unique_owners_count Int
 }
 
 model wallet_update {

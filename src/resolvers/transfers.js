@@ -26,6 +26,8 @@ const resolvers = {
     Mutation: {
         createVeveTransfer: async (_, { transferInput: imxTransArr }, { prisma, pubsub }) => {
 
+            const previousTransactionCount = await prisma.veve_transfers.count()
+
             let sendBkArray = []
             await imxTransArr.map(async (transfer, index) => {
 
@@ -83,6 +85,19 @@ const resolvers = {
                 // }
 
             })
+
+            const currentTransactionCount = await prisma.veve_transfers.count()
+            if (currentTransactionCount > previousTransactionCount) {
+                const test = await prisma.imx_stats.update({
+                    where: {
+                        project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d"
+                    }, data: {
+                        transaction_count: currentTransactionCount
+                    }
+                })
+                console.log('test is: ', test)
+                await pubsub.publish('IMX_VEVE_STATS_UPDATED', test)
+            }
 
             await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
                 createVeveTransfer: sendBkArray
