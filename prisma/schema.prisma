@@ -76,17 +76,25 @@ model veve_transfers {
 }
 
 model veve_wallets {
-  id            String    @id
-  user_id       String?   @unique
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime? @updatedAt
-  veve_username String?   @unique
+  id            String       @id
+  user_id       String?      @unique
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime?    @updatedAt
+  veve_username String?      @unique
   veve_id       String?
-  active        Boolean?  @default(true)
+  active        Boolean?     @default(true)
   last_active   DateTime?
   merged_to     String?
+  tags          wallet_tags? @relation(fields: [tagsId], references: [id])
+  tagsId        Int?
 
   @@index([user_id, veve_username])
+}
+
+model wallet_tags {
+  id      Int            @id @default(autoincrement())
+  name    String         @unique
+  wallets veve_wallets[]
 }
 
 model veve_watchlist {

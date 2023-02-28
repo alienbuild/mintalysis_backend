@@ -43,6 +43,7 @@
     "prisma": "^4.5.0",
     "slugify": "^1.6.5",
     "twit": "^2.2.11",
+    "unique-names-generator": "^4.7.1",
     "validator": "^13.7.0",
     "ws": "^8.12.0"
   }
