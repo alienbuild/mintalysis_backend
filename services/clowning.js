@@ -1,5 +1,6 @@
 import {PrismaClient} from "@prisma/client"
 import { customAlphabet } from 'nanoid'
+import { uniqueNamesGenerator, colors, NumberDictionary } from 'unique-names-generator';
 const nanoid = customAlphabet('1234567890abcdef', 5)
 import slugify from 'slugify'
 import fetch from "node-fetch";
@@ -9,27 +10,54 @@ import moment from "moment";
 
 const prisma = new PrismaClient()
 
-const playing = async () => {
-    console.log('[PLAYING] LOL]')
 
-    const blockchainId = 8706473
+import {fishSpecies} from "./fish_dictionary.js";
 
-    const wallet_add = await prisma.veve_transfers.findFirst({
-        where: {
-            token_id: blockchainId
-        },
-        orderBy: {
-            timestamp: 'desc',
-        },
-        select: {
-            to_wallet: true
-        }
-    })
+const name_wallets = async () => {
 
-    console.log('wallet_add is: ', wallet_add)
+    // const totalWalletCount = 2
+    const totalWalletCount = await prisma.veve_wallets.count()
+    console.log('totalWalletCount are: ', totalWalletCount)
+
+    for (let i = 0; i < totalWalletCount; i++) {
+
+        console.log('[PROCESSING] Batch: ', i + 1)
+
+        const wallets = await prisma.veve_wallets.findMany({
+            skip: i * 10000,
+            take: 10000
+        })
+
+        await wallets.map(async wallet => {
+
+            const numberDictionary = NumberDictionary.generate({ min: 10, max: 9999 });
+
+            const walletName = uniqueNamesGenerator({
+                dictionaries: [colors, fishSpecies, numberDictionary],
+                length: 3,
+                separator: '',
+                style: 'capital'
+            });
+
+            try {
+                await prisma.veve_wallets.update({
+                    where: { id: wallet.id },
+                    data: {
+                        tags: { create: { name: walletName } },
+                    },
+                })
+            } catch (e) {
+                console.log(`[FAILED]: Could not updated ${wallet.id}`)
+            }
+
+        })
+
+        console.log(`[SUCCESS] Batch ${i + 1}`)
+
+    }
 
 
 
 }
 
-playing()
+name_wallets()

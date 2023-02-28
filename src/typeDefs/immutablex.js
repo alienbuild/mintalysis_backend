@@ -37,6 +37,16 @@ const typeDefs = gql`
         timestamp: String
         token_id: String
         token: Token
+        tags: [WalletTags]
+    }
+    
+    type WalletTags {
+        from_wallet: Tag!
+        to_wallet: Tag!
+    }
+    
+    type Tag {
+        tag: String
     }
 `
 

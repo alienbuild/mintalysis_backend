@@ -13,15 +13,13 @@ const resolvers = {
         },
         getImxVeveTransfers: async (_, {token_id, limit = 10}, { prisma }) => {
 
-            console.log('okay limit is: ', limit)
-
             let queryParams = { take: limit }
             let transfers
             if (token_id){
                 transfers = await prisma.veve_transfers.findMany({
                     where: {
                         token_id: token_id
-                    }
+                    },
                 })
             } else {
                 transfers = await prisma.veve_transfers.findMany(queryParams)
@@ -54,9 +52,35 @@ const resolvers = {
                     token_id: token_id
                 }
             })
-        }
-    }
+        },
+        tags: async (args, __, { prisma }) => {
 
+            const toWalletTag = await prisma.veve_wallets.findFirst({
+                where: {
+                    id: args.to_wallet,
+                },
+                select: {
+                    tags: true
+                }
+            })
+
+            const fromWalletTag = await prisma.veve_wallets.findFirst({
+                where: {
+                    id: args.from_wallet,
+                },
+                select: {
+                    tags: true
+                }
+            })
+
+            return [
+                {
+                    from_wallet: { tag: fromWalletTag.tags.name },
+                    to_wallet: { tag: toWalletTag.tags.name },
+                },
+            ]
+        }
+    },
 }
 
 export default resolvers
