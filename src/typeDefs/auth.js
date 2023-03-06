@@ -19,6 +19,7 @@ const typeDefs = gql`
     
     type PageInfo {
         endCursor: String
+        totalCount: Int
     }
 
     type WalletSummary {

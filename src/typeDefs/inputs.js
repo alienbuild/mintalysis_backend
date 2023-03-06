@@ -49,6 +49,7 @@ const typeDefs = gql`
 
     input CredentialsInput {
         email: String!
+        mobile: Boolean
     }
 
 `

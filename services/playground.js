@@ -685,7 +685,7 @@ const getTokenWalletAddressOwners = async (skip = 130000, take = 10000) => {
 const getVeveUsernamesFromSecretAPI = (endCursor) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "840f7c83-d180-47a8-8f87-f3cfe73144a9"}, after: "${endCursor}"){
+    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}, after: "${endCursor}"){
         pageInfo {
             hasNextPage
             endCursor
@@ -719,7 +719,7 @@ const getVeveUsernamesFromSecretAPI = (endCursor) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "840f7c83-d180-47a8-8f87-f3cfe73144a9"}){
+    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}){
         pageInfo {
             hasNextPage
             endCursor

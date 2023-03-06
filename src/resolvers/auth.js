@@ -6,8 +6,9 @@ import {sendMagicLink} from "../utils/sendMagicLink.js"
 const resolvers = {
     Mutation: {
         auth: async (_, { credentials }, { prisma }) => {
+            console.log('HIT!', credentials)
 
-            const { email } = credentials
+            const { email, mobile } = credentials
 
             const isEmail = validator.isEmail(email)
             if (!isEmail) {
@@ -24,7 +25,7 @@ const resolvers = {
             })
             if (userExists){
                 const token = jwt.sign({ userId: userExists.id }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
-                await sendMagicLink({ email, token })
+                await sendMagicLink({ email, mobile, token })
 
                 return {
                     userErrors: [],
@@ -47,7 +48,7 @@ const resolvers = {
                     })
 
                     const token = jwt.sign({ userId: user.id }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
-                    await sendMagicLink({ email, token })
+                    await sendMagicLink({ email, mobile, token })
 
                     return {
                         userErrors: [],

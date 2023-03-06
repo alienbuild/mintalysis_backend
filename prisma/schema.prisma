@@ -67,28 +67,31 @@ model veve_transfers {
   to_wallet   String
   timestamp   String?   @db.Text
   token_id    Int
-  entry_price Float?
-  break_even  Float?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime? @updatedAt
+  break_even  Float?
+  entry_price Float?
 
   @@index([token_id, from_wallet, to_wallet])
 }
 
 model veve_wallets {
-  id            String       @id
-  user_id       String?      @unique
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime?    @updatedAt
-  veve_username String?      @unique
-  veve_id       String?
-  active        Boolean?     @default(true)
-  last_active   DateTime?
-  merged_to     String?
-  tags          wallet_tags? @relation(fields: [tagsId], references: [id])
-  tagsId        Int?
+  id                  String       @id
+  user_id             String?      @unique
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime?    @updatedAt
+  veve_username       String?      @unique
+  veve_id             String?
+  active              Boolean?     @default(true)
+  last_active         DateTime?
+  merged_to           String?
+  tagsId              Int?
+  first_activity_date DateTime?
+  last_activity_date  DateTime?
+  tags                wallet_tags? @relation(fields: [tagsId], references: [id])
 
   @@index([user_id, veve_username])
+  @@index([tagsId], map: "veve_wallets_tagsId_fkey")
 }
 
 model wallet_tags {
@@ -100,11 +103,14 @@ model wallet_tags {
 model veve_watchlist {
   id              String             @id @default(uuid())
   user_id         String
-  user            users              @relation(fields: [user_id], references: [id])
   collectible_id  String?
-  collectible     veve_collectibles? @relation(fields: [collectible_id], references: [collectible_id])
   unique_cover_id String?
+  collectible     veve_collectibles? @relation(fields: [collectible_id], references: [collectible_id])
   comic           veve_comics?       @relation(fields: [unique_cover_id], references: [unique_cover_id])
+  user            users              @relation(fields: [user_id], references: [id])
+
+  @@index([collectible_id], map: "veve_watchlist_collectible_id_fkey")
+  @@index([unique_cover_id], map: "veve_watchlist_unique_cover_id_fkey")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -131,10 +137,10 @@ model users {
   activated          Boolean          @default(false)
   stripe_customer_id String?
   ecomiwiki_user     Boolean?         @default(false)
+  veve_watchlist     veve_watchlist[]
   projects           nft_projects[]
   users_B            users[]          @relation("user_follows")
   users_A            users[]          @relation("user_follows")
-  veve_watchlist     veve_watchlist[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -183,12 +189,11 @@ model message {
 }
 
 model nft_projects {
-  id        String     @id @default(uuid())
-  name      String?    @unique
-  abbr      String?    @unique
-  active    Boolean    @default(false)
-  users     users[]
-  imx_stats imx_stats?
+  id     String  @id @default(uuid())
+  name   String? @unique
+  abbr   String? @unique
+  active Boolean @default(false)
+  users  users[]
 }
 
 model veve_comics {
@@ -230,10 +235,10 @@ model veve_comics {
   image_thumbnail           String?
   all_time_change           Decimal?         @db.Decimal(10, 2)
   slug                      String?          @unique
+  veve_watchlist            veve_watchlist[]
   artists                   artists[]
   characters                characters[]
   writers                   writers[]
-  veve_watchlist            veve_watchlist[]
 
   @@index([unique_cover_id], map: "unique_cover_id")
 }
@@ -345,8 +350,8 @@ model veve_collectibles {
   all_time_change                      Decimal?         @db.Decimal(10, 2)
   slug                                 String?          @unique
   series                               veve_series?     @relation(fields: [series_id], references: [series_id])
-  veve_tokens                          veve_tokens[]
   veve_watchlist                       veve_watchlist[]
+  veve_tokens                          veve_tokens[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -546,11 +551,12 @@ model veve_mints {
   token_id  Int
   createdAt DateTime  @default(now())
   updatedAt DateTime? @updatedAt
+
+  @@index([wallet_id])
 }
 
 model imx_stats {
-  project_id          String        @unique
-  project             nft_projects? @relation(fields: [project_id], references: [id])
+  project_id          String @unique
   token_count         Int
   wallet_count        Int
   transaction_count   Int
@@ -577,6 +583,23 @@ model wallet_update2 {
 model wallet_update3 {
   token_id  BigInt?
   wallet_id String? @db.Text
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model wallet_first {
+  wallet String? @db.Text
+  first  String? @db.Text
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model wallet_latest {
+  wallet String? @db.VarChar(100)
+  latest String? @db.Text
+  first  String? @db.Text
 
   @@ignore
 }
