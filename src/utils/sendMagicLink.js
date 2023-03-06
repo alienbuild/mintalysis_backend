@@ -390,14 +390,22 @@ max-height: none !important;
     `
 )
 
-export const sendMagicLink = ({ email, token }) => {
+export const sendMagicLink = ({ email, mobile, token }) => {
+
+    let emailTxt
+    if (mobile) {
+        console.log(`[MOBILE EXISTS] mintalysis://mintalysis/verify?k=${token}`)
+        emailTxt = `Please use the following link to continue logging in to mintalysis. mintalysis://mintalysis/verify?k=${token}`
+    } else {
+        emailTxt = `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/verify?k=${token}`
+    }
 
     let message = {
         from: 'noreply@mintalysis.com',
         to: email,
         subject: 'Finish signing in to Mintalysis.',
         html: html(token),
-        text: `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/verify?k=${token}`,
+        text: emailTxt,
     };
 
     console.log(`Sending email to: ${email}`)

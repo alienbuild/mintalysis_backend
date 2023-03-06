@@ -33,8 +33,8 @@ const name_wallets = async () => {
             const numberDictionary = NumberDictionary.generate({ min: 10, max: 9999 });
 
             const walletName = uniqueNamesGenerator({
-                dictionaries: [colors, fishSpecies, numberDictionary],
-                length: 3,
+                dictionaries: [fishSpecies, numberDictionary],
+                length: 2,
                 separator: '',
                 style: 'capital'
             });
@@ -47,7 +47,7 @@ const name_wallets = async () => {
                     },
                 })
             } catch (e) {
-                console.log(`[FAILED]: Could not updated ${wallet.id}`)
+                console.log(`[FAILED]: Could not updated ${wallet.id}`, e)
             }
 
         })

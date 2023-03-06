@@ -2,7 +2,8 @@ import gql from "graphql-tag"
 
 const typeDefs = gql`
     type Query {
-        getImxVeveTransfers(id: ID, limit: Int) : TransfersConnection
+        getWalletTransfers(walletId: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : TransfersConnection
+        getImxVeveTransfers(id: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : TransfersConnection
         getImxVeveStats(project_id: String!): ImxStats
         getImxTxns: [VeveTransfer]
     }
