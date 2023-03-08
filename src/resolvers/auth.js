@@ -57,6 +57,7 @@ const resolvers = {
                     }
 
                 } catch (e) {
+                    console.log('[ERROR] Unable to register the user: ', e)
                     throw new GraphQLError('Unable to register the user.')
                 }
             }

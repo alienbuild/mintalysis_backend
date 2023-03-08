@@ -131,7 +131,7 @@ model users {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   role               Role             @default(BASIC)
-  username           String           @unique
+  username           String?          @unique
   avatar             String?
   last_seen          DateTime?        @updatedAt
   activated          Boolean          @default(false)
@@ -573,8 +573,9 @@ model wallet_update {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model wallet_update2 {
-  token_id  BigInt?
-  wallet_id String? @db.Text
+  token_id       BigInt?
+  wallet_id      String?   @db.Text
+  first_activity DateTime?
 
   @@ignore
 }
