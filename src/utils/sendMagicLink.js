@@ -14,7 +14,7 @@ let transporter = nodemailer.createTransport({
     from: 'Mintalysis. <noreply@mintalysis.com>',
 });
 
-const html = (token) => (
+const html = (token, link) => (
     `
     <!DOCTYPE html>
 <html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:v="urn:schemas-microsoft-com:vml">
@@ -240,7 +240,7 @@ max-height: none !important;
 <tr>
 <td class="pad" style="padding-left:10px;padding-right:10px;padding-top:15px;text-align:center;">
 <div align="center" class="alignment">
-<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${process.env.BASE_URL}/user/dashboard?k=${token}" style="height:62px;width:240px;v-text-anchor:middle;" arcsize="97%" stroke="false" fillcolor="#3b82f6"><w:anchorlock/><v:textbox inset="0px,0px,0px,0px"><center style="color:#ffffff; font-family:Tahoma, sans-serif; font-size:16px"><![endif]--><a href="${process.env.BASE_URL}/user/dashboard?k=${token}" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#3b82f6;border-radius:60px;width:auto;border-top:0px solid transparent;font-weight:undefined;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:15px;padding-bottom:15px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;" target="_blank"><span style="padding-left:30px;padding-right:30px;font-size:16px;display:inline-block;letter-spacing:normal;"><span dir="ltr" style="margin: 0; word-break: break-word; line-height: 32px;"><strong>Continue to Mintalysis</strong></span></span></a>
+<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${link}" style="height:62px;width:240px;v-text-anchor:middle;" arcsize="97%" stroke="false" fillcolor="#3b82f6"><w:anchorlock/><v:textbox inset="0px,0px,0px,0px"><center style="color:#ffffff; font-family:Tahoma, sans-serif; font-size:16px"><![endif]--><a href="${link}" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#3b82f6;border-radius:60px;width:auto;border-top:0px solid transparent;font-weight:undefined;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:15px;padding-bottom:15px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;" target="_blank"><span style="padding-left:30px;padding-right:30px;font-size:16px;display:inline-block;letter-spacing:normal;"><span dir="ltr" style="margin: 0; word-break: break-word; line-height: 32px;"><strong>Continue to Mintalysis</strong></span></span></a>
 <!--[if mso]></center></v:textbox></v:roundrect><![endif]-->
 </div>
 </td>
@@ -393,18 +393,20 @@ max-height: none !important;
 export const sendMagicLink = ({ email, mobile, token }) => {
 
     let emailTxt
+    let link
     if (mobile) {
-        console.log(`[MOBILE EXISTS] mintalysis://mintalysis/verify?k=${token}`)
-        emailTxt = `Please use the following link to continue logging in to mintalysis. mintalysis://mintalysis/verify?k=${token}`
+        link = `https://app.mintalysis.com/?token=${token}`
+        emailTxt = `Please use the following link to continue logging in to mintalysis.`
     } else {
         emailTxt = `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/verify?k=${token}`
+        link = `${process.env.BASE_URL}/verify?k=${token}`
     }
 
     let message = {
         from: 'noreply@mintalysis.com',
         to: email,
         subject: 'Finish signing in to Mintalysis.',
-        html: html(token),
+        html: html(token, link),
         text: emailTxt,
     };
 
