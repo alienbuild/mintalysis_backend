@@ -398,8 +398,8 @@ export const sendMagicLink = ({ email, mobile, token }) => {
         link = `https://app.mintalysis.com/?token=${token}`
         emailTxt = `Please use the following link to continue logging in to mintalysis.`
     } else {
-        emailTxt = `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/verify?k=${token}`
-        link = `${process.env.BASE_URL}/verify?k=${token}`
+        emailTxt = `Please use the following link to continue logging in to mintalysis. ${process.env.BASE_URL}/user/verify?k=${token}`
+        link = `${process.env.BASE_URL}/user/verify?k=${token}`
     }
 
     let message = {

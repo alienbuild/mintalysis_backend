@@ -12,7 +12,6 @@ const typeDefs = gql`
         domain: String
     }
 
-#    Generic shit
     type UserError {
         message: String!
     }

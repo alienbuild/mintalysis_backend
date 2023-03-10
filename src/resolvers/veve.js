@@ -69,6 +69,9 @@ const resolvers = {
         veveCollectiblePriceData: async (_, { collectibleId, type, period }, { userInfo, prisma }) => {
             let groupOption = { $dateToString: { format: "%Y-%m-%dT%H", date: "$at" } }
             switch (period){
+                case 1:
+                    groupOption = { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
+                    break
                 case 7:
                     groupOption = { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
                     break
