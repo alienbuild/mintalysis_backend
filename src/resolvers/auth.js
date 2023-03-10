@@ -6,7 +6,6 @@ import {sendMagicLink} from "../utils/sendMagicLink.js"
 const resolvers = {
     Mutation: {
         auth: async (_, { credentials }, { prisma }) => {
-            console.log('HIT!', credentials)
 
             const { email, mobile } = credentials
 

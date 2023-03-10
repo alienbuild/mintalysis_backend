@@ -89,6 +89,7 @@ model veve_wallets {
   first_activity_date DateTime?
   last_activity_date  DateTime?
   tags                wallet_tags? @relation(fields: [tagsId], references: [id])
+  user                profile?     @relation(fields: [user_id], references: [user_id])
 
   @@index([user_id, veve_username])
   @@index([tagsId], map: "veve_wallets_tagsId_fkey")
@@ -128,8 +129,6 @@ model transfers_daily {
 model users {
   id                 String           @id @default(uuid())
   email              String           @unique
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
   role               Role             @default(BASIC)
   username           String?          @unique
   avatar             String?
@@ -141,6 +140,9 @@ model users {
   projects           nft_projects[]
   users_B            users[]          @relation("user_follows")
   users_A            users[]          @relation("user_follows")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  profile            profile?
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -148,15 +150,16 @@ model users {
 }
 
 model profile {
-  id                   Int      @id @default(autoincrement())
+  id                   Int           @id @default(autoincrement())
   bio                  String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  user_id              String   @unique
-  veve_username        String?  @unique
-  onboarded            Boolean  @default(false)
-  veve_wallet_imported Boolean  @default(false)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  user_id              String        @unique
+  user                 users         @relation(fields: [user_id], references: [id])
+  onboarded            Boolean       @default(false)
+  veve_wallet_imported Boolean       @default(false)
   veve_wallet_address  String?
+  veve_wallet          veve_wallets?
 }
 
 model conversation {
@@ -601,6 +604,21 @@ model wallet_latest {
   wallet String? @db.VarChar(100)
   latest String? @db.Text
   first  String? @db.Text
+
+  @@ignore
+}
+
+model wallet_first_last_active {
+  wallet       String   @id @db.VarChar(255)
+  first_active DateTime
+  last_active  DateTime
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model wallet_merges {
+  date        DateTime @db.DateTime(0)
+  from_wallet String   @db.VarChar(255)
+  to_wallet   String   @db.VarChar(255)
 
   @@ignore
 }

@@ -4,16 +4,20 @@ import {decodeCursor, encodeCursor} from "../utils/index.js";
 
 const resolvers = {
     Query: {
-        me: (_, __, { userInfo, prisma }) => {
+        me: async (_, __, {userInfo, prisma}) => {
             if (!userInfo) return null
-            return prisma.users.findUnique({
+            return await prisma.users.findUnique({
                 where: {
                     id: userInfo.userId
                 },
                 include: {
                     projects: true,
+                    profile: {
+                        include: {
+                            veve_wallet: true
+                        }
+                    }
                     // following: true, // TODO: Check why i need to uncomment this for it to work now?
-                    // veve_collectibles: true
                 }
             })
         },
@@ -167,13 +171,13 @@ const resolvers = {
         }
     },
     User : {
-        profile: (parent, __, { prisma }) => {
-            return prisma.profile.findUnique({
-                where: {
-                    user_id: parent.id
-                }
-            })
-        },
+        // profile: (parent, __, { prisma }) => {
+        //     return prisma.profile.findUnique({
+        //         where: {
+        //             user_id: parent.id
+        //         }
+        //     })
+        // },
         veve_collectibles: async (parent, { sortOptions, pagingOptions }, {userInfo, prisma}) => {
             let limit = 25
             let sortParams = { drop_date: 'asc' }

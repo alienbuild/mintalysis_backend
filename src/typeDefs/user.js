@@ -26,7 +26,6 @@ const typeDefs = gql`
         avatar: String
         email: String!
         last_seen: DateTime 
-        wallet_address: String
         stripe_customer_id: String
         profile: Profile
         role: String!
@@ -34,6 +33,20 @@ const typeDefs = gql`
         tokens: [Token]!
         projects: [Project]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
+        veve_wallet: VeveWallet
+    }
+    
+    type VeveWallet {
+        id: ID!
+        user_id: String
+        createdAt: DateTime
+        updatedAt: DateTime
+        veve_username: String
+        veve_id: String
+        active: Boolean
+        last_active: DateTime
+        first_activity_date: DateTime
+        last_activity_date: DateTime
     }
 
     type Profile {
@@ -46,6 +59,7 @@ const typeDefs = gql`
         veve_wallet_address: String
         veve_project: Boolean!
         veve_username: String
+        veve_wallet: VeveWallet
     }
 
     type AvatarUploadResponse {
