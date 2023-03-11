@@ -83,7 +83,6 @@ model veve_wallets {
   veve_username       String?      @unique
   veve_id             String?
   active              Boolean?     @default(true)
-  last_active         DateTime?
   merged_to           String?
   tagsId              Int?
   first_activity_date DateTime?
@@ -129,6 +128,8 @@ model transfers_daily {
 model users {
   id                 String           @id @default(uuid())
   email              String           @unique
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   role               Role             @default(BASIC)
   username           String?          @unique
   avatar             String?
@@ -136,13 +137,12 @@ model users {
   activated          Boolean          @default(false)
   stripe_customer_id String?
   ecomiwiki_user     Boolean?         @default(false)
+  onboarded          Boolean          @default(false)
+  profile            profile?
   veve_watchlist     veve_watchlist[]
   projects           nft_projects[]
   users_B            users[]          @relation("user_follows")
   users_A            users[]          @relation("user_follows")
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  profile            profile?
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -155,10 +155,10 @@ model profile {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   user_id              String        @unique
-  user                 users         @relation(fields: [user_id], references: [id])
   onboarded            Boolean       @default(false)
   veve_wallet_imported Boolean       @default(false)
   veve_wallet_address  String?
+  user                 users         @relation(fields: [user_id], references: [id])
   veve_wallet          veve_wallets?
 }
 
@@ -564,48 +564,6 @@ model imx_stats {
   wallet_count        Int
   transaction_count   Int
   unique_owners_count Int
-}
-
-model wallet_update {
-  token_id  Int     @unique(map: "token_id_UNIQUE")
-  wallet_id String? @default("Null") @db.VarChar(80)
-  max_id    String  @unique(map: "max_id_UNIQUE") @db.VarChar(45)
-
-  @@id([token_id, max_id])
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-model wallet_update2 {
-  token_id       BigInt?
-  wallet_id      String?   @db.Text
-  first_activity DateTime?
-
-  @@ignore
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-model wallet_update3 {
-  token_id  BigInt?
-  wallet_id String? @db.Text
-
-  @@ignore
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-model wallet_first {
-  wallet String? @db.Text
-  first  String? @db.Text
-
-  @@ignore
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-model wallet_latest {
-  wallet String? @db.VarChar(100)
-  latest String? @db.Text
-  first  String? @db.Text
-
-  @@ignore
 }
 
 model wallet_first_last_active {
