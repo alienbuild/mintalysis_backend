@@ -19,11 +19,6 @@ model leaderboard {
   @@ignore
 }
 
-model clown_usernames {
-  id       String @id
-  username String
-}
-
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model mints {
   id        BigInt?
@@ -41,12 +36,6 @@ model mints_daily {
   items   Int
 
   @@ignore
-}
-
-model tmp_comic_errors {
-  token_id Int     @id @unique(map: "token_id")
-  name     String? @db.Text
-  edition  Int?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -279,7 +268,6 @@ model veve_publishers {
 
 model veve_tokens {
   token_id          Int                 @id
-  name              String?             @db.Text
   edition           Int?
   mint_date         DateTime?
   rarity            String?             @db.Text
@@ -539,14 +527,6 @@ model odb_tokens {
   @@index([name], map: "name")
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-model tmp_ids {
-  uniqueCoverId             String
-  image_full_resolution_url String?
-
-  @@ignore
-}
-
 model veve_mints {
   id        Int       @id
   wallet_id String?
@@ -566,18 +546,21 @@ model imx_stats {
   unique_owners_count Int
 }
 
-model wallet_first_last_active {
+model tmp_wallet_first_last_active {
   wallet       String   @id @db.VarChar(255)
   first_active DateTime
   last_active  DateTime
+
+  @@map("_tmp_wallet_first_last_active")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-model wallet_merges {
+model tmp_wallet_merges {
   date        DateTime @db.DateTime(0)
   from_wallet String   @db.VarChar(255)
   to_wallet   String   @db.VarChar(255)
 
+  @@map("_tmp_wallet_merges")
   @@ignore
 }
 
