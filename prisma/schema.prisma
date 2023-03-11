@@ -279,7 +279,6 @@ model veve_publishers {
 
 model veve_tokens {
   token_id          Int                 @id
-  name              String?             @db.Text
   edition           Int?
   mint_date         DateTime?
   rarity            String?             @db.Text
@@ -566,12 +565,6 @@ model imx_stats {
   unique_owners_count Int
 }
 
-model wallet_first_last_active {
-  wallet       String   @id @db.VarChar(255)
-  first_active DateTime
-  last_active  DateTime
-}
-
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model wallet_merges {
   date        DateTime @db.DateTime(0)
@@ -579,6 +572,14 @@ model wallet_merges {
   to_wallet   String   @db.VarChar(255)
 
   @@ignore
+}
+
+model tmp_wallet_first_last_active {
+  wallet       String   @id @db.VarChar(255)
+  first_active DateTime
+  last_active  DateTime
+
+  @@map("_tmp_wallet_first_last_active")
 }
 
 enum Role {
