@@ -129,7 +129,7 @@ model users {
   onboarded          Boolean          @default(false)
   profile            profile?
   veve_watchlist     veve_watchlist[]
-  projects           nft_projects[]
+  projects           projects[]
   users_B            users[]          @relation("user_follows")
   users_A            users[]          @relation("user_follows")
 
@@ -180,7 +180,7 @@ model message {
   body           String   @db.Text
 }
 
-model nft_projects {
+model projects {
   id     String  @id @default(uuid())
   name   String? @unique
   abbr   String? @unique

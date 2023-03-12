@@ -229,12 +229,30 @@ const resolvers = {
 
             if (limit > 100) return null
 
-            let queryParams = { take: limit, orderBy: [{ createdAt: 'desc' }] }
+            let queryParams = { take: limit }
             let whereParams = {}
 
             if (collectibleId) whereParams = {...whereParams, collectible_id: collectibleId }
-            if (sortOptions && sortOptions.sortBy) queryParams = { ...queryParams, orderBy: { [sortOptions.sortBy]: sortOptions.sortDirection } }
-            // if (sortOptions && sortOptions.sortDirection) queryParams = { ...queryParams}
+            if (sortOptions && sortOptions.sortBy) {
+                let sortOptionsModified
+                switch (sortOptions.sortBy){
+                    case 'hottest':
+                        sortOptionsModified = { one_day_change : 'desc' }
+                        break
+                    case 'coldest':
+                        sortOptionsModified = { one_day_change : 'asc' }
+                        break
+                    case 'drop_date':
+                        sortOptionsModified = { drop_date: 'desc' }
+                    default:
+                        sortOptionsModified = {[sortOptions.sortBy]: sortOptions.sortDirection}
+                }
+
+                queryParams = {
+                    ...queryParams,
+                    orderBy: sortOptionsModified
+                }
+            } else { queryParams = {...queryParams, orderBy: [{ createdAt: 'desc' }]} }
             if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
             if (search) whereParams = {...whereParams, name: { contains: search } }
 
