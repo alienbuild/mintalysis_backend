@@ -1,21 +1,20 @@
 const resolvers = {
     Query: {
-        projects: async (_,{ id, name }, { prisma }) => {
-            let queryParams = {}
-            if (id) queryParams = { ...queryParams, id}
-            if (name) queryParams = { ...queryParams, name}
-            if (id){
-                return [prisma.nft_projects.findUnique({
-                    where:queryParams
-                })]
+        projects: async (_,{ id, name, active }, { prisma }) => {
+
+            let whereParams = {}
+            if (id) whereParams = { ...whereParams, id}
+            if (name) whereParams = { ...whereParams, name}
+            if (active) whereParams = { ...whereParams, active: true }
+            if (id){ return [prisma.projects.findUnique({ where: whereParams })]
             } else {
-                return prisma.nft_projects.findMany({})
+                return prisma.projects.findMany({ where: whereParams })
             }
         }
     },
     Mutation: {
         createProject: async (_, { name, abbr, active }, { prisma, userInfo }) => {
-            return prisma.nft_projects.create({
+            return prisma.projects.create({
                 data: {
                     name,
                     abbr,
