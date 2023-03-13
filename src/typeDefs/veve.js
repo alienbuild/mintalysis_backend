@@ -7,6 +7,7 @@ const typeDefs = gql`
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
         veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
         veveComics(uniqueCoverId: String, search: String, limit: Int, after: String): ComicsConnection
+        veveSeries(collectibleId: String, brandId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
         veveValuations : VeveValuationsPayload
         getCollectibleWatchlist(pagingOptions: pagingOptions): CollectibleWatchlistConnection
@@ -177,9 +178,9 @@ const typeDefs = gql`
     }
 
     type CollectiblesConnection {
-        edges: [Collectible!]!
+        edges: [Collectible]!
         totalCount: Int
-        pageInfo: PageInfo!
+        pageInfo: PageInfo
     }
 
     type Collectible {
@@ -231,8 +232,53 @@ const typeDefs = gql`
         total_listings: Int
         quantity: Int
         tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
+        brand: Brand
         valuations(period: Int) : [[VEVEValuationObj]]
         watching: Boolean
+    }
+    
+    type Brand {
+        brand_id: String!
+        name: String!
+        description: String
+        theme_logo_url: String
+        theme_logo_image_thumbnail_url: String
+        theme_logo_image_low_resolution_url: String
+        theme_logo_image_med_resolution_url: String
+        theme_logo_image_full_resolution_url: String
+        theme_logo_image_high_resolution_url: String
+        theme_logo_image_direction: String
+        theme_background_image_url: String
+        theme_background_image_thumbnail_url: String
+        theme_background_image_low_resolution_url: String
+        theme_background_image_med_resolution_url: String
+        theme_background_image_full_resolution_url: String
+        theme_background_image_high_resolution_url: String
+        theme_background_image_direction: String
+        theme_footer_image_url: String
+        theme_footer_image_thumbnail_url: String
+        theme_footer_image_low_resolution_url: String
+        theme_footer_image_med_resolution_url: String
+        theme_footer_image_full_resolution_url: String
+        theme_footer_image_high_resolution_url: String
+        theme_footer_image_direction: String
+        landscape_image_url: String
+        landscape_image_thumbnail_url: String
+        landscape_image_low_resolution_url: String
+        landscape_image_med_resolution_url: String
+        landscape_image_full_resolution_url: String
+        landscape_image_high_resolution_url: String
+        landscape_image_direction: String
+        square_image_url: String
+        square_image_thumbnail_url: String
+        square_image_low_resolution_url: String
+        square_image_med_resolution_url: String
+        square_image_full_resolution_url: String
+        square_image_high_resolution_url: String
+        square_image_direction: String
+        licensor_id: String
+        slug: String     
+        tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
     }
     
 `
