@@ -232,7 +232,17 @@ const resolvers = {
             let queryParams = { take: limit }
             let whereParams = {}
 
-            if (collectibleId) whereParams = {...whereParams, collectible_id: collectibleId }
+            if (collectibleId) {
+                whereParams = {...whereParams, collectible_id: collectibleId }
+
+                const collectibles = await prisma.veve_collectibles.findUnique({
+                    where: whereParams
+                })
+
+                return {
+                    edges: [collectibles],
+                }
+            }
             if (sortOptions && sortOptions.sortBy) {
                 let sortOptionsModified
                 switch (sortOptions.sortBy){
@@ -293,6 +303,21 @@ const resolvers = {
                 }
             }
 
+        },
+        veveSeries: async (_, { brandId, pagingOptions, sortOptions, search}, { prisma }) => {
+
+            const series = await prisma.veve_collectibles.findMany({
+                where: {
+                    brand_id: brandId
+                },
+            })
+
+            console.log('series is: ', series)
+
+            return {
+                edges: series,
+                totalCount: series.length,
+            }
         },
         veveDropDates: async (_, { startDate, endDate }, { prisma }) => {
 
@@ -807,6 +832,13 @@ const resolvers = {
                     endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
                 }
             }
+        },
+        brand: async ({ brand_id }, __ ,{ prisma }) => {
+            return await prisma.veve_brands.findUnique({
+                where: {
+                    brand_id
+                }
+            })
         },
         quantity: async ({ collectible_id }, __, { prisma, userInfo }) => {
             try {

@@ -916,4 +916,101 @@ export const scrapeUsersFromVeve = async (fullCapture = false, endCursor) => {
 
 }
 
-scrapeUsersFromVeve()
+// scrapeUsersFromVeve()
+
+import { removeBackgroundFromImageUrl } from "remove.bg";
+import path from 'path';
+import {fileURLToPath} from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export const removeCollectibleBackgrounds = async () => {
+
+
+    const collectibles = await prisma.veve_collectibles.findMany({
+        select:{
+            name: true,
+            collectible_id: true,
+            image_high_resolution_url: true
+        }
+    })
+
+    await collectibles.map(async (collectible, index) => {
+        await setTimeout(1000 * index)
+
+        // if (index > 1) return
+
+        try {
+            const url = collectible.image_high_resolution_url
+
+            const path = `${__dirname}/images/${collectible.collectible_id}`;
+            fs.mkdir(path, (error) => {
+            })
+
+            const outputFile = `${__dirname}/images/${collectible.collectible_id}/${collectible.collectible_id}.png`;
+
+            removeBackgroundFromImageUrl({
+                url,
+                apiKey: "GSSrHr8ph8mzbZQpeRVyiXWF",
+                size: "auto",
+                type: "product",
+                outputFile
+            }).then((result) => {
+                console.log(`${collectible.name} saved to ${outputFile}`);
+            }).catch((errors) => {
+                console.log(JSON.stringify(errors));
+            });
+        } catch (e) {
+            console.log('[EPIC ERROR] Unable to remove background: ', e)
+        }
+
+    })
+
+}
+
+// removeCollectibleBackgrounds()
+import tinify from 'tinify'
+// tinify.key = "gfmZyg5hY5VCdNRMRDWkW9Z3RsXmFGRt";
+tinify.key = "k8qvNnJ14WtCtTP6FZYVXcNfgghM9WWL";
+
+export const tinifyImages = async () => {
+
+    const collectibles = await prisma.veve_collectibles.findMany({
+        select: {
+            name: true,
+            collectible_id: true,
+            image_high_resolution_url: true
+        }
+    })
+
+    await collectibles.map(async (collectible, index) => {
+
+        // if (index > 0) return
+        if (index < 500) {
+            console.log(`[SKIPPING]`)
+        } else {
+            await setTimeout(1000 * (index - 500))
+
+            try {
+
+                const imagePath = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
+                const output = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
+
+                console.log(`[COMPRESSING] ${collectible.name} (${collectible.collectible_id})`)
+                const oldStats = fs.statSync(imagePath);
+
+                const source = tinify.fromFile(imagePath);
+                await source.toFile(output);
+                const newStats = fs.statSync(output);
+                console.log(`${collectible.name} (${collectible.collectible_id}) file size was ${oldStats.size}. It is now: ${newStats.size}`)
+
+            } catch (e) {
+                console.log(`[ERROR] Tinify: `, e)
+            }
+        }
+
+    })
+
+}
+
+tinifyImages()
