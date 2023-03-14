@@ -67,22 +67,6 @@ const resolvers = {
             return returnArr
         },
         veveCollectiblePriceData: async (_, { collectibleId, type, period }, { userInfo, prisma }) => {
-            let groupOption = { $dateToString: { format: "%Y-%m-%dT%H", date: "$at" } }
-            switch (period){
-                case 1:
-                    groupOption = { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
-                    break
-                case 7:
-                    groupOption = { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
-                    break
-                case 90:
-                    groupOption = { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
-                    break
-                default:
-                    groupOption = { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
-                    break
-            }
-
             switch (type){
                 case 'collectible':
                     return await CollectiblePrice.aggregate([
@@ -90,7 +74,7 @@ const resolvers = {
                             "$match": {
                                 collectibleId: collectibleId,
                                 // "date": {
-                                //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
+                                //     $gte: new Date(new Date().getTime() - (6 * 30 * 24 * 60 * 60 * 1000))
                                 // }
                             }
                         },
