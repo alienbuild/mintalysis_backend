@@ -7,7 +7,10 @@ import {cookieRotator} from "./alice/cookieRotator.js";
 import {setTimeout} from "node:timers/promises";
 import moment from "moment";
 import fs from 'fs'
-import * as https from "https";
+import { removeBackgroundFromImageUrl } from "remove.bg";
+import path from 'path';
+import {fileURLToPath} from 'url';
+import tinify from 'tinify'
 
 const prisma = new PrismaClient()
 
@@ -245,7 +248,6 @@ const generateWriterSlugs = async () => {
 
 }
 
-// Scrape username/wallets from veve
 const getVeveSuggestedUsers = (fragment) => {
     return `query  {
     suggestUsers(fragment: "${fragment}", limit: 20, showHiddenOrDisabledAccounts: false){
@@ -349,7 +351,6 @@ export const scrapeVeveSuggestedUsers = async () => {
 
 }
 
-// Aggregate usernames from veve feed... oy gonna take a while...
 const getVeveFeedUsernames = (startTime) => {
     console.log('querying using the start time of: ', new Date(startTime).toISOString())
     return `query {
@@ -677,12 +678,96 @@ const getTokenWalletAddressOwners = async (skip = 130000, take = 10000) => {
     }
 }
 
-// getTokenWalletAddressOwners()
-// getVeveUsernamesFromFeed() //
-// generateWriterSlugs()
-// scrapeVeveSuggestedUsers()
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const getVeveUsernamesFromSecretAPI = (endCursor) => {
+export const removeCollectibleBackgrounds = async () => {
+
+
+    const collectibles = await prisma.veve_collectibles.findMany({
+        select:{
+            name: true,
+            collectible_id: true,
+            image_high_resolution_url: true
+        }
+    })
+
+    await collectibles.map(async (collectible, index) => {
+        await setTimeout(1000 * index)
+
+        // if (index > 1) return
+
+        try {
+            const url = collectible.image_high_resolution_url
+
+            const path = `${__dirname}/images/${collectible.collectible_id}`;
+            fs.mkdir(path, (error) => {
+            })
+
+            const outputFile = `${__dirname}/images/${collectible.collectible_id}/${collectible.collectible_id}.png`;
+
+            removeBackgroundFromImageUrl({
+                url,
+                apiKey: "GSSrHr8ph8mzbZQpeRVyiXWF",
+                size: "auto",
+                type: "product",
+                outputFile
+            }).then((result) => {
+                console.log(`${collectible.name} saved to ${outputFile}`);
+            }).catch((errors) => {
+                console.log(JSON.stringify(errors));
+            });
+        } catch (e) {
+            console.log('[EPIC ERROR] Unable to remove background: ', e)
+        }
+
+    })
+
+}
+
+export const tinifyImages = async () => {
+    // tinify.key = "gfmZyg5hY5VCdNRMRDWkW9Z3RsXmFGRt";
+    tinify.key = "k8qvNnJ14WtCtTP6FZYVXcNfgghM9WWL";
+
+    const collectibles = await prisma.veve_collectibles.findMany({
+        select: {
+            name: true,
+            collectible_id: true,
+            image_high_resolution_url: true
+        }
+    })
+
+    await collectibles.map(async (collectible, index) => {
+
+        // if (index > 0) return
+        if (index < 500) {
+            console.log(`[SKIPPING]`)
+        } else {
+            await setTimeout(1000 * (index - 500))
+
+            try {
+
+                const imagePath = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
+                const output = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
+
+                console.log(`[COMPRESSING] ${collectible.name} (${collectible.collectible_id})`)
+                const oldStats = fs.statSync(imagePath);
+
+                const source = tinify.fromFile(imagePath);
+                await source.toFile(output);
+                const newStats = fs.statSync(output);
+                console.log(`${collectible.name} (${collectible.collectible_id}) file size was ${oldStats.size}. It is now: ${newStats.size}`)
+
+            } catch (e) {
+                console.log(`[ERROR] Tinify: `, e)
+            }
+        }
+
+    })
+
+}
+
+const getCollectibleSalesDataQuery = (endCursor) => {
     if (endCursor) {
         return `query OtherProfileQuery {
     collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}, after: "${endCursor}"){
@@ -753,7 +838,7 @@ const getVeveUsernamesFromSecretAPI = (endCursor) => {
 }`
     }
 }
-export const scrapeUsersFromVeve = async (fullCapture = false, endCursor) => {
+export const getCollectibleSalesData = async (fullCapture = false, endCursor) => {
 
     console.log('[STARTED]: Scraping usernames from veve secret api.')
 
@@ -771,7 +856,7 @@ export const scrapeUsersFromVeve = async (fullCapture = false, endCursor) => {
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getVeveUsernamesFromSecretAPI(endCursor)
+            query: getCollectibleSalesDataQuery(endCursor)
         }),
     })
         .then(veve_usernames => veve_usernames.json())
@@ -906,7 +991,7 @@ export const scrapeUsersFromVeve = async (fullCapture = false, endCursor) => {
             if (!fullCapture) {
                 console.log('[AWAITING] Found more wallets to scrape.', pageInfo.endCursor)
                 await setTimeout(14000)
-                await scrapeUsersFromVeve(fullCapture, pageInfo.endCursor)
+                await getCollectibleSalesData(fullCapture, pageInfo.endCursor)
             } else {
                 console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
             }
@@ -916,101 +1001,247 @@ export const scrapeUsersFromVeve = async (fullCapture = false, endCursor) => {
 
 }
 
-// scrapeUsersFromVeve()
-
-import { removeBackgroundFromImageUrl } from "remove.bg";
-import path from 'path';
-import {fileURLToPath} from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export const removeCollectibleBackgrounds = async () => {
-
-
-    const collectibles = await prisma.veve_collectibles.findMany({
-        select:{
-            name: true,
-            collectible_id: true,
-            image_high_resolution_url: true
-        }
-    })
-
-    await collectibles.map(async (collectible, index) => {
-        await setTimeout(1000 * index)
-
-        // if (index > 1) return
-
-        try {
-            const url = collectible.image_high_resolution_url
-
-            const path = `${__dirname}/images/${collectible.collectible_id}`;
-            fs.mkdir(path, (error) => {
-            })
-
-            const outputFile = `${__dirname}/images/${collectible.collectible_id}/${collectible.collectible_id}.png`;
-
-            removeBackgroundFromImageUrl({
-                url,
-                apiKey: "GSSrHr8ph8mzbZQpeRVyiXWF",
-                size: "auto",
-                type: "product",
-                outputFile
-            }).then((result) => {
-                console.log(`${collectible.name} saved to ${outputFile}`);
-            }).catch((errors) => {
-                console.log(JSON.stringify(errors));
-            });
-        } catch (e) {
-            console.log('[EPIC ERROR] Unable to remove background: ', e)
-        }
-
-    })
-
-}
 
 // removeCollectibleBackgrounds()
-import tinify from 'tinify'
-// tinify.key = "gfmZyg5hY5VCdNRMRDWkW9Z3RsXmFGRt";
-tinify.key = "k8qvNnJ14WtCtTP6FZYVXcNfgghM9WWL";
+// tinifyImages()
+// getTokenWalletAddressOwners()
+// getVeveUsernamesFromFeed() //
+// generateWriterSlugs()
+// scrapeVeveSuggestedUsers()
 
-export const tinifyImages = async () => {
+// getCollectibleSalesData()
 
-    const collectibles = await prisma.veve_collectibles.findMany({
-        select: {
-            name: true,
-            collectible_id: true,
-            image_high_resolution_url: true
+const getComicSalesDataQuery = (endCursor) => {
+    if (endCursor) {
+        return `query OtherProfileQuery {
+    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}, after: "${endCursor}"){
+        pageInfo {
+            hasNextPage
+            endCursor
         }
-    })
-
-    await collectibles.map(async (collectible, index) => {
-
-        // if (index > 0) return
-        if (index < 500) {
-            console.log(`[SKIPPING]`)
-        } else {
-            await setTimeout(1000 * (index - 500))
-
-            try {
-
-                const imagePath = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
-                const output = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
-
-                console.log(`[COMPRESSING] ${collectible.name} (${collectible.collectible_id})`)
-                const oldStats = fs.statSync(imagePath);
-
-                const source = tinify.fromFile(imagePath);
-                await source.toFile(output);
-                const newStats = fs.statSync(output);
-                console.log(`${collectible.name} (${collectible.collectible_id}) file size was ${oldStats.size}. It is now: ${newStats.size}`)
-
-            } catch (e) {
-                console.log(`[ERROR] Tinify: `, e)
+        edges{
+            node{
+                blockchainId
+                owner {
+                    id
+                    username
+                }
+                collectibleType{
+                    id
+                }
+                transactions {
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                    edges{
+                        node{
+                            id
+                            createdAt
+                            amountUsd
+                        }
+                    }
+                }
             }
         }
-
-    })
-
+    }
+}`
+    } else {
+        return `query OtherProfileQuery {
+    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}){
+        pageInfo {
+            hasNextPage
+            endCursor
+        }
+        edges{
+            node{
+                blockchainId
+                owner {
+                    id
+                    username
+                }
+                collectibleType{
+                    id
+                }
+                transactions {
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                    edges{
+                        node{
+                            id
+                            createdAt
+                            amountUsd
+                        }
+                    }
+                }
+            }
+        }
+    }
+}`
+    }
 }
 
-tinifyImages()
+export const getComicSalesData = async (fullCapture = false, endCursor) => {
+
+    console.log('[STARTED]: Scraping COMIC sales data and users')
+
+    const cookieToUse = cookieRotator()
+
+    await fetch(`https://web.api.prod.veve.me/graphql`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'cookie': cookieToUse,
+            'client-name': 'veve-web-app',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
+            'client-operation': 'AuthUserDetails',
+            'Connection': 'keep-alive'
+        },
+        body: JSON.stringify({
+            query: getComicSalesDataQuery(endCursor)
+        }),
+    })
+        .then(veve_usernames => veve_usernames.json())
+        .then(async veve_usernames => {
+            const pageInfo = veve_usernames.data.collectibleList.pageInfo
+            const veveUsers = veve_usernames.data.collectibleList.edges
+
+            console.log('****[VEVE DATA RECEIVED]****')
+            await veveUsers.map(async (user, index) => {
+                if (user.node?.blockchainId && user.node?.owner?.username){
+
+                    const username = user.node.owner.username
+                    const userId = user.node.owner.id
+                    const blockchainId = user.node.blockchainId
+                    const transactions = user.node.transactions?.edges
+                    const collectibleTypeId = user.node.collectibleType?.id
+                    const hasMoreTxs = user.node.transactions?.pageInfo.hasNextPage
+
+                    const exisitingUser = await prisma.veve_wallets.findUnique({
+                        where: {
+                            veve_username: username
+                        }
+                    })
+
+                    if (!exisitingUser) {
+                        try {
+                            // await setTimeout(1000 * index)
+                            // const wallet_address = await lookupUserWallet(blockchainId)
+
+                            const wallet_add = await prisma.veve_transfers.findFirst({
+                                where: {
+                                    token_id: Number(blockchainId)
+                                },
+                                orderBy: {
+                                    timestamp: 'desc',
+                                },
+                                select: {
+                                    to_wallet: true
+                                }
+                            })
+
+                            if (wallet_add?.to_wallet){
+                                console.log(`[FOUND]: Wallet: ${wallet_add.to_wallet} for user ${username} `)
+                                const saved_wallets = await prisma.veve_wallets.upsert({
+                                    where: {
+                                        id: wallet_add.to_wallet
+                                    },
+                                    update: {
+                                        veve_username: username,
+                                        veve_id: userId
+                                    },
+                                    create: {
+                                        id: wallet_add.to_wallet,
+                                        veve_username: username,
+                                        veve_id: userId
+                                    },
+                                    select: {
+                                        veve_username: true
+                                    }
+                                })
+                                console.log(`[SUCCESS] Saved wallet: ${saved_wallets.veve_username}`, pageInfo.endCursor)
+                            }
+
+
+                        } catch (err) {
+                            console.log(`[FAILED] `, err)
+                        }
+                    }
+
+                    await transactions && transactions.map(async (transaction) => {
+                        try {
+                            const amountUsd = transaction.node.amountUsd
+                            const createdAt = transaction.node.createdAt
+
+                            const litmusTest = await prisma.veve_transfers.findMany({
+                                where: {
+                                    token_id: Number(blockchainId)
+                                }
+                            })
+
+                            await litmusTest.map(async (tx) => {
+
+                                const imxTxDate = tx.timestamp
+                                const pastGive = moment(imxTxDate).subtract(30, 'seconds')
+                                const futureGive = moment(imxTxDate).add(30, 'seconds')
+                                const matchingTx = moment(createdAt).isBetween(pastGive, futureGive)
+
+                                if (matchingTx && !tx.entry_price) {
+
+                                    const checkTx = await prisma.veve_transfers.findFirst({
+                                        where: {
+                                            id: tx.id
+                                        }
+                                    })
+
+                                    if (checkTx.entry_price === null){
+                                        await prisma.veve_transfers.update({
+                                            where: {
+                                                id: tx.id
+                                            },
+                                            data: {
+                                                entry_price: Number(amountUsd)
+                                            },
+                                        })
+                                        console.log(`[UPDATED] Transaction updated with price. ${tx.id}`, pageInfo.endCursor)
+                                    }
+
+                                }
+                            })
+
+                        } catch (err) {
+                            console.log('[FAILED TXS] ', err)
+                        }
+
+                    })
+
+                    if (hasMoreTxs) {
+                        try {
+                            const txEndCursor = user.node.transactions?.pageInfo.endCursor
+                            fs.writeFileSync("./tx.txt", `{"collectibleTypeId": ${collectibleTypeId}}, "endCursor": "${txEndCursor}",\n`)
+                        } catch (e) {
+                            console.log('[FAILED] Unable to write to tx.txt', pageInfo.endCursor)
+                        }
+
+                    }
+
+                }
+            })
+
+            if (!pageInfo.hasNextPage) fullCapture = true
+
+            if (!fullCapture) {
+                console.log('[AWAITING] Found more wallets to scrape.', pageInfo.endCursor)
+                await setTimeout(14000)
+                await getCollectibleSalesData(fullCapture, pageInfo.endCursor)
+            } else {
+                console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
+            }
+
+        })
+        .catch(e => console.log('[ERROR] Unable to get usernames from veve.', e))
+
+}
