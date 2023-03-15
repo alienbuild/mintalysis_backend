@@ -11,8 +11,14 @@ import { removeBackgroundFromImageUrl } from "remove.bg";
 import path from 'path';
 import {fileURLToPath} from 'url';
 import tinify from 'tinify'
+import mongoose from "mongoose"
 
 const prisma = new PrismaClient()
+
+// MongoDB Database
+mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Connected to MongoDB'))
+    .catch((e) => console.log('Error connecting to MongoDB', e))
 
 const generateCollectibleSlugs = async () => {
 
@@ -1001,44 +1007,55 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
 
 }
 
-
 // removeCollectibleBackgrounds()
 // tinifyImages()
 // getTokenWalletAddressOwners()
 // getVeveUsernamesFromFeed() //
 // generateWriterSlugs()
 // scrapeVeveSuggestedUsers()
-
 // getCollectibleSalesData()
 
-const getComicSalesDataQuery = (endCursor) => {
+import VeveComicTxn from "../models/VeveComicTxns.js"
+
+const getComicSalesDataQuery = (endCursor, comic_id) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}, after: "${endCursor}"){
+    marketListingListByElementType(first: 500, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
+            hasPreviousPage
+            startCursor
             endCursor
         }
         edges{
             node{
-                blockchainId
-                owner {
+                status
+                elementId
+                seller {
                     id
                     username
                 }
-                collectibleType{
+                element {
                     id
-                }
-                transactions {
-                    pageInfo {
-                        hasNextPage
-                        endCursor
-                    }
-                    edges{
-                        node{
-                            id
-                            createdAt
-                            amountUsd
+                    ... on Comic {
+                        issueNumber
+                        blockchainId
+                        rarity
+                        comicType {
+                            name
+                        }
+                        transactions{
+                            pageInfo {
+                                hasNextPage
+                                endCursor
+                            }
+                            edges{
+                                node{
+                                    id
+                                    createdAt
+                                    amountUsd
+                                }
+                            }
                         }
                     }
                 }
@@ -1048,31 +1065,42 @@ const getComicSalesDataQuery = (endCursor) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}){
+    marketListingListByElementType(first: 500, elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
+            hasPreviousPage
+            startCursor
             endCursor
         }
         edges{
             node{
-                blockchainId
-                owner {
+                status
+                elementId
+                seller {
                     id
                     username
                 }
-                collectibleType{
+                element {
                     id
-                }
-                transactions {
-                    pageInfo {
-                        hasNextPage
-                        endCursor
-                    }
-                    edges{
-                        node{
-                            id
-                            createdAt
-                            amountUsd
+                    ... on Comic {
+                        issueNumber
+                        blockchainId
+                        rarity
+                        comicType {
+                            name
+                        }
+                        transactions{
+                            pageInfo {
+                                hasNextPage
+                                endCursor
+                            }
+                            edges{
+                                node{
+                                    id
+                                    createdAt
+                                    amountUsd
+                                }
+                            }
                         }
                     }
                 }
@@ -1082,6 +1110,9 @@ const getComicSalesDataQuery = (endCursor) => {
 }`
     }
 }
+
+// SELECT * FROM `veve_comics` ORDER BY `veve_comics`.`drop_date` ASC
+const comic_id = "0f695376-cd81-42f5-b603-4e0cc9cc8529"
 
 export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
@@ -1101,24 +1132,46 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getComicSalesDataQuery(endCursor)
+            query: getComicSalesDataQuery(endCursor, comic_id)
         }),
     })
         .then(veve_usernames => veve_usernames.json())
-        .then(async veve_usernames => {
-            const pageInfo = veve_usernames.data.collectibleList.pageInfo
-            const veveUsers = veve_usernames.data.collectibleList.edges
+        .then(async veve_comic_sales => {
+            const pageInfo = veve_comic_sales.data.marketListingListByElementType.pageInfo
+            const veveSales = veve_comic_sales.data.marketListingListByElementType.edges
 
-            console.log('****[VEVE DATA RECEIVED]****')
-            await veveUsers.map(async (user, index) => {
-                if (user.node?.blockchainId && user.node?.owner?.username){
+             console.log('****[VEVE DATA RECEIVED]****')
+             veveSales.map(async (sale, index) => {
+                if (sale.node?.seller?.id){
 
-                    const username = user.node.owner.username
-                    const userId = user.node.owner.id
-                    const blockchainId = user.node.blockchainId
-                    const transactions = user.node.transactions?.edges
-                    const collectibleTypeId = user.node.collectibleType?.id
-                    const hasMoreTxs = user.node.transactions?.pageInfo.hasNextPage
+                    const username = sale.node.seller.username
+                    const userId = sale.node.seller.id
+                    const blockchainId = sale.node.element?.blockchainId
+                    const issueNumber = sale.node.element?.issueNumber
+                    const rarity = sale.node.element?.rarity
+                    const transactions = sale.node.element?.transactions?.edges
+                    const elementId = sale.node.elementId
+                    const hasMoreTxs = sale.node.transactions?.pageInfo.hasNextPage
+
+                    try {
+                        await prisma.veve_tokens.upsert({
+                            where: {
+                                token_id: Number(blockchainId)
+                            },
+                            update: {
+                                element_id: elementId
+                            },
+                            create: {
+                                element_id: elementId,
+                                token_id: Number(blockchainId),
+                                edition: issueNumber,
+                                type: 'comic',
+                                rarity: rarity
+                            }
+                        })
+                    } catch (e) {
+                        console.log(`[ERROR] Unable to update element_id ${elementId} for token ${blockchainId}`, e)
+                    }
 
                     const exisitingUser = await prisma.veve_wallets.findUnique({
                         where: {
@@ -1175,6 +1228,8 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
                         try {
                             const amountUsd = transaction.node.amountUsd
                             const createdAt = transaction.node.createdAt
+
+                            await VeveComicTxn.create({ token: Number(blockchainId), value: Number(amountUsd), date: new Date(createdAt), comic_id: comic_id })
 
                             const litmusTest = await prisma.veve_transfers.findMany({
                                 where: {
@@ -1234,14 +1289,16 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
             if (!pageInfo.hasNextPage) fullCapture = true
 
             if (!fullCapture) {
-                console.log('[AWAITING] Found more wallets to scrape.', pageInfo.endCursor)
-                await setTimeout(14000)
-                await getCollectibleSalesData(fullCapture, pageInfo.endCursor)
+                console.log('[AWAITING] Found more sales data to scrape.', pageInfo.endCursor)
+                await setTimeout(15000)
+                await getComicSalesData(fullCapture, pageInfo.endCursor)
             } else {
                 console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
             }
 
         })
-        .catch(e => console.log('[ERROR] Unable to get usernames from veve.', e))
+        .catch(e => console.log('[ERROR] Unable to get sales data from veve.', e))
 
 }
+
+getComicSalesData()
