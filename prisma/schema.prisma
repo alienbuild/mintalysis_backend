@@ -190,6 +190,7 @@ model projects {
 
 model veve_comics {
   unique_cover_id           String           @id
+  comic_id                  String?
   name                      String
   rarity                    String?
   description               String?          @db.Text
@@ -197,7 +198,7 @@ model veve_comics {
   drop_date                 DateTime?
   store_price               Decimal?         @db.Decimal(10, 2)
   publisher_id              String?
-  market_fee                Decimal?         @db.Decimal(10, 2)
+  market_fee                Decimal?         @db.Decimal(10, 3)
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
   all_time_high             Decimal?         @db.Decimal(10, 2)
@@ -279,6 +280,7 @@ model veve_tokens {
   licensor_id       String?
   series_id         String?
   wallet_id         String?
+  element_id        String?
   brand             veve_brands?        @relation(fields: [brand_id], references: [brand_id])
   licensor          veve_licensors?     @relation(fields: [licensor_id], references: [licensor_id])
   series            veve_series?        @relation(fields: [series_id], references: [series_id])
@@ -299,7 +301,7 @@ model veve_collectibles {
   edition_type                         String?
   store_price                          Decimal?         @db.Decimal(10, 2)
   drop_date                            DateTime?
-  market_fee                           Decimal?         @db.Decimal(10, 2)
+  market_fee                           Decimal?         @db.Decimal(10, 3)
   createdAt                            DateTime         @default(now())
   updatedAt                            DateTime?
   background_image_direction           String?
@@ -407,7 +409,7 @@ model veve_licensors {
   landscape_image_med_resolution_url         String?
   landscape_image_thumbnail_url              String?
   landscape_image_url                        String?
-  market_fee                                 Decimal?      @db.Decimal(10, 2)
+  market_fee                                 Decimal?      @db.Decimal(10, 3)
   square_image_direction                     String?
   square_image_full_resolution_url           String?
   square_image_high_resolution_url           String?

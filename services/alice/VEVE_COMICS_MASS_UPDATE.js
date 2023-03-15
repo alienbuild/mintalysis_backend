@@ -91,9 +91,9 @@ const getVevelatestComicsQuery = () => {
     }`
 }
 
-export const VEVE_GET_LATEST_COMICS = async () => {
-    console.log('GETTING LATEST COMICS')
-    console.log(`[ALICE][VEVE] - [GET LATEST COLLECTIBLES]`)
+export const VEVE_COMICS_MASS_UPDATE = async () => {
+    console.log('UPDATING ALL COMICS')
+    console.log(`[ALICE][VEVE] - [UPDATE ALL COMICS]`)
 
     await fetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
@@ -142,9 +142,16 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                 try {
 
-                    await prisma.veve_comics.create({
-                        data: {
-                            comicId: comic.node.comicType.id,
+                    await prisma.veve_comics.upsert({
+                        where: {
+                            unique_cover_id: comic.node.image.id,
+                        },
+                        update: {
+                            comic_id: comic.node.comicType.id,
+                            market_fee: comic.node.comicType.comicSeries.publisher.marketFee
+                        },
+                        create: {
+                            comic_id: comic.node.comicType.id,
                             unique_cover_id: comic.node.image.id,
                             name: comic.node.comicType.name,
                             rarity: comic.node.rarity,
