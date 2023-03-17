@@ -208,6 +208,11 @@ const resolvers = {
         },
         veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions }, { prisma }) => {
 
+            const test = await prisma.veve_collectibles.findMany({
+                take: 2,
+                orderBy: { drop_date: 'desc'}
+            })
+
             let limit = 25
             if (pagingOptions?.limit) limit = pagingOptions.limit
 
@@ -229,12 +234,16 @@ const resolvers = {
             }
             if (sortOptions && sortOptions.sortBy) {
                 let sortOptionsModified
+                if (sortOptions.sortDirection === null) sortOptions.sortDirection = 'desc'
                 switch (sortOptions.sortBy){
+                    case 'coming_soon':
+                        whereParams = { ...whereParams, drop_date: { gte: new Date() } }
                     case 'hottest':
                         sortOptionsModified = { one_day_change : 'desc' }
                         break
                     case 'coldest':
                         sortOptionsModified = { one_day_change : 'asc' }
+                        whereParams = { ...whereParams, floor_price: { gt: 0 }}
                         break
                     case 'drop_date':
                         sortOptionsModified = { drop_date: 'desc' }
@@ -295,8 +304,6 @@ const resolvers = {
                     brand_id: brandId
                 },
             })
-
-            console.log('series is: ', series)
 
             return {
                 edges: series,

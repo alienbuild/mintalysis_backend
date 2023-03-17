@@ -228,6 +228,7 @@ model veve_comics {
   image_thumbnail           String?
   all_time_change           Decimal?         @db.Decimal(10, 2)
   slug                      String?          @unique
+  unique_holders            BigInt?
   veve_watchlist            veve_watchlist[]
   artists                   artists[]
   characters                characters[]
@@ -342,6 +343,7 @@ model veve_collectibles {
   total_listings                       Int?
   all_time_change                      Decimal?         @db.Decimal(10, 2)
   slug                                 String?          @unique
+  unique_holders                       BigInt?
   series                               veve_series?     @relation(fields: [series_id], references: [series_id])
   veve_watchlist                       veve_watchlist[]
   veve_tokens                          veve_tokens[]
@@ -393,6 +395,7 @@ model veve_brands {
   square_image_direction                     String?
   licensor_id                                String
   slug                                       String?       @unique
+  market_cap                                 Decimal?      @db.Decimal(10, 2)
   veve_tokens                                veve_tokens[]
 
   @@index([licensor_id], map: "brands_licensor_id_fkey")
@@ -439,6 +442,7 @@ model veve_licensors {
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_url                       String?
   slug                                       String?       @unique
+  market_cap                                 Decimal?      @db.Decimal(10, 2)
   veve_tokens                                veve_tokens[]
 }
 
@@ -486,6 +490,7 @@ model veve_series {
   licensor_id                                String
   brand_id                                   String
   slug                                       String?             @unique
+  market_cap                                 Decimal?            @db.Decimal(10, 2)
   veve_collectibles                          veve_collectibles[]
   veve_tokens                                veve_tokens[]
 
