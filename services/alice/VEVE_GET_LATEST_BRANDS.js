@@ -12,7 +12,7 @@ const username = proxy_parts[2]
 const password = proxy_parts[3]
 
 const getVeveLatestBrandsQuery = () => `query brandList {
-    brandList {
+    brandList(first: 100, sortOptions: { sortBy: NAME, sortDirection: DESCENDING }) {
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -144,10 +144,10 @@ export const VEVE_GET_LATEST_BRANDS = async () => {
                             licensor_id: brand.node.licensor?.id
                         }
                     })
-                    console.log(`[SUCCESS][VEVE][BRAND]: ${brand.node.name} was added to prisma db.`)
+                    console.log(`[SUCCESS][VEVE][BRAND]: ${brand.node.name} was added to prisma db. cursor: `, latest_brands.data.brandList.pageInfo.endCursor)
 
                 } catch (e) {
-                    console.log(`[FAIL][VEVE][BRAND]: ${brand.node.name} was not added to prisma db.`)
+                    console.log(`[FAIL][VEVE][BRAND]: ${brand.node.name} was not added to prisma db.`, latest_brands.data.brandList.pageInfo.endCursor)
                 }
             })
 
@@ -155,4 +155,3 @@ export const VEVE_GET_LATEST_BRANDS = async () => {
         .catch(err => console.log('[ERROR][VEVE][BRANDS] Unable to get latest brands. ', err))
 
 }
-

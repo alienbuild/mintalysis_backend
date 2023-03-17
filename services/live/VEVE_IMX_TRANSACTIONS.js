@@ -87,7 +87,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                     await setTimeout(Math.floor(Math.random() * 2000) + index * 1000 / 3)
 
-                    try {
 
                         imxTransArr.push({
                             id: transaction.txn_id,
@@ -100,13 +99,20 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         imxWalletIds.push({id: transaction.transfers[0].to_address })
                         imxWalletIds.push({id: transaction.transfers[0].from_address })
 
-                        const checkMetaData = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${transaction.transfers[0].token.token_id}`)
-                        const metadata = await checkMetaData.json()
+                        let metadata
+
+                        try {
+                            const checkMetaData = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${transaction.transfers[0].token.token_id}`)
+                            metadata = await checkMetaData.json()
+                        } catch (e) {
+                            console.log('[ERROR] Unable to check metadata for : ', transaction.transfers[0].token.token_id)
+                        }
 
                         let updateObj = {
                             token_id: Number(transaction.transfers[0].token.token_id),
                             wallet_id: transaction.transfers[0].to_address,
                         }
+
                         if (metadata && metadata.name){
                             updateObj.mint_date = metadata.created_at
                             if (metadata && metadata.metadata.editionType){
@@ -134,6 +140,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                                 }
                             }
                         }
+                    try {
 
                         await prisma.veve_tokens.upsert({
                             where: {
@@ -146,7 +153,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         })
 
                     } catch(err) {
-                        console.log('[ERROR] Unable to check metadata for : ', transaction.transfers[0].token.token_id)
+                        console.log(`[ERROR] Unable to upsert ${transaction.transfers[0].token.token_id} : `, err )
                     }
 
                 })

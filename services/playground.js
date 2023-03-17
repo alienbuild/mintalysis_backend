@@ -1112,7 +1112,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 }
 
 // SELECT * FROM `veve_comics` ORDER BY `veve_comics`.`drop_date` ASC
-const comic_id = "0f695376-cd81-42f5-b603-4e0cc9cc8529"
+const comic_id = "1435a62a-06eb-47d8-8f6f-fc0e09fa72c5"
 
 export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
