@@ -70,7 +70,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 query: getImxTransactions(),
                 variables: {
                     address: "0xa7aefead2f25972d80516628417ac46b3f2604af",
-                    pageSize: 40, // 2673 is max?
+                    pageSize: 2673, // 2673 is max?
                     txnType: "transfer"
                 }
             })
@@ -87,12 +87,11 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                     await setTimeout(Math.floor(Math.random() * 2000) + index * 1000 / 3)
 
-
                         imxTransArr.push({
                             id: transaction.txn_id,
                             from_wallet: transaction.transfers[0].from_address,
                             to_wallet: transaction.transfers[0].to_address,
-                            timestamp: moment.unix(Number(transaction.txn_time) / 1000).format(),
+                            timestamp: moment.unix(Number(transaction.txn_time) / 1000).utc().format(),
                             token_id: Number(transaction.transfers[0].token.token_id)
                         })
 
@@ -105,7 +104,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                             const checkMetaData = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${transaction.transfers[0].token.token_id}`)
                             metadata = await checkMetaData.json()
                         } catch (e) {
-                            console.log('[ERROR] Unable to check metadata for : ', transaction.transfers[0].token.token_id)
                         }
 
                         let updateObj = {
@@ -205,5 +203,3 @@ export const VEVE_IMX_TRANSACTIONS = () => {
     }
 
 }
-
-VEVE_IMX_TRANSACTIONS()

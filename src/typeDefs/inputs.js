@@ -46,6 +46,10 @@ const typeDefs = gql`
         sortBy: String
         sortDirection: String
     }
+    
+    input filterOptions {
+        underRRP: Boolean
+    }
 
     input CredentialsInput {
         email: String!
