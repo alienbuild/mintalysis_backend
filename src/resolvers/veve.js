@@ -206,12 +206,7 @@ const resolvers = {
             }
 
         },
-        veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions }, { prisma }) => {
-
-            const test = await prisma.veve_collectibles.findMany({
-                take: 2,
-                orderBy: { drop_date: 'desc'}
-            })
+        veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions, filterOptions }, { prisma }) => {
 
             let limit = 25
             if (pagingOptions?.limit) limit = pagingOptions.limit
@@ -257,7 +252,8 @@ const resolvers = {
                 }
             } else { queryParams = {...queryParams, orderBy: [{ createdAt: 'desc' }]} }
             if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
-            if (search) whereParams = {...whereParams, name: { contains: search } }
+            if (filterOptions && filterOptions.underRRP) whereParams = { ...whereParams, floor_price: {lt: filterOptions.underRRP }}
+            if (search) whereParams = { ...whereParams, name: { contains: search } }
 
             queryParams = { ...queryParams, where: { ...whereParams } }
 

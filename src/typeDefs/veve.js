@@ -5,7 +5,7 @@ const typeDefs = gql`
     type Query {
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
-        veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
+        veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions): CollectiblesConnection
         veveComics(uniqueCoverId: String, search: String, limit: Int, after: String): ComicsConnection
         veveSeries(collectibleId: String, brandId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
@@ -27,7 +27,7 @@ const typeDefs = gql`
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
     }
-
+    
     type ComicWatchlistConnection {
         edges: [Comic]!
         pageInfo: PageInfo!

@@ -70,7 +70,7 @@ export const VEVE_IMX_MINTS = () => {
                 query: getImxMints(),
                 variables: {
                     address: "0xa7aefead2f25972d80516628417ac46b3f2604af",
-                    pageSize: 500, // 2673 is max?
+                    pageSize: 2673, // 2673 is max?
                     txnType: "mint"
                 }
             })
@@ -87,11 +87,11 @@ export const VEVE_IMX_MINTS = () => {
                     imxMintsArr.push({
                         id: mint.txn_id,
                         wallet_id: mint.transfers[0].to_address,
-                        timestamp: moment.unix(Number(mint.txn_time) / 1000).format(),
+                        timestamp: moment.unix(Number(mint.txn_time) / 1000).utc().format(),
                         token_id: Number(mint.transfers[0].token.token_id)
                     })
 
-                    imxTokenArr.push({token_id: Number(mint.transfers[0].token.token_id), mint_date: moment.unix(mint.txn_time / 1000).format()})
+                    imxTokenArr.push({token_id: Number(mint.transfers[0].token.token_id), mint_date: moment.unix(mint.txn_time / 1000).utc().format()})
                     imxWalletIds.push({id: mint.transfers[0].to_address})
 
                 })
