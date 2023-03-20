@@ -123,7 +123,7 @@ const main = async () => {
     // Now that our HTTP server is fully set up, we can listen to it.
     await new Promise((resolve) =>
             httpServer.listen(PORT, () => {
-                scheduledRapidJobs()
+                // scheduledRapidJobs()
                 scheduledHourlyJobs()
                 scheduledDailyJobs()
                 // scheduledLiveJobs()

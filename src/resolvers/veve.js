@@ -252,7 +252,7 @@ const resolvers = {
                 }
             } else { queryParams = {...queryParams, orderBy: [{ createdAt: 'desc' }]} }
             if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
-            if (filterOptions && filterOptions.underRRP) whereParams = { ...whereParams, floor_price: {lt: filterOptions.underRRP }}
+            if (filterOptions && filterOptions.underRRP) whereParams = { ...whereParams, floor_price: { lt: await prisma.veve_collectibles.fields.store_price }}
             if (search) whereParams = { ...whereParams, name: { contains: search } }
 
             queryParams = { ...queryParams, where: { ...whereParams } }

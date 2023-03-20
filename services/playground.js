@@ -691,12 +691,18 @@ export const removeCollectibleBackgrounds = async () => {
 
 
     const collectibles = await prisma.veve_collectibles.findMany({
+        where: {
+          // drop_date: { gt: Date.now() }
+          drop_date: { gt: moment().subtract(8, 'days').format() }
+        },
         select:{
             name: true,
             collectible_id: true,
             image_high_resolution_url: true
         }
     })
+
+    console.log('collectibles is: ', collectibles)
 
     await collectibles.map(async (collectible, index) => {
         await setTimeout(1000 * index)
@@ -736,25 +742,28 @@ export const tinifyImages = async () => {
     tinify.key = "k8qvNnJ14WtCtTP6FZYVXcNfgghM9WWL";
 
     const collectibles = await prisma.veve_collectibles.findMany({
+        where: {
+            // drop_date: { gt: Date.now() }
+            drop_date: { gt: moment().subtract(8, 'days').format() }
+        },
         select: {
             name: true,
             collectible_id: true,
-            image_high_resolution_url: true
         }
     })
 
     await collectibles.map(async (collectible, index) => {
 
         // if (index > 0) return
-        if (index < 500) {
+        if (index > 50) {
             console.log(`[SKIPPING]`)
         } else {
             await setTimeout(1000 * (index - 500))
 
             try {
 
-                const imagePath = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
-                const output = `${__dirname}/images/collectibles/${collectible.collectible_id}/${collectible.collectible_id}.png`
+                const imagePath = `${__dirname}/images/${collectible.collectible_id}/${collectible.collectible_id}.png`
+                const output = `${__dirname}/images/${collectible.collectible_id}/${collectible.collectible_id}.png`
 
                 console.log(`[COMPRESSING] ${collectible.name} (${collectible.collectible_id})`)
                 const oldStats = fs.statSync(imagePath);
@@ -1112,7 +1121,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 }
 
 // SELECT * FROM `veve_comics` ORDER BY `veve_comics`.`drop_date` ASC
-const comic_id = "28a4b1ce-acc4-4be0-bad8-078cc6b400ae"
+const comic_id = "955d3b4c-7026-4ad4-be0a-4249c24c3fc3"
 
 export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
@@ -1125,7 +1134,7 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'cookie': cookieToUse,
+            'cookie': "veve=s%3At7Swi7D2OjqNjk2M6lw8Me7Bdz6ERN8b.iwTXO3APW4noQ2NepyIiEWcxIS8GZlMWdG4cJG9%2BKbg",
             'client-name': 'veve-web-app',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
             'client-operation': 'AuthUserDetails',
