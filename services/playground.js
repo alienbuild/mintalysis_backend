@@ -693,7 +693,7 @@ export const removeCollectibleBackgrounds = async () => {
     const collectibles = await prisma.veve_collectibles.findMany({
         where: {
           // drop_date: { gt: Date.now() }
-          drop_date: { gt: moment().subtract(8, 'days').format() }
+          drop_date: { gt: moment().subtract(4, 'days').format() }
         },
         select:{
             name: true,
@@ -744,7 +744,7 @@ export const tinifyImages = async () => {
     const collectibles = await prisma.veve_collectibles.findMany({
         where: {
             // drop_date: { gt: Date.now() }
-            drop_date: { gt: moment().subtract(8, 'days').format() }
+            drop_date: { gt: moment().subtract(4, 'days').format() }
         },
         select: {
             name: true,
@@ -1017,7 +1017,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
 }
 
 // removeCollectibleBackgrounds()
-// tinifyImages()
+tinifyImages()
 // getTokenWalletAddressOwners()
 // getVeveUsernamesFromFeed() //
 // generateWriterSlugs()
@@ -1310,4 +1310,4 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
 }
 
-getComicSalesData()
+// getComicSalesData()
