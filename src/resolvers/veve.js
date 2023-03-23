@@ -1089,6 +1089,7 @@ const resolvers = {
                 })
 
             } catch (e) {
+                console.log('transfers err: ', e)
                 throw new GraphQLError('Could not get user transfers for this token.', e)
             }
         }
