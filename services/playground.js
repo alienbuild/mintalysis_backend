@@ -1017,7 +1017,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
 }
 
 // removeCollectibleBackgrounds()
-tinifyImages()
+// tinifyImages()
 // getTokenWalletAddressOwners()
 // getVeveUsernamesFromFeed() //
 // generateWriterSlugs()
@@ -1310,4 +1310,4 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
 }
 
-// getComicSalesData()
+getComicSalesData()

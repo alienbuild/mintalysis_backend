@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fieldReference"]
 }
 
@@ -122,6 +122,7 @@ model users {
   updatedAt          DateTime         @updatedAt
   role               Role             @default(BASIC)
   username           String?          @unique
+  name               String?
   avatar             String?
   last_seen          DateTime?        @updatedAt
   activated          Boolean          @default(false)
