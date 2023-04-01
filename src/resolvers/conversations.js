@@ -37,7 +37,6 @@ const resolvers = {
             if (!userInfo) throw new GraphQLError('Not authorised')
 
             const { userId } = userInfo
-
             try {
                 const conversation = await prisma.conversation.create({
                     data: {
@@ -62,6 +61,7 @@ const resolvers = {
                 }
 
             } catch (err) {
+                console.log('nah : ', err)
                 throw new GraphQLError('Error creating conversation.')
             }
         },
@@ -94,7 +94,6 @@ const resolvers = {
                 })
 
             } catch (err) {
-                console.log('Error deleting conversation: ', err)
                 throw new GraphQLError('Error deleting conversation.')
             }
 
