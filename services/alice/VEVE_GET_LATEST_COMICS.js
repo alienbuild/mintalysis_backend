@@ -112,6 +112,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
         .then(latest_comics => latest_comics.json())
         .then(async latest_comics => {
 
+            console.log('got data..')
             const marketListingByComicCover = latest_comics.data.marketListingByComicCover.edges
 
             marketListingByComicCover.map(async (comic) => {
@@ -144,7 +145,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                     await prisma.veve_comics.create({
                         data: {
-                            comicId: comic.node.comicType.id,
+                            comic_id: comic.node.comicType.id,
                             unique_cover_id: comic.node.image.id,
                             name: comic.node.comicType.name,
                             rarity: comic.node.rarity,
@@ -182,7 +183,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                     console.log(`[SUCCESS][VEVE][COMIC]: ${comic.node.comicType.name} added to prisma db.`)
                 } catch (e) {
-                    // console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`, e)
+                    console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`, e)
                 }
 
             })
@@ -191,3 +192,5 @@ export const VEVE_GET_LATEST_COMICS = async () => {
         .catch(err => console.log('[ERROR][VEVE] Unable to get latest comics. ', err))
 
 }
+
+// VEVE_GET_LATEST_COMICS()
