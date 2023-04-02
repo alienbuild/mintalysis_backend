@@ -30,7 +30,17 @@ const resolvers = {
                 throw new GraphQLError('Unable to get conversations')
             }
 
-        }
+        },
+        conversation: async (_, { conversationId }, { userInfo, prisma }) => {
+
+            return await prisma.conversation.findUnique({
+                where: {
+                    id: conversationId
+                },
+                include: conversationPopulated
+            })
+
+        },
     },
     Mutation: {
         createConversation: async (_, { participantIds }, { userInfo, prisma, pubsub } ) => {
@@ -38,30 +48,48 @@ const resolvers = {
 
             const { userId } = userInfo
             try {
-                const conversation = await prisma.conversation.create({
-                    data: {
+                const existingConversation = await prisma.conversation.findMany({
+                    where: {
+                        owner_id: userId,
                         participants: {
-                            createMany: {
-                                data: participantIds.map(id => ({
-                                    user_id: id,
-                                    has_seen_latest_message: id === userId
-                                }))
+                            every: {
+                                user_id: { in: participantIds },
                             }
                         }
-                    },
-                    include: conversationPopulated
+                    }
                 })
 
-                pubsub.publish('CONVERSATION_CREATED', {
-                    conversationCreated: conversation
-                })
+                if (existingConversation.length > 0) {
+                    return {
+                        conversationId: existingConversation[0].id
+                    }
+                } else {
+                    const conversation = await prisma.conversation.create({
+                        data: {
+                            owner_id: userId,
+                            participants: {
+                                createMany: {
+                                    data: participantIds.map(id => ({
+                                        user_id: id,
+                                        has_seen_latest_message: id === userId
+                                    }))
+                                }
+                            }
+                        },
+                        include: conversationPopulated
+                    })
 
-                return {
-                    conversationId: conversation.id
+                    pubsub.publish('CONVERSATION_CREATED', {
+                        conversationCreated: conversation
+                    })
+
+                    return {
+                        conversationId: conversation.id
+                    }
                 }
 
             } catch (err) {
-                console.log('nah : ', err)
+                console.log('nah: ', err)
                 throw new GraphQLError('Error creating conversation.')
             }
         },
@@ -138,7 +166,8 @@ export const participantPopulated = Prisma.validator()({
     user: {
         select: {
             id: true,
-            username: true
+            username: true,
+            last_seen: true
         }
     }
 })

@@ -51,7 +51,8 @@ const resolvers = {
                             contains: searchedUsername,
                             not: myUsername,
                         }
-                    }
+                    },
+                    take: 10
                 })
 
             } catch (error) {
