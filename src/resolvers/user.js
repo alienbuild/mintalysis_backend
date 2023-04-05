@@ -23,13 +23,27 @@ const resolvers = {
         },
         profile: async (_, {userId}, {prisma, userInfo}) => {
 
-            const isMyProfile = Number(userId) === userInfo?.userId
+            const isMyProfile = userId === userInfo?.userId
 
-            const profile = await prisma.profile.findUnique({
+            const profile = await prisma.users.findUnique({
                 where: {
-                    user_id: Number(userId)
+                    id: userId
+                },
+                include: {
+                    projects: true,
+                    profile: true
                 }
             })
+
+            console.log('profile is...', profile)
+            // const profile = await prisma.profile.findUnique({
+            //     where: {
+            //         user_id: userId
+            //     },
+            //     include: {
+            //         user: true
+            //     }
+            // })
 
             if (!profile) return null
 
