@@ -18,7 +18,7 @@ const EcomiWikiUserMigration = async () => {
     await cursor.eachAsync(async (user) => {
         const { name, email, stripe_customer_id, createdAt, subscriptions } = user
 
-        if (!stripe_customer_id) return
+        // if (!stripe_customer_id) return
 
         let subscriber = false
         if (subscriptions.length > 0) subscriber = true
@@ -27,9 +27,9 @@ const EcomiWikiUserMigration = async () => {
             const newUser = await prisma.users.create({
                 data: {
                     name,
+                    username: generateFromEmail(email, 4),
                     email,
                     createdAt,
-                    stripe_customer_id,
                     ecomiwiki_user: subscriber
                 }
             })
@@ -51,7 +51,7 @@ const EcomiWikiUserMigration = async () => {
 
 }
 
-// EcomiWikiUserMigration()
+EcomiWikiUserMigration()
 
 import { generateFromEmail, generateUsername } from "unique-username-generator";
 
@@ -90,4 +90,4 @@ const generateUsernames = async () => {
 
 }
 
-generateUsernames()
+// generateUsernames()

@@ -36,7 +36,6 @@ const getVeveCollectibleFloorsQuery = () => {
                 storePrice
             }
         }
-        totalCount
     }
 }`
 }
@@ -1081,4 +1080,3 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
 }
-

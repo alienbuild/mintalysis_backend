@@ -185,6 +185,7 @@ model conversation_participant {
 
 model message {
   id             String        @id @default(uuid())
+  type           MessageType   @default(TEXT)
   conversationId String
   conversation   conversation  @relation(fields: [conversationId], references: [id])
   senderId       String
@@ -589,4 +590,10 @@ model tmp_wallet_merges {
 enum Role {
   BASIC
   ADMIN
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  OFFER
 }
