@@ -5,7 +5,7 @@ const typeDefs = gql`
     type Query {
         me: User
         findUserFollowing(userId: String!) : User
-        profile(userId: ID!): Profile
+        getUser(userId: ID): User
         searchUsers(username: String!): [User]
         getUsers: [User]
     }
@@ -26,6 +26,10 @@ const typeDefs = gql`
         avatar: String
         email: String!
         last_seen: DateTime 
+        createdAt: DateTime
+        updatedAt: DateTime
+        ecomiwiki_user: Boolean
+        activated: Boolean
         stripe_customer_id: String
         profile: Profile
         role: String!
