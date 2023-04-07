@@ -21,9 +21,11 @@ const resolvers = {
                 }
             })
         },
-        profile: async (_, {userId}, {prisma, userInfo}) => {
+        getUser: async (_, { userId }, {prisma, userInfo}) => {
 
             const isMyProfile = userId === userInfo?.userId
+
+            console.log('userid is: ', userId)
 
             const profile = await prisma.users.findUnique({
                 where: {
