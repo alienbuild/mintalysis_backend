@@ -84,8 +84,9 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
-
-                    await setTimeout(Math.floor(Math.random() * 2000) + index * 1000 / 3)
+                    
+                    // Max 5 calls a sec on public rest api
+                    await setTimeout(index*200)
 
                     imxTransArr.push({
                         id: transaction.txn_id,
@@ -116,6 +117,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         if (metadata && metadata.metadata.editionType){
                             let collectibleId = metadata.image_url.split('.')
                             updateObj.edition = metadata.metadata.edition
+                            updateObj.rarity = metadata.metadata.rarity
                             updateObj.collectible_id = collectibleId[3]
                             updateObj.type = 'collectible'
                         } else {
@@ -131,6 +133,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                                 if (uniqueCoverId){
                                     updateObj.unique_cover_id = uniqueCoverId.unique_cover_id
                                     updateObj.edition = metadata.metadata.edition
+                                    updateObj.rarity = metadata.metadata.rarity
                                     updateObj.type = 'comic'
                                 }
                             } catch (e) {
