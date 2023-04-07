@@ -70,7 +70,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 query: getImxTransactions(),
                 variables: {
                     address: "0xa7aefead2f25972d80516628417ac46b3f2604af",
-                    pageSize: 50, // 2673 is max?
+                    pageSize: 2673, // 2673 is max?
                     txnType: "transfer"
                 }
             })
@@ -85,7 +85,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
 
-                    // await setTimeout(Math.floor(Math.random() * 2000) + index * 1000 / 3)
+                    await setTimeout(Math.floor(Math.random() * 2000) + index * 1000 / 3)
 
                     imxTransArr.push({
                         id: transaction.txn_id,
@@ -116,7 +116,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         if (metadata && metadata.metadata.editionType){
                             let collectibleId = metadata.image_url.split('.')
                             updateObj.edition = metadata.metadata.edition
-                            updateObj.rarity = metadata.metadata.rarity
                             updateObj.collectible_id = collectibleId[3]
                             updateObj.type = 'collectible'
                         } else {
@@ -132,14 +131,12 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                                 if (uniqueCoverId){
                                     updateObj.unique_cover_id = uniqueCoverId.unique_cover_id
                                     updateObj.edition = metadata.metadata.edition
-                                    updateObj.rarity = metadata.metadata.rarity
                                     updateObj.type = 'comic'
                                 }
                             } catch (e) {
                                 console.log('[ERROR] could not look up comic ', e)
                             }
                         }
-                        console.log(updateObj)
                     }
                     try {
 
@@ -148,10 +145,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                                 token_id: Number(transaction.transfers[0].token.token_id)
                             },
                             update:{
-                                wallet_id: transaction.transfers[0].to_address,
-                                edition: updateObj.edition,
-                                type: updateObj.type,
-                                rarity: updateObj.rarity
+                                wallet_id: transaction.transfers[0].to_address
                             },
                             create: updateObj
                         })
