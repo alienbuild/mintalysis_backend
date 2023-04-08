@@ -12,6 +12,7 @@ import artistResolvers from './artists.js'
 import writerResolvers from './writers.js'
 import ecologiResolvers from './ecologi.js'
 import immutablexResolvers from './immutablex.js'
+import communityResolvers from './community.js'
 
 const resolvers = merge({},
     DateTime,
@@ -26,7 +27,8 @@ const resolvers = merge({},
     artistResolvers,
     writerResolvers,
     ecologiResolvers,
-    immutablexResolvers
+    immutablexResolvers,
+    communityResolvers
 )
 
 export default resolvers
