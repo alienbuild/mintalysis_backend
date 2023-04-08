@@ -116,33 +116,66 @@ model transfers_daily {
 }
 
 model users {
-  id                 String                     @id @default(uuid())
-  email              String                     @unique
-  createdAt          DateTime                   @default(now())
-  updatedAt          DateTime                   @updatedAt
-  role               Role                       @default(BASIC)
-  username           String                     @unique
-  name               String?
-  avatar             String?
-  last_seen          DateTime?                  @updatedAt
-  activated          Boolean                    @default(false)
-  stripe_customer_id String?
-  ecomiwiki_user     Boolean?                   @default(false)
-  onboarded          Boolean                    @default(false)
-  profile            profile?
-  viewed_profile     Int?
-  impressions        Int?
-  followers          follows[]                  @relation("follower")
-  following          follows[]                  @relation("following")
-  veve_watchlist     veve_watchlist[]
-  projects           projects[]
-  conversations      conversation_participant[]
-  messages           message[]
-  conversation       conversation[]
+  id                  String                     @id @default(uuid())
+  email               String                     @unique
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  role                Role                       @default(BASIC)
+  username            String                     @unique
+  name                String?
+  avatar              String?
+  last_seen           DateTime?                  @updatedAt
+  activated           Boolean                    @default(false)
+  stripe_customer_id  String?
+  ecomiwiki_user      Boolean?                   @default(false)
+  onboarded           Boolean                    @default(false)
+  profile             profile?
+  viewed_profile      Int?
+  impressions         Int?
+  followers           follows[]                  @relation("follower")
+  following           follows[]                  @relation("following")
+  veve_watchlist      veve_watchlist[]
+  projects            projects[]
+  conversations       conversation_participant[]
+  messages            message[]
+  conversation        conversation[]
+  communities         communities[]              @relation("member")
+  communities_created communities[]              @relation("creator")
+  posts               posts[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
   @@index([stripe_customer_id], map: "stripe_customer_id")
+}
+
+model communities {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String   @unique
+  type         String
+  image        String?
+  cover_image  String?
+  creator_id   String
+  creator      users    @relation("creator", fields: [creator_id], references: [id])
+  member_count Int?
+  members      users[]  @relation("member")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  posts        posts[]
+}
+
+model posts {
+  id                  String      @id @default(uuid())
+  author_id           String
+  author              users       @relation(fields: [author_id], references: [id])
+  community_id        String
+  community           communities @relation(fields: [community_id], references: [id])
+  body                String?
+  comment_count       Int?
+  like_count          Int?
+  image_url           String?
+  community_image_url String?
+  createdAt           DateTime    @default(now())
 }
 
 model follows {

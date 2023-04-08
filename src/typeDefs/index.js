@@ -12,6 +12,7 @@ import artistTypeDefs from './artists.js'
 import writerTypeDefs from './writers.js'
 import ecologiTypeDefs from './ecologi.js'
 import immutablexTypeDefs from './immutablex.js'
+import communityTypeDefs from './community.js'
 
 const typeDefs = [
     scalarDefs,
@@ -27,7 +28,8 @@ const typeDefs = [
     artistTypeDefs,
     writerTypeDefs,
     ecologiTypeDefs,
-    immutablexTypeDefs
+    immutablexTypeDefs,
+    communityTypeDefs
 ]
 
 export default typeDefs
