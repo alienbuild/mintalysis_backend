@@ -4,7 +4,9 @@ const typeDefs = gql`
     
     type Query {
         getCommunity(community_name: String) : Community
-        getPosts(community_id: ID) : [Post]
+        getPosts(community_id: ID, project_id: ID) : [Post]
+        getPost(post_id: ID!) : Post
+        getComments(post_id: ID!, community_id: ID) : [Comment]
     }
     
     type Mutation {
@@ -12,6 +14,12 @@ const typeDefs = gql`
         joinCommunity(community_id: ID!) : Boolean
         leaveCommunity(community_id: ID!) : Boolean
         createPost(payload: CreatePostPayload!) : Post
+        deletePost(post_id: ID!) : Boolean
+        likePost(post_id: ID!): Boolean
+        unlikePost(post_id: ID!): Boolean
+        createComment(post_id: ID!, community_id: ID!, body: String) : Comment
+        likeComment(comment_id: ID!) : Boolean
+        unlikeComment(comment_id: ID!) : Boolean
     }
     
     type Community {
@@ -36,6 +44,18 @@ const typeDefs = gql`
         community_image_url: String
         community: Community
         author: User
+        liked_by: [User]
+        comments: [Comment]
+    }
+    
+    type Comment {
+        id: String
+        author: User
+        body: String
+        createdAt: DateTime
+        updatedAt: DateTime
+        like_count: Int
+        liked_by: [User]
     }
 
     input CreateCommunityPayload {
