@@ -15,6 +15,7 @@ export const typeDefs = gql`
         name: String!
         abbr: String
         active: Boolean!
+        icon: String
         users: [User]
     }
 

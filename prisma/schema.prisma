@@ -142,6 +142,9 @@ model users {
   communities         communities[]              @relation("member")
   communities_created communities[]              @relation("creator")
   posts               posts[]
+  likes_posts         posts[]                    @relation("likes_posts")
+  likes_comments      comments[]                 @relation("likes_comments")
+  comments            comments[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -149,19 +152,22 @@ model users {
 }
 
 model communities {
-  id           String   @id @default(uuid())
-  name         String   @unique
-  slug         String   @unique
+  id           String     @id @default(uuid())
+  name         String     @unique
+  slug         String     @unique
   type         String
   image        String?
   cover_image  String?
   creator_id   String
-  creator      users    @relation("creator", fields: [creator_id], references: [id])
+  creator      users      @relation("creator", fields: [creator_id], references: [id])
   member_count Int?
-  members      users[]  @relation("member")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  members      users[]    @relation("member")
+  project_id   String?
+  project      projects?  @relation(fields: [project_id], references: [id])
   posts        posts[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  comments     comments[]
 }
 
 model posts {
@@ -176,6 +182,23 @@ model posts {
   image_url           String?
   community_image_url String?
   createdAt           DateTime    @default(now())
+  liked_by            users[]     @relation("likes_posts")
+  comments            comments[]
+}
+
+model comments {
+  id           String      @id @default(uuid())
+  author_id    String
+  author       users       @relation(fields: [author_id], references: [id])
+  post_id      String
+  post         posts       @relation(fields: [post_id], references: [id])
+  community_id String
+  community    communities @relation(fields: [community_id], references: [id])
+  body         String?
+  like_count   Int?
+  liked_by     users[]     @relation("likes_comments")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }
 
 model follows {
@@ -250,11 +273,13 @@ model offer {
 }
 
 model projects {
-  id     String  @id @default(uuid())
-  name   String? @unique
-  abbr   String? @unique
-  active Boolean @default(false)
-  users  users[]
+  id          String        @id @default(uuid())
+  name        String?       @unique
+  abbr        String?       @unique
+  active      Boolean       @default(false)
+  icon        String?
+  users       users[]
+  communities communities[]
 }
 
 model veve_comics {

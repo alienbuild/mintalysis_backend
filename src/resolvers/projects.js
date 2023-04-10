@@ -18,7 +18,7 @@ const resolvers = {
                 data: {
                     name,
                     abbr,
-                    active
+                    active,
                 }
             })
         }
