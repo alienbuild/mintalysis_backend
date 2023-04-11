@@ -13,6 +13,7 @@ const resolvers = {
                     id: true,
                     slug: true,
                     name: true,
+                    type: true,
                     creator_id: true,
                     member_count: true,
                     createdAt: true,
@@ -32,6 +33,26 @@ const resolvers = {
                             username: true,
                             avatar: true,
                             last_seen: true
+                        }
+                    },
+                    veve_collectible: {
+                        select: {
+                            collectible_id: true,
+                            name: true,
+                            rarity: true,
+                            description: true,
+                            edition_type: true,
+                            image_thumbnail_url: true,
+                            image_med_resolution_url: true,
+                            drop_date: true,
+                            market_fee: true,
+                            total_issued: true,
+                            floor_price: true,
+                            market_cap: true,
+                            all_time_high: true,
+                            all_time_low: true,
+                            one_day_change: true,
+                            total_listings: true,
                         }
                     }
                 }
@@ -100,6 +121,7 @@ const resolvers = {
                         }
                     },
                     comments: {
+                        where: { parent_id: null },
                         select: {
                             id: true,
                             author: {
@@ -121,14 +143,30 @@ const resolvers = {
                                     id: true
                                 }
                             },
+                            children: {
+                                include: {
+                                    children: true,
+                                    author: {
+                                        select: {
+                                            id: true,
+                                            username: true,
+                                            avatar: true,
+                                            last_seen: true
+                                        }
+                                    },
+                                    liked_by: true
+                                }
+                            }
                         },
-                        take: 1
+                        take: 5
                     }
                 },
                 orderBy: {
                     createdAt: 'desc',
                 },
             })
+
+            console.log('getPosts: ', getPosts[0].comments[0].children)
 
             return getPosts
 
@@ -232,13 +270,41 @@ const resolvers = {
                 take: limit
             })
 
-            console.log('comments are: ', getComments)
-
             return getComments
+        },
+        getCommentReactions: async (_, { comment_id }, { userInfo, prisma }) => {
+
+            console.log('hit: ', comment_id)
+            try {
+
+                const likedBy = await prisma.comments.findMany({
+                    where: {
+                        id: comment_id
+                    },
+                    select: {
+                        liked_by: {
+                            select: {
+                                id: true,
+                                username: true,
+                                avatar: true,
+                                last_seen: true
+                            }
+                        }
+                    }
+                })
+
+                return likedBy[0].liked_by
+
+            } catch (e) {
+                throw new GraphQLError('Not authorised.')
+            }
+
         }
     },
     Mutation: {
         createCommunity: async (_, { payload }, { userInfo, prisma }) => {
+
+            console.log('payload is: ', payload)
 
             return await prisma.communities.create({
                     data: {
@@ -354,7 +420,7 @@ const resolvers = {
 
             return !!unlikePost;
         },
-        createComment: async (_, { post_id, community_id, body }, { userInfo, prisma }) => {
+        createComment: async (_, { parent_id, post_id, community_id, body }, { userInfo, prisma }) => {
 
             const user = await prisma.users.findUnique({
                 where: {
@@ -370,32 +436,71 @@ const resolvers = {
             })
             const match = user.communities.filter(c => c.id === community_id)
             if (match) {
-                await prisma.post.update({
-                    where: {
-                        id: post_id,
-                    },
-                    data: {
-                        comment_count: { increment: 1 }
-                    }
-                })
-                return await prisma.comments.create({
-                    data: {
-                        author_id: userInfo.userId,
-                        post_id: post_id,
-                        community_id: community_id,
-                        body: body,
-                        like_count: 0
-                    },
-                    select: {
-                        author: {
-                            select: {
-                                id: true,
-                                username: true,
-                                avatar: true
+                if (parent_id) {
+                    try {
+                        await prisma.posts.update({
+                            where: {
+                                id: post_id,
+                            },
+                            data: {
+                                comment_count: { increment: 1 }
                             }
-                        }
+                        })
+                        return await prisma.comments.create({
+                            data: {
+                                post_id: post_id,
+                                parent_id: parent_id,
+                                community_id: community_id,
+                                body: body,
+                                author_id: userInfo.userId,
+                                like_count: 0
+                            },
+                            select: {
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        avatar: true
+                                    }
+                                }
+                            }
+                        })
+                    } catch (e) {
+                        console.log('nah: ', e)
+                        throw new GraphQLError('Not authorised.')
                     }
-                })
+                } else {
+                    try {
+                        await prisma.posts.update({
+                            where: {
+                                id: post_id,
+                            },
+                            data: {
+                                comment_count: { increment: 1 }
+                            }
+                        })
+                        return await prisma.comments.create({
+                            data: {
+                                author_id: userInfo.userId,
+                                post_id: post_id,
+                                community_id: community_id,
+                                body: body,
+                                like_count: 0
+                            },
+                            select: {
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        avatar: true
+                                    }
+                                }
+                            }
+                        })
+                    } catch (e) {
+                        throw new GraphQLError('Not authorised.')
+                    }
+                }
             } else {
                 throw new GraphQLError('Not authorised.')
             }

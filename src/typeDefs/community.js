@@ -7,6 +7,7 @@ const typeDefs = gql`
         getPosts(community_id: ID, project_id: ID) : [Post]
         getPost(post_id: ID!) : Post
         getComments(post_id: ID!, community_id: ID) : [Comment]
+        getCommentReactions(comment_id: ID!) : [User]
     }
     
     type Mutation {
@@ -17,7 +18,7 @@ const typeDefs = gql`
         deletePost(post_id: ID!) : Boolean
         likePost(post_id: ID!): Boolean
         unlikePost(post_id: ID!): Boolean
-        createComment(post_id: ID!, community_id: ID!, body: String) : Comment
+        createComment(parent_id: ID, post_id: ID, community_id: ID!, body: String) : Comment
         likeComment(comment_id: ID!) : Boolean
         unlikeComment(comment_id: ID!) : Boolean
     }
@@ -32,6 +33,7 @@ const typeDefs = gql`
         creator: User
         isMember: Boolean
         members: [User]
+        veve_collectible: Collectible
     }
     
     type Post {
@@ -56,6 +58,7 @@ const typeDefs = gql`
         updatedAt: DateTime
         like_count: Int
         liked_by: [User]
+        children: [Comment]
     }
 
     input CreateCommunityPayload {
@@ -63,7 +66,9 @@ const typeDefs = gql`
         type: String
         slug: String
         creator_id: String
+        project_id: String
         member_count: Int
+        veve_collectible_id: String
     }
     
     input CreatePostPayload { 
