@@ -162,7 +162,7 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 const previousTransactionCount = await prisma.veve_transfers.count()
 
                 try {
-                    const transfers = await prisma.veve_transfers.createMany({
+                    await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
                     })

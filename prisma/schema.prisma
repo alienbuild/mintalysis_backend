@@ -152,22 +152,36 @@ model users {
 }
 
 model communities {
-  id           String     @id @default(uuid())
-  name         String     @unique
-  slug         String     @unique
-  type         String
-  image        String?
-  cover_image  String?
-  creator_id   String
-  creator      users      @relation("creator", fields: [creator_id], references: [id])
-  member_count Int?
-  members      users[]    @relation("member")
-  project_id   String?
-  project      projects?  @relation(fields: [project_id], references: [id])
-  posts        posts[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  comments     comments[]
+  id                  String             @id @default(uuid())
+  name                String             @unique
+  slug                String             @unique
+  type                String
+  image               String?
+  cover_image         String?
+  creator_id          String
+  creator             users              @relation("creator", fields: [creator_id], references: [id])
+  member_count        Int?
+  members             users[]            @relation("member")
+  project_id          String?
+  project             projects?          @relation(fields: [project_id], references: [id])
+  posts               posts[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  comments            comments[]
+  veve_collectible_id String?
+  veve_collectible    veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
+  veve_comic_id       String?
+  veve_comic          veve_comics?       @relation(fields: [veve_comic_id], references: [unique_cover_id])
+  utilities           utilities[]
+}
+
+model utilities {
+  id           String       @id @default(uuid())
+  title        String?
+  body         String?
+  value        Int?
+  community_id String?
+  community    communities? @relation(fields: [community_id], references: [id])
 }
 
 model posts {
@@ -199,6 +213,9 @@ model comments {
   liked_by     users[]     @relation("likes_comments")
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  children     comments[]  @relation("comment_children")
+  parent       comments?   @relation("comment_children", fields: [parent_id], references: [id])
+  parent_id    String?
 }
 
 model follows {
@@ -327,6 +344,7 @@ model veve_comics {
   artists                   artists[]
   characters                characters[]
   writers                   writers[]
+  communities               communities[]
 
   @@index([unique_cover_id], map: "unique_cover_id")
 }
@@ -441,6 +459,7 @@ model veve_collectibles {
   series                               veve_series?     @relation(fields: [series_id], references: [series_id])
   veve_watchlist                       veve_watchlist[]
   veve_tokens                          veve_tokens[]
+  communities                          communities[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
