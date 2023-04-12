@@ -8,6 +8,7 @@ const typeDefs = gql`
         getPost(post_id: ID!) : Post
         getComments(post_id: ID!, community_id: ID) : [Comment]
         getCommentReactions(comment_id: ID!) : [User]
+        canViewCommunity(project_id: ID!, community_id: ID!): Boolean
     }
     
     type Mutation {
@@ -30,6 +31,7 @@ const typeDefs = gql`
         type: String
         member_count: Int
         createdAt: DateTime
+        project_id: String
         creator: User
         isMember: Boolean
         members: [User]
@@ -68,6 +70,7 @@ const typeDefs = gql`
         creator_id: String
         project_id: String
         member_count: Int
+        gate_key: String
         veve_collectible_id: String
     }
     

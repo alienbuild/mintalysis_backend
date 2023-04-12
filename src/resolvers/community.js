@@ -15,6 +15,7 @@ const resolvers = {
                     name: true,
                     type: true,
                     creator_id: true,
+                    project_id: true,
                     member_count: true,
                     createdAt: true,
                     creator: {
@@ -166,8 +167,6 @@ const resolvers = {
                 },
             })
 
-            console.log('getPosts: ', getPosts[0].comments[0].children)
-
             return getPosts
 
         },
@@ -299,12 +298,74 @@ const resolvers = {
                 throw new GraphQLError('Not authorised.')
             }
 
-        }
+        },
+        canViewCommunity: async (_, { project_id, community_id }, { userInfo, prisma }) => {
+
+            if (!userInfo || !project_id) return false
+            let user_wallet
+            // TODO: Might be able to automated this by using the 'hro' or 'veve' abbr
+            // and using like await prisma.[abbr]_wallets.findFirst({ ... })
+            switch (true){
+                // VEVE PROJECT
+                case project_id === 'de2180a8-4e26-402a-aed1-a09a51e6e33d':
+                    user_wallet = await prisma.veve_wallets.findFirst({
+                        where: {
+                            user_id: userInfo.userId
+                        },
+                        select: {
+                            id: true
+                        }
+                    })
+                    break
+                // HRO PROJECT
+                case project_id === 'e01fd52f-3e85-4036-b531-5f626f425862':
+                    user_wallet = await prisma.hro_wallets.findFirst({
+                        where: {
+                            user_id: userInfo.userId
+                        },
+                        select: {
+                            id: true
+                        }
+                    })
+                    break
+                default:
+                    return false
+            }
+
+            if (!user_wallet) return false
+
+            const gate_key = await prisma.communities.findUnique({
+                where: {
+                    id: community_id
+                },
+                select: {
+                    gate_key: true,
+                    veve_collectible_id: true,
+                    veve_comic_id: true,
+                }
+            })
+
+            switch (gate_key.gate_key) {
+                case 'veve_collectible_id':
+                    console.log('switch: gatekey is veve_collectible_id')
+                    break
+                default:
+                    console.log('switch: defaulted.')
+                    break
+            }
+
+            const tokens = await prisma.veve_tokens.findFirst({
+                where: {
+                    collectible_id: "a659bbc2-45cd-4f72-9ca2-7e92a245d05f",
+                    wallet_id: user_wallet.id
+                }
+            })
+
+            return !!tokens;
+        },
     },
     Mutation: {
         createCommunity: async (_, { payload }, { userInfo, prisma }) => {
-
-            console.log('payload is: ', payload)
 
             return await prisma.communities.create({
                     data: {

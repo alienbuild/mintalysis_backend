@@ -168,6 +168,7 @@ model communities {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   comments            comments[]
+  gate_key            String?
   veve_collectible_id String?
   veve_collectible    veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
   veve_comic_id       String?
