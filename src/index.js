@@ -101,14 +101,13 @@ const main = async () => {
         json(),
         expressMiddleware(server, {
             context: async ({ req }) => {
-
-            const userInfo = await getUserFromToken(req.headers.authorization)
-        // const session = await getSession({ req });
-
-        return { userInfo, prisma, pubsub };
-    },
-})
-);
+                const ipAddress = req.header('x-forwarded-for') || req.socket.remoteAddress
+                const userAgent = req.headers["user-agent"]
+                const userInfo = await getUserFromToken(req.headers.authorization)
+                return { ipAddress, userAgent, userInfo, prisma, pubsub };
+            },
+        })
+    );
 
     // server.applyMiddleware({ app, path: "/graphql", cors: corsOptions });
 

@@ -4,6 +4,28 @@ import {GraphQLError} from "graphql"
 import {sendMagicLink} from "../utils/sendMagicLink.js"
 
 const resolvers = {
+    Query: {
+        validate: async (_, __, { ipAddress, userAgent, userInfo, prisma }) => {
+
+            try {
+                await prisma.login_history.create({
+                    data: {
+                        browser: userAgent,
+                        ip_address: ipAddress,
+                        user_id: userInfo.userId
+                    }
+                })
+
+                return true
+
+            } catch (e) {
+                console.log('nah: ', e)
+                return false
+            }
+
+
+        }
+    },
     Mutation: {
         auth: async (_, { credentials }, { prisma }) => {
 
