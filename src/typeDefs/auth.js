@@ -2,6 +2,10 @@ import gql from 'graphql-tag'
 
 const typeDefs = gql`
 
+    type Query {
+        validate: Boolean
+    }
+    
     type Mutation {
         auth(credentials: CredentialsInput!) : AuthPayload!
     }

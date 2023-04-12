@@ -116,46 +116,72 @@ model transfers_daily {
 }
 
 model users {
-  id                  String                     @id @default(uuid())
-  email               String                     @unique
-  createdAt           DateTime                   @default(now())
-  updatedAt           DateTime                   @updatedAt
-  role                Role                       @default(BASIC)
-  username            String                     @unique
-  name                String?
-  avatar              String?
-  last_seen           DateTime?                  @updatedAt
-  activated           Boolean                    @default(false)
-  stripe_customer_id  String?
-  ecomiwiki_user      Boolean?                   @default(false)
-  onboarded           Boolean                    @default(false)
-  profile             profile?
-  viewed_profile      Int?
-  impressions         Int?
-  followers           follows[]                  @relation("follower")
-  following           follows[]                  @relation("following")
-  veve_watchlist      veve_watchlist[]
-  projects            projects[]
-  conversations       conversation_participant[]
-  messages            message[]
-  conversation        conversation[]
-  communities         communities[]              @relation("member")
-  communities_created communities[]              @relation("creator")
-  posts               posts[]
-  likes_posts         posts[]                    @relation("likes_posts")
-  likes_comments      comments[]                 @relation("likes_comments")
-  comments            comments[]
+  id                     String                     @id @default(uuid())
+  email                  String                     @unique
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+  role                   Role                       @default(BASIC)
+  username               String                     @unique
+  name                   String?
+  cover_image            String?
+  avatar                 String?
+  last_seen              DateTime?                  @default(now())
+  status                 UserStatus                 @default(ACTIVE)
+  activated              Boolean                    @default(false)
+  stripe_customer_id     String?
+  ecomiwiki_user         Boolean?                   @default(false)
+  onboarded              Boolean                    @default(false)
+  profile                profile?
+  viewed_profile         Int?
+  impressions            Int?
+  followers              follows[]                  @relation("follower")
+  following              follows[]                  @relation("following")
+  veve_watchlist         veve_watchlist[]
+  projects               projects[]
+  conversations          conversation_participant[]
+  messages               message[]
+  conversation           conversation[]
+  communities            communities[]              @relation("member")
+  communities_created    communities[]              @relation("creator")
+  posts                  posts[]
+  likes_posts            posts[]                    @relation("likes_posts")
+  likes_comments         comments[]                 @relation("likes_comments")
+  comments               comments[]
+  from_notifications     notifications[]            @relation("from_notifications")
+  to_notifications       notifications[]            @relation("to_notifications")
+  invited_in_communities communities[]              @relation("users_communities_invites")
+  login_history          login_history[]            @relation("user_login_history")
 
   @@index([email], map: "email")
   @@index([username], map: "username")
   @@index([stripe_customer_id], map: "stripe_customer_id")
 }
 
+model login_history {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  browser    String?
+  ip_address String
+  user       users    @relation("user_login_history", fields: [user_id], references: [id], onDelete: Cascade)
+  user_id    String
+}
+
+model notifications {
+  id           String           @id @default(uuid())
+  type         NotificationType
+  content      String
+  createdAt    DateTime         @default(now())
+  from_user    users?           @relation(name: "from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
+  from_user_id String?
+  to_user      users?           @relation(name: "to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
+  to_user_id   String?
+}
+
 model communities {
   id                  String             @id @default(uuid())
   name                String             @unique
   slug                String             @unique
-  type                String
+  type                CommunityPrivacy       @default(PUBLIC)
   image               String?
   cover_image         String?
   creator_id          String
@@ -168,6 +194,7 @@ model communities {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   comments            comments[]
+  invited_users       users[]            @relation("users_communities_invites")
   gate_key            String?
   veve_collectible_id String?
   veve_collectible    veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
@@ -279,10 +306,11 @@ model message {
   body           String        @db.Text
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  offer          offer[]
+  status         MessageStatus @default(SENT)
+  offer          offers[]
 }
 
-model offer {
+model offers {
   id            String   @id @default(uuid())
   offer         Decimal? @db.Decimal(10, 2)
   offerAccepted Boolean? @default(false)
@@ -694,4 +722,29 @@ enum MessageType {
   TEXT
   IMAGE
   OFFER
+}
+
+enum NotificationType {
+  POST
+  FOLLOWER
+  COMMUNITY
+  OFFER
+}
+
+enum CommunityPrivacy {
+  PUBLIC
+  PRIVATE
+  HODLERS
+}
+
+enum MessageStatus {
+  SENT
+  RECEIVED
+  SEEN
+}
+
+enum UserStatus {
+  ACTIVE
+  IDLE
+  LOGOUT
 }
