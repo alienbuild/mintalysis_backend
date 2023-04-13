@@ -144,12 +144,15 @@ model users {
   communities            communities[]              @relation("member")
   communities_created    communities[]              @relation("creator")
   posts                  posts[]
+  community_posts        community_posts[]
   likes_posts            posts[]                    @relation("likes_posts")
+  likes_community_posts  community_posts[]          @relation("likes_community_posts")
   likes_comments         comments[]                 @relation("likes_comments")
   comments               comments[]
   from_notifications     notifications[]            @relation("from_notifications")
   to_notifications       notifications[]            @relation("to_notifications")
   invited_in_communities communities[]              @relation("users_communities_invites")
+  tagged_in_posts        posts[]                    @relation("users_posts_tag")
   login_history          login_history[]            @relation("user_login_history")
 
   @@index([email], map: "email")
@@ -181,7 +184,7 @@ model communities {
   id                  String             @id @default(uuid())
   name                String             @unique
   slug                String             @unique
-  type                CommunityPrivacy       @default(PUBLIC)
+  type                CommunityPrivacy   @default(PUBLIC)
   image               String?
   cover_image         String?
   creator_id          String
@@ -201,6 +204,7 @@ model communities {
   veve_comic_id       String?
   veve_comic          veve_comics?       @relation(fields: [veve_comic_id], references: [unique_cover_id])
   utilities           utilities[]
+  community_posts     community_posts[]
 }
 
 model utilities {
@@ -213,37 +217,58 @@ model utilities {
 }
 
 model posts {
+  id                  String           @id @default(uuid())
+  audience            PostAudienceEnum @default(PUBLIC)
+  author_id           String?
+  author              users?           @relation(fields: [author_id], references: [id])
+  community_id        String?
+  community           communities?     @relation(fields: [community_id], references: [id])
+  body                String?
+  image_url           String?
+  community_image_url String?
+  like_count          Int?
+  comment_count       Int?
+  liked_by            users[]          @relation("likes_posts")
+  comments            comments[]
+  tagged_users        users[]          @relation("users_posts_tag")
+  createdAt           DateTime         @default(now())
+}
+
+model community_posts {
   id                  String      @id @default(uuid())
   author_id           String
   author              users       @relation(fields: [author_id], references: [id])
   community_id        String
   community           communities @relation(fields: [community_id], references: [id])
-  body                String?
-  comment_count       Int?
-  like_count          Int?
+  content             String?
   image_url           String?
   community_image_url String?
-  createdAt           DateTime    @default(now())
-  liked_by            users[]     @relation("likes_posts")
+  comment_count       Int?
+  like_count          Int?
+  liked_by            users[]     @relation("likes_community_posts")
   comments            comments[]
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 }
 
 model comments {
-  id           String      @id @default(uuid())
-  author_id    String
-  author       users       @relation(fields: [author_id], references: [id])
-  post_id      String
-  post         posts       @relation(fields: [post_id], references: [id])
-  community_id String
-  community    communities @relation(fields: [community_id], references: [id])
-  body         String?
-  like_count   Int?
-  liked_by     users[]     @relation("likes_comments")
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  children     comments[]  @relation("comment_children")
-  parent       comments?   @relation("comment_children", fields: [parent_id], references: [id])
-  parent_id    String?
+  id                String           @id @default(uuid())
+  author_id         String
+  author            users            @relation(fields: [author_id], references: [id])
+  post_id           String
+  post              posts            @relation(fields: [post_id], references: [id])
+  community_id      String
+  community         communities      @relation(fields: [community_id], references: [id])
+  body              String?
+  like_count        Int?
+  liked_by          users[]          @relation("likes_comments")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  children          comments[]       @relation("comment_children")
+  parent            comments?        @relation("comment_children", fields: [parent_id], references: [id])
+  parent_id         String?
+  community_posts   community_posts? @relation(fields: [community_postsId], references: [id])
+  community_postsId String?
 }
 
 model follows {
@@ -322,6 +347,7 @@ model projects {
   id          String        @id @default(uuid())
   name        String?       @unique
   abbr        String?       @unique
+  slug        String?       @unique
   active      Boolean       @default(false)
   icon        String?
   users       users[]
@@ -747,4 +773,10 @@ enum UserStatus {
   ACTIVE
   IDLE
   LOGOUT
+}
+
+enum PostAudienceEnum {
+  PUBLIC
+  ONLY_ME
+  SPECIFIC
 }

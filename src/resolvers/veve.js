@@ -53,7 +53,6 @@ const keepFetchingData = async (cursor, tokenCount, wallet_address) => {
 const resolvers = {
     Query: {
         validateVeveUsername: async (_, {username}, ___) => {
-            console.log('query username is: ', username)
             let returnArr = []
             try {
                 const userList = await validateVeveUsername(username)

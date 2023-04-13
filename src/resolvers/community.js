@@ -83,10 +83,11 @@ const resolvers = {
             }
 
         },
-        getPosts: async (_, { community_id, project_id }, { userInfo, prisma }) => {
+        getPosts: async (_, { user_id, community_id, project_id }, { userInfo, prisma }) => {
 
             let whereParams = {}
 
+            if (user_id) whereParams = { ...whereParams, author_id: user_id }
             if (community_id) whereParams = { ...whereParams, community_id }
             if (project_id) whereParams = { ...whereParams, project_id }
 
@@ -425,9 +426,16 @@ const resolvers = {
         },
         createPost: async (_, { payload }, { userInfo, prisma }) => {
 
-            return await prisma.posts.create({
-                data: payload
-            })
+            console.log('payload is: ', payload)
+
+            try {
+                return await prisma.posts.create({
+                    data: payload
+                })
+            } catch (e) {
+                console.log('Nope...', e)
+                throw new GraphQLError('Failed to create post.')
+            }
 
         },
         deletePost: async (_, { post_id }, { userInfo, prisma }) => {
