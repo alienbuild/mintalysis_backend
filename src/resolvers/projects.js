@@ -1,3 +1,5 @@
+import {slugify} from "../utils/index.js";
+
 const resolvers = {
     Query: {
         projects: async (_,{ id, name, active }, { prisma }) => {
@@ -19,6 +21,7 @@ const resolvers = {
                     name,
                     abbr,
                     active,
+                    slug: slugify(name)
                 }
             })
         }

@@ -4,7 +4,7 @@ const typeDefs = gql`
     
     type Query {
         getCommunity(community_name: String) : Community
-        getPosts(community_id: ID, project_id: ID) : [Post]
+        getPosts(user_id: ID, community_id: ID, project_id: ID) : [Post]
         getPost(post_id: ID!) : Post
         getComments(post_id: ID!, community_id: ID) : [Comment]
         getCommentReactions(comment_id: ID!) : [User]
@@ -12,7 +12,7 @@ const typeDefs = gql`
     }
     
     type Mutation {
-        createCommunity(payload: CreateCommunityPayload!) : Community
+        createCommunity(payload: CreateCommunityPayload) : Community
         joinCommunity(community_id: ID!) : Boolean
         leaveCommunity(community_id: ID!) : Boolean
         createPost(payload: CreatePostPayload!) : Post

@@ -4,16 +4,22 @@ const typeDefs = gql`
     
     type Query {
         me: User
-        findUserFollowing(userId: String!) : User
-        getUser(userId: ID): User
+        getUserFollowing(userId: String!) : User
+        getUser(username: String!): UserConnection
         searchUsers(username: String!): [User]
         getUsers: [User]
+    }
+    
+    type UserConnection {
+        user: User,
+        isMyProfile: Boolean
+        userIsFollowing: Boolean
     }
     
     type Mutation {
         avatarUpload(file: Upload) : AvatarUploadResponse #Auth only
         updateLastSeen(now: String) : Boolean
-        followUser(userId: String!) : User
+        followUser(userId: ID!) : Boolean
     }
     
     type Subscription {
@@ -28,16 +34,23 @@ const typeDefs = gql`
         last_seen: DateTime 
         createdAt: DateTime
         updatedAt: DateTime
+        cover_image: String
         ecomiwiki_user: Boolean
         activated: Boolean
         stripe_customer_id: String
         profile: Profile
         role: String!
-        following: [User]
+        following: [FollowerConnection]
+        followers: [FollowerConnection]
         tokens: [Token]!
         projects: [Project]
+        posts: [Post]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
         veve_wallet: VeveWallet
+    }
+    
+    type FollowerConnection {
+        follower: User
     }
     
     type VeveWallet {

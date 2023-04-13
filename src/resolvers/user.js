@@ -21,38 +21,66 @@ const resolvers = {
                 }
             })
         },
-        getUser: async (_, { userId }, {prisma, userInfo}) => {
+        getUser: async (_, { username }, {prisma, userInfo}) => {
 
-            const isMyProfile = userId === userInfo?.userId
+            const isMyProfile = username === userInfo?.userId
 
-            console.log('userid is: ', userId)
+            try {
 
-            const profile = await prisma.users.findUnique({
-                where: {
-                    id: userId
-                },
-                include: {
-                    projects: true,
-                    profile: true
+                const user = await prisma.users.findUnique({
+                    where: {
+                        username: username
+                    },
+                    include: {
+                        projects: true,
+                        profile: true,
+                        followers: {
+                            select: {
+                                following: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        avatar: true
+                                    }
+                                }
+                            }
+                        },
+                        following: {
+                            select: {
+                                follower: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        avatar: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+
+                console.log('user is: ', user)
+
+                if (!user) return null
+
+                const check = await prisma.follows.findFirst({
+                    where: {
+                        followingId: userInfo.userId,
+                        followerId: user.id
+                    }
+                })
+
+                return {
+                    user: user,
+                    isMyProfile,
+                    userIsFollowing: !!check
                 }
-            })
 
-            console.log('profile is...', profile)
-            // const profile = await prisma.profile.findUnique({
-            //     where: {
-            //         user_id: userId
-            //     },
-            //     include: {
-            //         user: true
-            //     }
-            // })
-
-            if (!profile) return null
-
-            return {
-                ...profile,
-                isMyProfile
+            } catch (e) {
+                console.log('boerwersdfsdf : ', e)
+                throw new GraphQLError('Not authorised.')
             }
+
         },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
 
@@ -80,18 +108,24 @@ const resolvers = {
 
             return await prisma.users.findMany({})
         },
-        findUserFollowing: async (_, { userId }, { userInfo, prisma }) => {
+        getUserFollowing: async (_, { userId }, { prisma, userInfo }) => {
 
-            if (!userInfo) throw new GraphQLError('Not authorised.')
+            // if (!userInfo) throw new GraphQLError('Not authorised.')
 
-            return await prisma.users.findUnique({
-                where: {
-                    id: userInfo.userId,
-                },
-                select: {
-                    following: true
-                },
-            })
+            try {
+                return await prisma.users.findUnique({
+                    where: {
+                        id: userId,
+                    },
+                    include: {
+                        following: true,
+                        followers: true
+                    },
+                })
+            } catch (e) {
+                throw new GraphQLError('Not authorised.')
+            }
+
         }
     },
     Mutation: {
@@ -165,20 +199,19 @@ const resolvers = {
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
 
-            const test = await prisma.users.update({
-                where: {
-                    id: userInfo.userId
-                },
-                data: {
-                    following: {
-                        connect: {
-                            id: userId
-                        }
+            try {
+                await prisma.follows.create({
+                    data: {
+                        follower: { connect: { id: userInfo.userId } },
+                        following: { connect: { id: userId } },
                     }
-                }
-            })
+                })
 
-            return test
+                return true
+            } catch (e) {
+                throw new GraphQLError('Not authorised.')
+            }
+
         }
     },
     Subscription: {
