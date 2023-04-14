@@ -4,10 +4,12 @@ const typeDefs = gql`
     
     type Query {
         me: User
-        getUserFollowing(userId: String!) : User
         getUser(username: String!): UserConnection
-        searchUsers(username: String!): [User]
         getUsers: [User]
+        searchUsers(username: String!): [User]
+        getUserFollowing(userId: String! type: String) : User
+        getUserCommunities(userId: String!): [Community]
+        getUserProjects(userId: ID!): Boolean
     }
     
     type UserConnection {
@@ -20,6 +22,7 @@ const typeDefs = gql`
         avatarUpload(file: Upload) : AvatarUploadResponse #Auth only
         updateLastSeen(now: String) : Boolean
         followUser(userId: ID!) : Boolean
+        unfollowUser(userId: ID!): Boolean
     }
     
     type Subscription {
@@ -47,10 +50,20 @@ const typeDefs = gql`
         posts: [Post]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
         veve_wallet: VeveWallet
+        _count: UserCommunityStats
+    }
+    
+    type UserCommunityStats {
+        followers: Int
+        following: Int
+        posts: Int
+        comments: Int
+        projects: Int 
     }
     
     type FollowerConnection {
         follower: User
+        following: User
     }
     
     type VeveWallet {

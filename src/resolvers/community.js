@@ -91,85 +91,154 @@ const resolvers = {
             if (community_id) whereParams = { ...whereParams, community_id }
             if (project_id) whereParams = { ...whereParams, project_id }
 
-            const getPosts = await prisma.posts.findMany({
-                where: whereParams,
-                select: {
-                    id: true,
-                    body: true,
-                    comment_count: true,
-                    like_count: true,
-                    createdAt: true,
-                    community: {
-                        select: {
-                            id: true,
-                            slug: true,
-                            name: true,
-                        }
-                    },
-                    author: {
-                        select: {
-                            id: true,
-                            username: true,
-                            last_seen: true,
-                            avatar: true
-                        }
-                    },
-                    liked_by: {
-                        where: {
-                            id: userInfo.userId
-                        },
-                        select: {
-                            id: true
-                        }
-                    },
-                    comments: {
-                        where: { parent_id: null },
-                        select: {
-                            id: true,
-                            author: {
-                                select: {
-                                    id: true,
-                                    username: true,
-                                    avatar: true,
-                                }
-                            },
-                            body: true,
-                            createdAt: true,
-                            updatedAt: true,
-                            like_count: true,
-                            liked_by: {
-                                where: {
-                                    id: userInfo.userId
-                                },
-                                select: {
-                                    id: true
-                                }
-                            },
-                            children: {
-                                include: {
-                                    children: true,
-                                    author: {
-                                        select: {
-                                            id: true,
-                                            username: true,
-                                            avatar: true,
-                                            last_seen: true
-                                        }
-                                    },
-                                    liked_by: true
-                                }
+            if (community_id) {
+                return await prisma.community_posts.findMany({
+                    where: whereParams,
+                    select: {
+                        id: true,
+                        content: true,
+                        comment_count: true,
+                        like_count: true,
+                        createdAt: true,
+                        community: {
+                            select: {
+                                id: true,
+                                slug: true,
+                                name: true,
                             }
                         },
-                        take: 5
-                    }
-                },
-                orderBy: {
-                    createdAt: 'desc',
-                },
-            })
-
-            return getPosts
-
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                last_seen: true,
+                                avatar: true
+                            }
+                        },
+                        liked_by: {
+                            where: {
+                                id: userInfo.userId
+                            },
+                            select: {
+                                id: true
+                            }
+                        },
+                        comments: {
+                            where: {parent_id: null},
+                            select: {
+                                id: true,
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        avatar: true,
+                                    }
+                                },
+                                body: true,
+                                createdAt: true,
+                                updatedAt: true,
+                                like_count: true,
+                                liked_by: {
+                                    where: {
+                                        id: userInfo.userId
+                                    },
+                                    select: {
+                                        id: true
+                                    }
+                                },
+                                children: {
+                                    include: {
+                                        children: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                username: true,
+                                                avatar: true,
+                                                last_seen: true
+                                            }
+                                        },
+                                        liked_by: true
+                                    }
+                                }
+                            },
+                            take: 5
+                        }
+                    },
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                })
+            } else {
+                return await prisma.posts.findMany({
+                    where: whereParams,
+                    select: {
+                        id: true,
+                        body: true,
+                        comment_count: true,
+                        like_count: true,
+                        createdAt: true,
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                last_seen: true,
+                                avatar: true
+                            }
+                        },
+                        liked_by: {
+                            where: {
+                                id: userInfo.userId
+                            },
+                            select: {
+                                id: true
+                            }
+                        },
+                        comments: {
+                            where: {parent_id: null},
+                            select: {
+                                id: true,
+                                author: {
+                                    select: {
+                                        id: true,
+                                        username: true,
+                                        avatar: true,
+                                    }
+                                },
+                                body: true,
+                                createdAt: true,
+                                updatedAt: true,
+                                like_count: true,
+                                liked_by: {
+                                    where: {
+                                        id: userInfo.userId
+                                    },
+                                    select: {
+                                        id: true
+                                    }
+                                },
+                                children: {
+                                    include: {
+                                        children: true,
+                                        author: {
+                                            select: {
+                                                id: true,
+                                                username: true,
+                                                avatar: true,
+                                                last_seen: true
+                                            }
+                                        },
+                                        liked_by: true
+                                    }
+                                }
+                            },
+                            take: 5
+                        }
+                    },
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                })
+            }
         },
         getPost: async (_, { post_id }, { userInfo, prisma}) => {
 
@@ -426,15 +495,22 @@ const resolvers = {
         },
         createPost: async (_, { payload }, { userInfo, prisma }) => {
 
-            console.log('payload is: ', payload)
-
-            try {
-                return await prisma.posts.create({
-                    data: payload
-                })
-            } catch (e) {
-                console.log('Nope...', e)
-                throw new GraphQLError('Failed to create post.')
+            if (payload.community_id){
+                try {
+                    return await prisma.community_posts.create({
+                        data: payload
+                    })
+                } catch (e) {
+                    throw new GraphQLError('Failed to create post.')
+                }
+            } else {
+                try {
+                    return await prisma.posts.create({
+                        data: payload
+                    })
+                } catch (e) {
+                    throw new GraphQLError('Failed to create post.')
+                }
             }
 
         },
