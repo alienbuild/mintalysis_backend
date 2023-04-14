@@ -36,7 +36,7 @@ const resolvers = {
                         profile: true,
                         followers: {
                             select: {
-                                following: {
+                                follower: {
                                     select: {
                                         id: true,
                                         username: true,
@@ -47,7 +47,7 @@ const resolvers = {
                         },
                         following: {
                             select: {
-                                follower: {
+                                following: {
                                     select: {
                                         id: true,
                                         username: true,
@@ -55,18 +55,25 @@ const resolvers = {
                                     }
                                 }
                             }
+                        },
+                        _count: {
+                            select: {
+                                followers: true,
+                                following: true,
+                                posts: true,
+                                comments: true,
+                                projects: true
+                            }
                         }
                     }
                 })
-
-                console.log('user is: ', user)
 
                 if (!user) return null
 
                 const check = await prisma.follows.findFirst({
                     where: {
-                        followingId: userInfo.userId,
-                        followerId: user.id
+                        followingId: user.id,
+                        followerId: userInfo.userId
                     }
                 })
 
@@ -81,6 +88,10 @@ const resolvers = {
                 throw new GraphQLError('Not authorised.')
             }
 
+        },
+        getUsers: async (_, __, { prisma, userInfo}) => {
+
+            return await prisma.users.findMany({})
         },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
 
@@ -104,26 +115,103 @@ const resolvers = {
             }
 
         },
-        getUsers: async (_, __, { prisma, userInfo}) => {
+        getUserFollowing: async (_, { userId, type = "followers" }, { prisma, userInfo }) => {
 
-            return await prisma.users.findMany({})
-        },
-        getUserFollowing: async (_, { userId }, { prisma, userInfo }) => {
-
-            // if (!userInfo) throw new GraphQLError('Not authorised.')
+            let select
+            if (type === 'followers') {
+                select = {
+                    followers: {
+                        select: {
+                            follower: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    avatar: true
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                select = {
+                    following: {
+                        select: {
+                            following: {
+                                select: {
+                                    id: true,
+                                    username: true,
+                                    avatar: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             try {
                 return await prisma.users.findUnique({
                     where: {
                         id: userId,
                     },
-                    include: {
-                        following: true,
-                        followers: true
-                    },
+                    select
                 })
             } catch (e) {
                 throw new GraphQLError('Not authorised.')
+            }
+
+        },
+        getUserCommunities: async (_, { userId }, { userInfo, prisma }) => {
+
+            console.log('hit: ', userId)
+
+            try {
+                const test = await prisma.users.findUnique({
+                    where:{
+                        id: userId
+                    },
+                    select: {
+                        communities: {
+                            select: {
+                                id: true,
+                                name: true,
+                                type: true,
+                                slug: true,
+                                image: true,
+                                member_count: true,
+                                createdAt: true
+                            }
+                        }
+                    }
+                })
+
+                console.log('test is: ', test)
+
+                return test.communities
+            } catch (e) {
+                console.log('nah: ', e)
+                throw new GraphQLError('Not authorised.')
+            }
+
+        },
+        getUserProjects: async (_, { userId }, { userInfo, prisma }) => {
+
+            try {
+
+                const test = await prisma.users.findUnique({
+                    where: {
+                        id: userId
+                    },
+                    select: {
+                        projects: true,
+                    }
+                })
+
+                console.log('projects and count: ', test)
+
+                return true
+
+            } catch (e) {
+                console.log('nah: ', e)
             }
 
         }
@@ -198,16 +286,31 @@ const resolvers = {
         followUser: async (_, { userId }, { userInfo, prisma }) => {
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
+            if (userId === userInfo.userId) throw new GraphQLError('You can not follow yourself.')
 
             try {
-                await prisma.follows.create({
+                return await prisma.follows.create({
                     data: {
-                        follower: { connect: { id: userInfo.userId } },
-                        following: { connect: { id: userId } },
+                        followerId: userInfo.userId,
+                        followingId: userId
                     }
                 })
+            } catch (e) {
+                throw new GraphQLError('Not authorised.')
+            }
 
-                return true
+        },
+        unfollowUser: async (_, { userId }, { userInfo, prisma }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised.')
+            if (userId === userInfo.userId) throw new GraphQLError('You can not unfollow yourself.')
+
+            try {
+                return await prisma.follows.delete({
+                    where: {
+                        followerId: userInfo.userId,
+                        followingId: userId
+                    }
+                })
             } catch (e) {
                 throw new GraphQLError('Not authorised.')
             }

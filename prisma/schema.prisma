@@ -134,8 +134,8 @@ model users {
   profile                profile?
   viewed_profile         Int?
   impressions            Int?
-  followers              follows[]                  @relation("follower")
-  following              follows[]                  @relation("following")
+  followers              follows[]                  @relation("following")
+  following              follows[]                  @relation("follower")
   veve_watchlist         veve_watchlist[]
   projects               projects[]
   conversations          conversation_participant[]
@@ -285,10 +285,10 @@ model profile {
   bio                  String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
-  user_id              String        @unique
   onboarded            Boolean       @default(false)
   veve_wallet_imported Boolean       @default(false)
   veve_wallet_address  String?
+  user_id              String        @unique
   user                 users         @relation(fields: [user_id], references: [id])
   veve_wallet          veve_wallets?
 }
