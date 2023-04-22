@@ -85,13 +85,11 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
                     
-                    // Max 5 calls a sec on public rest api
-                    // await setTimeout(index*200)
-                    
                     let token_id =Number(transaction.transfers[0].token.token_id) 
                     let timestamp = moment.unix(Number(transaction.txn_time) / 1000).utc().format()
                     let from_wallet = transaction.transfers[0].from_address
                     let to_wallet = transaction.transfers[0].to_address
+                    let active = 1
 
                     imxTransArr.push({
                         id: transaction.txn_id,
@@ -101,8 +99,8 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         token_id: token_id
                     })
 
-                    imxWalletIds.push({id: from_wallet })
-                    imxWalletIds.push({id: to_wallet })
+                    imxWalletIds.push({id: from_wallet, last_activity_date: timestamp, active: active})
+                    imxWalletIds.push({id: to_wallet, last_activity_date: timestamp, active: active })
 
                     // let metadata
 

@@ -83,16 +83,21 @@ export const VEVE_IMX_MINTS = () => {
                 let imxWalletIds = []
 
                 await imxMints.data.listTransactionsV2.items.map(async (mint) => {
+                    
+                    let token_id = Number(mint.transfers[0].token.token_id)
+                    let timestamp = moment.unix(Number(mint.txn_time) / 1000).utc().format()
+                    let wallet_id = mint.transfers[0].to_address
+                    let active = 1
 
                     imxMintsArr.push({
                         id: mint.txn_id,
-                        wallet_id: mint.transfers[0].to_address,
-                        timestamp: moment.unix(Number(mint.txn_time) / 1000).utc().format(),
-                        token_id: Number(mint.transfers[0].token.token_id)
+                        wallet_id: wallet_id,
+                        timestamp: timestamp,
+                        token_id: token_id
                     })
 
-                    imxTokenArr.push({token_id: Number(mint.transfers[0].token.token_id), mint_date: moment.unix(mint.txn_time / 1000).utc().format()})
-                    imxWalletIds.push({id: mint.transfers[0].to_address})
+                    imxTokenArr.push({token_id: token_id, mint_date: mint_date, wallet_id: wallet_id})
+                    imxWalletIds.push({id: wallet_id, active: active, last_activity_date: timestamp})
 
                 })
 
