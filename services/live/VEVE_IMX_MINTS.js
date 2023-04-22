@@ -100,6 +100,8 @@ export const VEVE_IMX_MINTS = () => {
                     imxWalletIds.push({id: wallet_id, active: active, last_activity_date: timestamp})
 
                 })
+                
+                const previousMintCount = await prisma.veve_mints.count()
 
                 try {
 
@@ -118,12 +120,26 @@ export const VEVE_IMX_MINTS = () => {
                         skipDuplicates: true
                     })
 
+                    const currentMintCount = await prisma.veve_mints.count()
+                    if (currentMintCount > previousMintCount) {
+                        const imxStats = await prisma.imx_stats.update({
+                            where: {
+                                project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d"
+                            }, data: {
+                                token_count: currentMintCount
+                            }
+                        })
+                        await pubsub.publish('IMX_VEVE_STATS_UPDATED', {
+                            imxVeveStatsUpdated: imxStats
+                        })
+                    }    
+
                 } catch (e) {
-                    console.log('fail clown: ', e)
+                    console.log('[ERROR] Unable to send mints: ', e)
                 }
 
             })
-            .catch(e => console.log('[ERROR] VEVE_IMX_MINTS: ', e))
+            .catch(e => console.log('[ERROR] Unable to fetch IMX Mints:', e))
 
 
     } catch (e) {
