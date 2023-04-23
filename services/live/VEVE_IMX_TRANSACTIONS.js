@@ -145,6 +145,29 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     //         }
                     //     }
                     // }
+
+                    try {
+
+                        await prisma.veve_wallets.upsert({
+                            where: {
+                                id: to_wallet or from_wallet?
+                            },
+                            update:{
+                                active: active, 
+                                last_activity_date: timestamp
+                            },
+                            create: {
+                                id: wallet_id, 
+                                active: active, 
+                                first_activity_date: timestamp, 
+                                last_activity_date: timestamp
+                            }
+                        })
+
+                    } catch(err) {
+                        console.log(`[ERROR] Unable to upsert ${wallet_id} : `, err )
+                    }
+
                     try {
 
                         await prisma.veve_tokens.upsert({
@@ -171,10 +194,10 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         skipDuplicates: true
                     })
 
-                    await prisma.veve_wallets.createMany({
-                        data: imxWalletIds,
-                        skipDuplicates:true
-                    })
+                    // await prisma.veve_wallets.createMany({
+                    //     data: imxWalletIds,
+                    //     skipDuplicates:true
+                    // })
 
                     await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
                         createVeveTransfer: imxTransArr
@@ -193,10 +216,24 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                                 transaction_count: currentTransactionCount
                             }
                         })
-                        await pubsub.publish('IMX_VEVE_STATS_UPDATED', {
+                        await pubsub.publish('IMX_VEVE_TXN_STATS_UPDATED', {
                             imxVeveStatsUpdated: imxStats
                         })
                     }
+
+                    const currentWalletCount = await prisma.veve_wallets.count()
+                    if (currentWalletCount > previousWalletCount) {
+                        const imxStats = await prisma.imx_stats.update({
+                            where: {
+                                project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d"
+                            }, data: {
+                                wallet_count: currentWalletCount
+                            }
+                        })
+                        await pubsub.publish('IMX_VEVE_WALLET_STATS_UPDATED', {
+                            imxVeveStatsUpdated: imxStats
+                        })
+                    }  
 
                 } catch (e) {
                     console.log('[ERROR] Unable to send transactions: ', e)

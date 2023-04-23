@@ -80,7 +80,11 @@ export const VEVE_IMX_MINTS = () => {
 
                 let imxMintsArr = []
                 let imxTokenArr = []
-                let imxWalletIds = []
+                let imxWalletIdsNew = []
+                let imxWalletIdsUpdate = []
+
+                const previousWalletCount = await prisma.veve_wallets.count()
+                const previousMintCount = await prisma.veve_mints.count()
 
                 await imxMints.data.listTransactionsV2.items.map(async (mint) => {
                     
@@ -96,13 +100,49 @@ export const VEVE_IMX_MINTS = () => {
                         token_id: token_id
                     })
 
-                    imxTokenArr.push({token_id: token_id, mint_date: mint_date, wallet_id: wallet_id})
-                    imxWalletIds.push({id: wallet_id, active: active, last_activity_date: timestamp})
+                    imxTokenArr.push({
+                        token_id: token_id, 
+                        mint_date: mint_date, 
+                        wallet_id: wallet_id
+                    })
+
+                    imxWalletIdsNew.push({
+                        id: wallet_id, 
+                        active: active, 
+                        first_activity_date: timestamp,
+                        last_activity_date: timestamp
+                    })
+
+                    imxWalletIdsUpdate.push({ 
+                        id: wallet_id,
+                        active: active, 
+                        last_activity_date: timestamp
+                    })
+
+                    // try {
+                    //     await prisma.veve_wallets.upsert({
+                    //         where: {
+                    //             id: wallet_id
+                    //         },
+                    //         update:{
+                    //             active: active, 
+                    //             last_activity_date: timestamp
+                    //         },
+                    //         create: {
+                    //             id: wallet_id, 
+                    //             active: active, 
+                    //             first_activity_date: timestamp, 
+                    //             last_activity_date: timestamp
+                    //         }
+                    //     })
+
+                    // } catch(err) {
+                    //     console.log(`[ERROR] Unable to upsert ${wallet_id} to veve_wallets: `, err )
+                    // }
+
 
                 })
                 
-                const previousMintCount = await prisma.veve_mints.count()
-
                 try {
 
                     await prisma.veve_mints.createMany({
@@ -110,10 +150,23 @@ export const VEVE_IMX_MINTS = () => {
                         skipDuplicates: true
                     })
 
-                    await prisma.veve_wallets.createMany({
-                        data: imxWalletIds,
-                        skipDuplicates:true
-                    })
+
+                    await prisma.$transaction(
+                        ??.map((mint =>
+                            prisma.veve_wallets.upsert({
+                                where: { 
+                                    id: mint.wallet_id 
+                                },
+                                update: imxWalletIdsUpdate,
+                                create: imxWalletIdsNew
+                            })
+                        ))
+                    );
+
+                    //await prisma.veve_wallets.createMany({
+                    //    data: imxWalletIds,
+                    //    skipDuplicates:true
+                    //})
 
                     await prisma.veve_tokens.createMany({
                         data: imxTokenArr,
@@ -129,10 +182,24 @@ export const VEVE_IMX_MINTS = () => {
                                 token_count: currentMintCount
                             }
                         })
-                        await pubsub.publish('IMX_VEVE_STATS_UPDATED', {
+                        await pubsub.publish('IMX_VEVE_MINT_STATS_UPDATED', {
                             imxVeveStatsUpdated: imxStats
                         })
                     }    
+
+                    const currentWalletCount = await prisma.veve_wallets.count()
+                    if (currentWalletCount > previousWalletCount) {
+                        const imxStats = await prisma.imx_stats.update({
+                            where: {
+                                project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d"
+                            }, data: {
+                                wallet_count: currentWalletCount
+                            }
+                        })
+                        await pubsub.publish('IMX_VEVE_WALLET_STATS_UPDATED', {
+                            imxVeveStatsUpdated: imxStats
+                        })
+                    }  
 
                 } catch (e) {
                     console.log('[ERROR] Unable to send mints: ', e)
