@@ -28,3 +28,10 @@ export const slugify = (string) => {
         .replace(/^-+/, '') // Trim - from start of text
         .replace(/-+$/, '') // Trim - from end of text
 }
+
+export const exclude = (model, keys) => {
+    for (let key of keys) {
+        delete model[key]
+    }
+    return model
+}
