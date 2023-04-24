@@ -89,7 +89,6 @@ const resolvers = {
                 }
 
             } catch (err) {
-                console.log('nah: ', err)
                 throw new GraphQLError('Error creating conversation.')
             }
         },

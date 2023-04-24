@@ -66,19 +66,20 @@ model veve_transfers {
 }
 
 model veve_wallets {
-  id                  String       @id
-  user_id             String?      @unique
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime?    @updatedAt
-  veve_username       String?      @unique
+  id                  String        @id
+  user_id             String?       @unique
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime?     @updatedAt
+  veve_username       String?       @unique
   veve_id             String?
-  active              Boolean?     @default(true)
+  active              Boolean?      @default(true)
   merged_to           String?
   tagsId              Int?
   first_activity_date DateTime?
   last_activity_date  DateTime?
-  tags                wallet_tags? @relation(fields: [tagsId], references: [id])
-  user                profile?     @relation(fields: [user_id], references: [user_id])
+  tags                wallet_tags?  @relation(fields: [tagsId], references: [id])
+  user                profile?      @relation(fields: [user_id], references: [user_id])
+  veve_tokens         veve_tokens[]
 
   @@index([user_id, veve_username])
   @@index([tagsId], map: "veve_wallets_tagsId_fkey")
@@ -116,44 +117,49 @@ model transfers_daily {
 }
 
 model users {
-  id                     String                     @id @default(uuid())
-  email                  String                     @unique
-  createdAt              DateTime                   @default(now())
-  updatedAt              DateTime                   @updatedAt
-  role                   Role                       @default(BASIC)
-  username               String                     @unique
-  name                   String?
-  cover_image            String?
-  avatar                 String?
-  last_seen              DateTime?                  @default(now())
-  status                 UserStatus                 @default(ACTIVE)
-  activated              Boolean                    @default(false)
-  stripe_customer_id     String?
-  ecomiwiki_user         Boolean?                   @default(false)
-  onboarded              Boolean                    @default(false)
-  profile                profile?
-  viewed_profile         Int?
-  impressions            Int?
-  followers              follows[]                  @relation("following")
-  following              follows[]                  @relation("follower")
-  veve_watchlist         veve_watchlist[]
-  projects               projects[]
-  conversations          conversation_participant[]
-  messages               message[]
-  conversation           conversation[]
-  communities            communities[]              @relation("member")
-  communities_created    communities[]              @relation("creator")
-  posts                  posts[]
-  community_posts        community_posts[]
-  likes_posts            posts[]                    @relation("likes_posts")
-  likes_community_posts  community_posts[]          @relation("likes_community_posts")
-  likes_comments         comments[]                 @relation("likes_comments")
-  comments               comments[]
-  from_notifications     notifications[]            @relation("from_notifications")
-  to_notifications       notifications[]            @relation("to_notifications")
-  invited_in_communities communities[]              @relation("users_communities_invites")
-  tagged_in_posts        posts[]                    @relation("users_posts_tag")
-  login_history          login_history[]            @relation("user_login_history")
+  id                      String                     @id @default(uuid())
+  email                   String                     @unique
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  role                    Role                       @default(BASIC)
+  username                String                     @unique
+  avatar                  String?
+  last_seen               DateTime?                  @default(now())
+  activated               Boolean                    @default(false)
+  stripe_customer_id      String?
+  ecomiwiki_user          Boolean?                   @default(false)
+  onboarded               Boolean                    @default(false)
+  name                    String?
+  impressions             Int?
+  viewed_profile          Int?
+  cover_image             String?
+  status                  UserStatus                 @default(ACTIVE)
+  comments                comments[]
+  communities_created     communities[]              @relation("creator")
+  community_posts         community_posts[]
+  conversation            conversation[]
+  conversations           conversation_participant[]
+  following               follows[]                  @relation("follower")
+  followers               follows[]                  @relation("following")
+  login_history           login_history[]            @relation("user_login_history")
+  messages                message[]
+  from_notifications      notifications[]            @relation("from_notifications")
+  to_notifications        notifications[]            @relation("to_notifications")
+  posts                   posts[]
+  profile                 profile?
+  veve_watchlist          veve_watchlist[]
+  likes_comments          comments[]                 @relation("likes_comments")
+  likes_community_posts   community_posts[]          @relation("likes_community_posts")
+  likes_posts             posts[]                    @relation("likes_posts")
+  communities             communities[]              @relation("member")
+  projects                projects[]
+  invited_in_communities  communities[]              @relation("users_communities_invites")
+  tagged_in_posts         posts[]                    @relation("users_posts_tag")
+  poker_table             poker_table[]
+  poker_table_message     poker_table_message[]
+  poker_table_participant poker_table_participant[]
+  poker_table_pots        poker_table_pots?          @relation(fields: [poker_table_potsId], references: [id])
+  poker_table_potsId      String?
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -164,9 +170,11 @@ model login_history {
   id         String   @id @default(uuid())
   createdAt  DateTime @default(now())
   browser    String?
+  user_id    String
   ip_address String
   user       users    @relation("user_login_history", fields: [user_id], references: [id], onDelete: Cascade)
-  user_id    String
+
+  @@index([user_id], map: "login_history_user_id_fkey")
 }
 
 model notifications {
@@ -174,37 +182,45 @@ model notifications {
   type         NotificationType
   content      String
   createdAt    DateTime         @default(now())
-  from_user    users?           @relation(name: "from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
   from_user_id String?
-  to_user      users?           @relation(name: "to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
   to_user_id   String?
+  from_user    users?           @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
+  to_user      users?           @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
+
+  @@index([from_user_id], map: "notifications_from_user_id_fkey")
+  @@index([to_user_id], map: "notifications_to_user_id_fkey")
 }
 
 model communities {
   id                  String             @id @default(uuid())
   name                String             @unique
-  slug                String             @unique
   type                CommunityPrivacy   @default(PUBLIC)
-  image               String?
-  cover_image         String?
   creator_id          String
-  creator             users              @relation("creator", fields: [creator_id], references: [id])
   member_count        Int?
-  members             users[]            @relation("member")
-  project_id          String?
-  project             projects?          @relation(fields: [project_id], references: [id])
-  posts               posts[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
-  comments            comments[]
-  invited_users       users[]            @relation("users_communities_invites")
-  gate_key            String?
+  cover_image         String?
+  image               String?
+  slug                String             @unique
+  project_id          String?
   veve_collectible_id String?
-  veve_collectible    veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
   veve_comic_id       String?
+  gate_key            String?
+  creator             users              @relation("creator", fields: [creator_id], references: [id])
+  project             projects?          @relation(fields: [project_id], references: [id])
+  veve_collectible    veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
   veve_comic          veve_comics?       @relation(fields: [veve_comic_id], references: [unique_cover_id])
-  utilities           utilities[]
+  comments            comments[]
   community_posts     community_posts[]
+  posts               posts[]
+  utilities           utilities[]
+  members             users[]            @relation("member")
+  invited_users       users[]            @relation("users_communities_invites")
+
+  @@index([creator_id], map: "communities_creator_id_fkey")
+  @@index([project_id], map: "communities_project_id_fkey")
+  @@index([veve_collectible_id], map: "communities_veve_collectible_id_fkey")
+  @@index([veve_comic_id], map: "communities_veve_comic_id_fkey")
 }
 
 model utilities {
@@ -214,70 +230,85 @@ model utilities {
   value        Int?
   community_id String?
   community    communities? @relation(fields: [community_id], references: [id])
+
+  @@index([community_id], map: "utilities_community_id_fkey")
 }
 
 model posts {
   id                  String           @id @default(uuid())
-  audience            PostAudienceEnum @default(PUBLIC)
   author_id           String?
-  author              users?           @relation(fields: [author_id], references: [id])
   community_id        String?
-  community           communities?     @relation(fields: [community_id], references: [id])
   body                String?
   image_url           String?
   community_image_url String?
-  like_count          Int?
   comment_count       Int?
-  liked_by            users[]          @relation("likes_posts")
-  comments            comments[]
-  tagged_users        users[]          @relation("users_posts_tag")
+  like_count          Int?
   createdAt           DateTime         @default(now())
+  audience            PostAudienceEnum @default(PUBLIC)
+  author              users?           @relation(fields: [author_id], references: [id])
+  community           communities?     @relation(fields: [community_id], references: [id])
+  comments            comments[]
+  liked_by            users[]          @relation("likes_posts")
+  tagged_users        users[]          @relation("users_posts_tag")
+
+  @@index([author_id], map: "posts_author_id_fkey")
+  @@index([community_id], map: "posts_community_id_fkey")
 }
 
 model community_posts {
   id                  String      @id @default(uuid())
   author_id           String
-  author              users       @relation(fields: [author_id], references: [id])
   community_id        String
-  community           communities @relation(fields: [community_id], references: [id])
   content             String?
   image_url           String?
   community_image_url String?
   comment_count       Int?
   like_count          Int?
-  liked_by            users[]     @relation("likes_community_posts")
-  comments            comments[]
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
+  author              users       @relation(fields: [author_id], references: [id])
+  community           communities @relation(fields: [community_id], references: [id])
+  comments            comments[]
+  liked_by            users[]     @relation("likes_community_posts")
+
+  @@index([author_id], map: "community_posts_author_id_fkey")
+  @@index([community_id], map: "community_posts_community_id_fkey")
 }
 
 model comments {
   id                String           @id @default(uuid())
   author_id         String
-  author            users            @relation(fields: [author_id], references: [id])
   post_id           String
-  post              posts            @relation(fields: [post_id], references: [id])
   community_id      String
-  community         communities      @relation(fields: [community_id], references: [id])
   body              String?
   like_count        Int?
-  liked_by          users[]          @relation("likes_comments")
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
-  children          comments[]       @relation("comment_children")
-  parent            comments?        @relation("comment_children", fields: [parent_id], references: [id])
   parent_id         String?
-  community_posts   community_posts? @relation(fields: [community_postsId], references: [id])
   community_postsId String?
+  author            users            @relation(fields: [author_id], references: [id])
+  community         communities      @relation(fields: [community_id], references: [id])
+  community_posts   community_posts? @relation(fields: [community_postsId], references: [id])
+  parent            comments?        @relation("comment_children", fields: [parent_id], references: [id])
+  post              posts            @relation(fields: [post_id], references: [id])
+  children          comments[]       @relation("comment_children")
+  liked_by          users[]          @relation("likes_comments")
+
+  @@index([author_id], map: "comments_author_id_fkey")
+  @@index([community_id], map: "comments_community_id_fkey")
+  @@index([community_postsId], map: "comments_community_postsId_fkey")
+  @@index([parent_id], map: "comments_parent_id_fkey")
+  @@index([post_id], map: "comments_post_id_fkey")
 }
 
 model follows {
-  follower    users  @relation("follower", fields: [followerId], references: [id])
   followerId  String
-  following   users  @relation("following", fields: [followingId], references: [id])
   followingId String
+  follower    users  @relation("follower", fields: [followerId], references: [id])
+  following   users  @relation("following", fields: [followingId], references: [id])
 
   @@id([followerId, followingId])
+  @@index([followingId], map: "follows_followingId_fkey")
 }
 
 model profile {
@@ -285,10 +316,10 @@ model profile {
   bio                  String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+  user_id              String        @unique
   onboarded            Boolean       @default(false)
   veve_wallet_imported Boolean       @default(false)
   veve_wallet_address  String?
-  user_id              String        @unique
   user                 users         @relation(fields: [user_id], references: [id])
   veve_wallet          veve_wallets?
 }
@@ -296,67 +327,74 @@ model profile {
 model conversation {
   id                String                     @id @default(uuid())
   createdAt         DateTime                   @default(now())
-  owner_id          String?
-  owner             users?                     @relation(fields: [owner_id], references: [id])
   updatedAt         DateTime                   @updatedAt
   latest_message_id String?                    @unique
-  latest_message    message?                   @relation(name: "latest_conversation_message", fields: [latest_message_id], references: [id], onUpdate: NoAction, onDelete: NoAction)
+  owner_id          String?
+  owner             users?                     @relation(fields: [owner_id], references: [id])
+  latest_message    message?                   @relation("latest_conversation_message", fields: [latest_message_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   participants      conversation_participant[]
   messages          message[]
 
   @@index([latest_message_id], map: "latest_message_id")
+  @@index([owner_id], map: "conversation_owner_id_fkey")
 }
 
 model conversation_participant {
   id                      String       @id @default(uuid())
   user_id                 String
-  user                    users        @relation(fields: [user_id], references: [id])
   conversation_id         String
-  conversation            conversation @relation(fields: [conversation_id], references: [id])
   createdAt               DateTime     @default(now())
   has_seen_latest_message Boolean
   updatedAt               DateTime     @updatedAt
+  conversation            conversation @relation(fields: [conversation_id], references: [id])
+  user                    users        @relation(fields: [user_id], references: [id])
 
   @@index([has_seen_latest_message], map: "has_seen_latest_message")
+  @@index([conversation_id], map: "conversation_participant_conversation_id_fkey")
+  @@index([user_id], map: "conversation_participant_user_id_fkey")
 }
 
 model message {
   id             String        @id @default(uuid())
-  type           MessageType   @default(TEXT)
   conversationId String
-  conversation   conversation  @relation(fields: [conversationId], references: [id])
   senderId       String
-  sender         users         @relation(fields: [senderId], references: [id])
-  is_latest_in   conversation? @relation(name: "latest_conversation_message")
   body           String        @db.Text
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  type           MessageType   @default(TEXT)
   status         MessageStatus @default(SENT)
+  conversation   conversation  @relation(fields: [conversationId], references: [id])
+  sender         users         @relation(fields: [senderId], references: [id])
+  is_latest_in   conversation? @relation("latest_conversation_message")
   offer          offers[]
+
+  @@index([conversationId], map: "message_conversationId_fkey")
+  @@index([senderId], map: "message_senderId_fkey")
 }
 
 model offers {
   id            String   @id @default(uuid())
   offer         Decimal? @db.Decimal(10, 2)
   offerAccepted Boolean? @default(false)
-  message       message? @relation(fields: [messageId], references: [id])
   messageId     String?
+  message       message? @relation(fields: [messageId], references: [id])
+
+  @@index([messageId], map: "offers_messageId_fkey")
 }
 
 model projects {
   id          String        @id @default(uuid())
   name        String?       @unique
   abbr        String?       @unique
-  slug        String?       @unique
   active      Boolean       @default(false)
   icon        String?
-  users       users[]
+  slug        String?       @unique
   communities communities[]
+  users       users[]
 }
 
 model veve_comics {
   unique_cover_id           String           @id
-  comic_id                  String?
   name                      String
   rarity                    String?
   description               String?          @db.Text
@@ -394,12 +432,13 @@ model veve_comics {
   image_thumbnail           String?
   all_time_change           Decimal?         @db.Decimal(10, 2)
   slug                      String?          @unique
+  comic_id                  String?
   unique_holders            BigInt?
+  communities               communities[]
   veve_watchlist            veve_watchlist[]
   artists                   artists[]
   characters                characters[]
   writers                   writers[]
-  communities               communities[]
 
   @@index([unique_cover_id], map: "unique_cover_id")
 }
@@ -450,6 +489,7 @@ model veve_tokens {
   wallet_id         String?
   element_id        String?
   brand             veve_brands?        @relation(fields: [brand_id], references: [brand_id])
+  veve_wallets      veve_wallets?       @relation(fields: [wallet_id], references: [id], map: "veve_tokens_ibfk_1")
   licensor          veve_licensors?     @relation(fields: [licensor_id], references: [licensor_id])
   series            veve_series?        @relation(fields: [series_id], references: [series_id])
   veve_collectibles veve_collectibles[]
@@ -512,9 +552,9 @@ model veve_collectibles {
   slug                                 String?          @unique
   unique_holders                       BigInt?
   series                               veve_series?     @relation(fields: [series_id], references: [series_id])
+  communities                          communities[]
   veve_watchlist                       veve_watchlist[]
   veve_tokens                          veve_tokens[]
-  communities                          communities[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -739,6 +779,96 @@ model tmp_wallet_merges {
   @@ignore
 }
 
+model hro_mints {
+  id        Int       @id
+  wallet_id String?
+  timestamp String?   @db.Text
+  token_id  String?   @db.VarChar(50)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+
+  @@index([wallet_id], map: "veve_mints_wallet_id_idx")
+}
+
+model hro_transfers {
+  id          Int       @id
+  from_wallet String
+  to_wallet   String
+  timestamp   String?   @db.Text
+  token_id    String?   @db.VarChar(50)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime?
+  break_even  Float?
+  entry_price Float?
+
+  @@index([token_id, from_wallet, to_wallet], map: "veve_transfers_token_id_from_wallet_to_wallet_idx")
+}
+
+model poker_table {
+  id                String                    @id @default(uuid())
+  host_id           String?
+  host              users?                    @relation(fields: [host_id], references: [id])
+  participants      poker_table_participant[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  latest_message_id String?                   @unique
+  latest_message    poker_table_message?      @relation("latest_conversation_message", fields: [latest_message_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  messages          poker_table_message[]
+  community_cards   Json?
+  deck              Json?
+  buy_in            Int                       @default(1000)
+  hand_number       Int                       @default(0)
+  current_round     String?
+  current_bet       Int?
+  current_position  Int?
+  last_position     Int?
+  status            PokerTableStatus          @default(WAITING)
+  poker_table_pots  poker_table_pots[]
+}
+
+model poker_table_pots {
+  id               String      @id @default(uuid())
+  poker_table_id   String
+  poker_table      poker_table @relation(fields: [poker_table_id], references: [id])
+  amount           Int         @default(0)
+  eligible_players users[]
+}
+
+model poker_table_participant {
+  id                      String      @id @default(uuid())
+  stack_size              Int?        @default(1000)
+  bet                     Int?        @default(0)
+  folded                  Boolean     @default(false)
+  show_cards              Boolean     @default(false)
+  hole_cards              Json?
+  seat                    Int         @default(1)
+  action                  String?
+  poker_table_id          String
+  poker_table             poker_table @relation(fields: [poker_table_id], references: [id])
+  left                    Boolean     @default(false)
+  has_seen_latest_message Boolean
+  updatedAt               DateTime    @updatedAt
+  user_id                 String
+  user                    users       @relation(fields: [user_id], references: [id])
+}
+
+model poker_table_message {
+  id             String        @id @default(uuid())
+  poker_table_id String
+  senderId       String
+  body           String        @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  type           MessageType   @default(TEXT)
+  status         MessageStatus @default(SENT)
+  conversation   poker_table   @relation(fields: [poker_table_id], references: [id])
+  sender         users         @relation(fields: [senderId], references: [id])
+  is_latest_in   poker_table?  @relation("latest_conversation_message")
+
+  @@index([poker_table_id], map: "message_conversationId_fkey")
+  @@index([senderId], map: "message_senderId_fkey")
+}
+
 enum Role {
   BASIC
   ADMIN
@@ -779,4 +909,10 @@ enum PostAudienceEnum {
   PUBLIC
   ONLY_ME
   SPECIFIC
+}
+
+enum PokerTableStatus {
+  WAITING
+  IN_PROGRESS
+  GAME_OVER
 }

@@ -886,6 +886,13 @@
   dependencies:
     regenerator-runtime "^0.13.10"
 
+"@chevtek/poker-engine@https://github.com/alienbuild/poker-engine.git":
+  version "1.2.14"
+  resolved "https://github.com/alienbuild/poker-engine.git#b7387ced78c5024e85cb0b107b034fb64682494a"
+  dependencies:
+    pokersolver "^2.1.4"
+    rimraf "^3.0.2"
+
 "@graphql-tools/merge@8.3.14":
   version "8.3.14"
   resolved "https://registry.yarnpkg.com/@graphql-tools/merge/-/merge-8.3.14.tgz#d4d0a645656691d35e90e0686a6fa3d4091a34da"
@@ -2775,7 +2782,7 @@ glob-parent@~5.1.2:
   dependencies:
     is-glob "^4.0.1"
 
-glob@^7.1.2:
+glob@^7.1.2, glob@^7.1.3:
   version "7.2.3"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.2.3.tgz#b8df0fb802bbfa8e89bd1d938b4e16578ed44f2b"
   integrity sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==
@@ -3945,6 +3952,11 @@ picomatch@^2.0.4, picomatch@^2.2.1:
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.1.tgz#3ba3833733646d9d3e4995946c1365a67fb07a42"
   integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==
 
+pokersolver@^2.1.4:
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/pokersolver/-/pokersolver-2.1.4.tgz#58934f3dad1dc597c44e80474bc82e9626790ccc"
+  integrity sha512-vmgZS+K8H8r1RePQykFM5YyvlKo1v3xVec8FMBjg9N6mR2Tj/n/X415w+lG67FWbrk71D/CADmKFinDgaQlAsw==
+
 posix-character-classes@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/posix-character-classes/-/posix-character-classes-0.1.1.tgz#01eac0fe3b5af71a2a6c02feabb8c1fef7e00eab"
@@ -4249,6 +4261,13 @@ retry@0.13.1:
   version "0.13.1"
   resolved "https://registry.npmjs.org/retry/-/retry-0.13.1.tgz"
   integrity sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==
+
+rimraf@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/rimraf/-/rimraf-3.0.2.tgz#f1a5402ba6220ad52cc1282bac1ae3aa49fd061a"
+  integrity sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==
+  dependencies:
+    glob "^7.1.3"
 
 safe-buffer@5.2.1, safe-buffer@^5.0.1, safe-buffer@^5.1.2:
   version "5.2.1"

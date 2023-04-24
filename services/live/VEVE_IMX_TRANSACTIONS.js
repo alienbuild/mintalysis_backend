@@ -84,11 +84,11 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
-                    
+
                     // Max 5 calls a sec on public rest api
                     // await setTimeout(index*200)
-                    
-                    let token_id =Number(transaction.transfers[0].token.token_id) 
+
+                    let token_id =Number(transaction.transfers[0].token.token_id)
                     let timestamp = moment.unix(Number(transaction.txn_time) / 1000).utc().format()
                     let from_wallet = transaction.transfers[0].from_address
                     let to_wallet = transaction.transfers[0].to_address
@@ -168,14 +168,15 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                 const previousTransactionCount = await prisma.veve_transfers.count()
 
                 try {
-                    await prisma.veve_transfers.createMany({
-                        data: imxTransArr,
-                        skipDuplicates: true
-                    })
 
                     await prisma.veve_wallets.createMany({
                         data: imxWalletIds,
                         skipDuplicates:true
+                    })
+
+                    await prisma.veve_transfers.createMany({
+                        data: imxTransArr,
+                        skipDuplicates: true
                     })
 
                     await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
