@@ -79,12 +79,13 @@ export const VEVE_IMX_TRANSACTIONS = () => {
             .then(async imxTransactions => {
 
                 const nextToken = imxTransactions.data.listTransactionsV2.nextToken
-
+                const previousWalletCount = await prisma.veve_wallets.count()
                 let imxTransArr = []
-                let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
                     
+                    let imxToWallet = []
+                    let imxFromWallet = []
                     let token_id =Number(transaction.transfers[0].token.token_id) 
                     let timestamp = moment.unix(Number(transaction.txn_time) / 1000).utc().format()
                     let from_wallet = transaction.transfers[0].from_address
@@ -99,8 +100,15 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         token_id: token_id
                     })
 
-                    imxWalletIds.push({id: from_wallet, last_activity_date: timestamp, active: active})
-                    imxWalletIds.push({id: to_wallet, last_activity_date: timestamp, active: active })
+                    imxFromWallet.push({id: from_wallet, last_activity_date: timestamp, active: active})
+                    //no way for from_wallet to be a brand new wallet
+                    imxToWallet.push({id: to_wallet, last_activity_date: timestamp, active: active })
+
+                    let updateObj = {
+                        token_id: token_id,
+                        wallet_id: to_wallet,
+                        mint_date: timestamp
+                    }
 
                     // let metadata
 
@@ -109,12 +117,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     //     metadata = await checkMetaData.json()
                     // } catch (e) {
                     // }
-
-                    let updateObj = {
-                        token_id: token_id,
-                        wallet_id: to_wallet,
-                        mint_date: timestamp
-                    }
 
                     // if (metadata && metadata.name){
                     //     updateObj.mint_date = metadata.created_at
@@ -150,22 +152,28 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
                         await prisma.veve_wallets.upsert({
                             where: {
-                                id: to_wallet or from_wallet?
+                                id: to_wallet
                             },
-                            update:{
-                                active: active, 
-                                last_activity_date: timestamp
-                            },
-                            create: {
-                                id: wallet_id, 
-                                active: active, 
-                                first_activity_date: timestamp, 
-                                last_activity_date: timestamp
-                            }
+                            update: imxToWallet,
+                            create: imxToWallet
                         })
 
                     } catch(err) {
-                        console.log(`[ERROR] Unable to upsert ${wallet_id} : `, err )
+                        console.log(`[ERROR] Unable to upsert to_wallet: ${wallet_id} : `, err )
+                    }
+
+                    try {
+
+                        await prisma.veve_wallets.upsert({
+                            where: {
+                                id: from_wallet
+                            },
+                            update: imxFromWallet,
+                            create: imxFromWallet
+                        })
+
+                    } catch(err) {
+                        console.log(`[ERROR] Unable to upsert from_wallet: ${wallet_id} : `, err )
                     }
 
                     try {
@@ -193,11 +201,6 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                         data: imxTransArr,
                         skipDuplicates: true
                     })
-
-                    // await prisma.veve_wallets.createMany({
-                    //     data: imxWalletIds,
-                    //     skipDuplicates:true
-                    // })
 
                     await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
                         createVeveTransfer: imxTransArr
