@@ -84,21 +84,22 @@ export const VEVE_IMX_MINTS = () => {
 
                 await imxMints.data.listTransactionsV2.items.map(async (mint) => {
                     
+                    let txn_id = mint.txn_id
                     let token_id = Number(mint.transfers[0].token.token_id)
                     let timestamp = moment.unix(Number(mint.txn_time) / 1000).utc().format()
                     let wallet_id = mint.transfers[0].to_address
                     let active = 1
-
+                    
                     imxMintsArr.push({
-                        id: mint.txn_id,
+                        id: txn_id,
                         wallet_id: wallet_id,
                         timestamp: timestamp,
                         token_id: token_id
                     })
-
+                    
                     imxTokenArr.push({
                         token_id: token_id, 
-                        mint_date: mint_date, 
+                        mint_date: timestamp, 
                         wallet_id: wallet_id
                     })
 
@@ -120,13 +121,14 @@ export const VEVE_IMX_MINTS = () => {
                         skipDuplicates: true
                     })
 
-                    await prisma.veve_wallets.upsert({
-                        where: {
-                            id: wallet_id
-                        },
-                        update:imxWalletIds,
-                        create: imxWalletIds
-
+                    imxWalletIds.map(async wallet => {
+                        prisma.veve_wallets.upsert({
+                            where: {
+                                id: wallet
+                            },
+                            update: imxWalletIds,
+                            create: imxWalletIds
+                        });
                     })
 
                     await prisma.veve_tokens.createMany({

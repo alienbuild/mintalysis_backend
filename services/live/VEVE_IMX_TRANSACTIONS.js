@@ -79,13 +79,14 @@ export const VEVE_IMX_TRANSACTIONS = () => {
             .then(async imxTransactions => {
 
                 const nextToken = imxTransactions.data.listTransactionsV2.nextToken
+
                 const previousWalletCount = await prisma.veve_wallets.count()
                 let imxTransArr = []
+                let imxWalletIds = []
 
                 await imxTransactions.data.listTransactionsV2.items.map(async (transaction, index) => {
                     
-                    let imxToWallet = []
-                    let imxFromWallet = []
+                    let txn_id = transaction.txn_id
                     let token_id =Number(transaction.transfers[0].token.token_id) 
                     let timestamp = moment.unix(Number(transaction.txn_time) / 1000).utc().format()
                     let from_wallet = transaction.transfers[0].from_address
@@ -93,87 +94,30 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     let active = 1
 
                     imxTransArr.push({
-                        id: transaction.txn_id,
+                        id: txn_id,
                         from_wallet: from_wallet,
                         to_wallet: to_wallet,
                         timestamp: timestamp,
                         token_id: token_id
                     })
 
-                    imxFromWallet.push({id: from_wallet, last_activity_date: timestamp, active: active})
                     //no way for from_wallet to be a brand new wallet
-                    imxToWallet.push({id: to_wallet, last_activity_date: timestamp, active: active })
+                    imxWalletIds.push({
+                        id: from_wallet, 
+                        last_activity_date: timestamp, 
+                        active: active
+                    })
+
+                    imxWalletIds.push({
+                        id: to_wallet, 
+                        last_activity_date: timestamp, 
+                        active: active
+                    })
 
                     let updateObj = {
                         token_id: token_id,
                         wallet_id: to_wallet,
                         mint_date: timestamp
-                    }
-
-                    // let metadata
-
-                    // try {
-                    //     const checkMetaData = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${transaction.transfers[0].token.token_id}`)
-                    //     metadata = await checkMetaData.json()
-                    // } catch (e) {
-                    // }
-
-                    // if (metadata && metadata.name){
-                    //     updateObj.mint_date = metadata.created_at
-                    //     if (metadata && metadata.metadata.editionType){
-                    //         let collectibleId = metadata.image_url.split('.')
-                    //         updateObj.edition = metadata.metadata.edition
-                    //         updateObj.rarity = metadata.metadata.rarity
-                    //         updateObj.collectible_id = collectibleId[3]
-                    //         updateObj.type = 'collectible'
-                    //     } else {
-                    //         try {
-                    //             const uniqueCoverId = await prisma.veve_comics.findFirst({
-                    //                 where: {
-                    //                     image_full_resolution_url: metadata.image_url
-                    //                 },
-                    //                 select: {
-                    //                     unique_cover_id: true
-                    //                 }
-                    //             })
-                    //             if (uniqueCoverId){
-                    //                 updateObj.unique_cover_id = uniqueCoverId.unique_cover_id
-                    //                 updateObj.edition = metadata.metadata.edition
-                    //                 updateObj.rarity = metadata.metadata.rarity
-                    //                 updateObj.type = 'comic'
-                    //             }
-                    //         } catch (e) {
-                    //             console.log('[ERROR] could not look up comic ', e)
-                    //         }
-                    //     }
-                    // }
-
-                    try {
-
-                        await prisma.veve_wallets.upsert({
-                            where: {
-                                id: to_wallet
-                            },
-                            update: imxToWallet,
-                            create: imxToWallet
-                        })
-
-                    } catch(err) {
-                        console.log(`[ERROR] Unable to upsert to_wallet: ${wallet_id} : `, err )
-                    }
-
-                    try {
-
-                        await prisma.veve_wallets.upsert({
-                            where: {
-                                id: from_wallet
-                            },
-                            update: imxFromWallet,
-                            create: imxFromWallet
-                        })
-
-                    } catch(err) {
-                        console.log(`[ERROR] Unable to upsert from_wallet: ${wallet_id} : `, err )
                     }
 
                     try {
@@ -200,6 +144,16 @@ export const VEVE_IMX_TRANSACTIONS = () => {
                     await prisma.veve_transfers.createMany({
                         data: imxTransArr,
                         skipDuplicates: true
+                    })
+
+                    imxWalletIds.map(async wallet => {
+                        prisma.veve_wallets.upsert({
+                            where: {
+                                id: wallet
+                            },
+                            update: imxWalletIds,
+                            create: imxWalletIds
+                        });
                     })
 
                     await pubsub.publish('VEVE_IMX_TRANSFER_CREATED', {
@@ -244,6 +198,44 @@ export const VEVE_IMX_TRANSACTIONS = () => {
 
             })
             .catch(error => console.log('[ERROR] Unable to fetch IMX transactions.', error))
+
+            // let metadata
+
+                                // try {
+                                //     const checkMetaData = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${transaction.transfers[0].token.token_id}`)
+                                //     metadata = await checkMetaData.json()
+                                // } catch (e) {
+                                // }
+
+                                // if (metadata && metadata.name){
+                                //     updateObj.mint_date = metadata.created_at
+                                //     if (metadata && metadata.metadata.editionType){
+                                //         let collectibleId = metadata.image_url.split('.')
+                                //         updateObj.edition = metadata.metadata.edition
+                                //         updateObj.rarity = metadata.metadata.rarity
+                                //         updateObj.collectible_id = collectibleId[3]
+                                //         updateObj.type = 'collectible'
+                                //     } else {
+                                //         try {
+                                //             const uniqueCoverId = await prisma.veve_comics.findFirst({
+                                //                 where: {
+                                //                     image_full_resolution_url: metadata.image_url
+                                //                 },
+                                //                 select: {
+                                //                     unique_cover_id: true
+                                //                 }
+                                //             })
+                                //             if (uniqueCoverId){
+                                //                 updateObj.unique_cover_id = uniqueCoverId.unique_cover_id
+                                //                 updateObj.edition = metadata.metadata.edition
+                                //                 updateObj.rarity = metadata.metadata.rarity
+                                //                 updateObj.type = 'comic'
+                                //             }
+                                //         } catch (e) {
+                                //             console.log('[ERROR] could not look up comic ', e)
+                                //         }
+                                //     }
+                                // }
 
     } catch (e){
         console.log('[ERROR] VEVE_IMX_TRANSACTIONS: ', e)
