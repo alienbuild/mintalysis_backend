@@ -24,6 +24,7 @@ export const pubsub = new PubSub();
 
 const main = async () => {
     dotenv.config();
+
     // Create the schema, which will be used separately by ApolloServer and
     // the WebSocket server.
     const schema = makeExecutableSchema({

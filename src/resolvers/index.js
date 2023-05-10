@@ -14,6 +14,7 @@ import ecologiResolvers from './ecologi.js'
 import immutablexResolvers from './immutablex.js'
 import communityResolvers from './community.js'
 import pokerResolvers from './poker.js'
+import uptimeResolvers from './uptime.js'
 
 const resolvers = merge({},
     DateTime,
@@ -30,7 +31,8 @@ const resolvers = merge({},
     ecologiResolvers,
     immutablexResolvers,
     communityResolvers,
-    pokerResolvers
+    pokerResolvers,
+    uptimeResolvers
 )
 
 export default resolvers

@@ -1,4 +1,3 @@
-export const userIsConversationParticipant = (participants, userId) => {
+export const userIsPokerParticipant = (participants, userId) => {
     return !!participants.find(participant => participant.user_id === userId)
 }
-

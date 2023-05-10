@@ -1,4 +1,4 @@
-import { Table, Player } from "@chevtek/poker-engine"
+import {Table, Player, Card} from "@chevtek/poker-engine"
 
 // const table = new Table();
 // console.log('table is: ', table)
@@ -33,22 +33,26 @@ table.players = [
 ]
 table.pots = []
 
-table.sitDown("Player 1", 1000);
-
+table.sitDown("Player 1", 1000, 3);
+console.log('table pos 3 is: ', table.players)
 table.sitDown("Player 2", 1000);
 table.sitDown("Player 3", 1000);
 
-console.log('table is: ', table)
+table.standUp("Player 1");
+console.log('table pos 3 is: ', table.players)
+
+// // console.log(`Card color is: ${card.color}. Rank is ${card.rank}. Suit is ${card.suit}. SuitChar is: ${card.suitChar}`)
+// console.log('table is: ', table)
 
 table.dealCards();
 
-// console.log('community cards are: ', table.communityCards)
 
 // player 1 (dealer) is first to act.
 table.currentActor.callAction();
 
 // player 2 is first to act on the flop.
 table.currentActor.callAction();
+
 
 // console.log(table.currentActor.legalActions());
 

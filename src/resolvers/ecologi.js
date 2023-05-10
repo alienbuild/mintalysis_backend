@@ -1,3 +1,5 @@
+import fetch from 'node-fetch'
+
 const resolvers = {
     Query: {
         getEcologiStats: async (_, __, { prisma }) => {
