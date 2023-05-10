@@ -284,6 +284,8 @@ const lookupUserWallet = async (token_id, index = 1000) => {
     }
 }
 
+
+
 export const scrapeVeveSuggestedUsers = async () => {
     console.log('[STARTING] Getting suggested users from VEVE')
 

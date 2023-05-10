@@ -2,6 +2,7 @@ import {GraphQLError} from "graphql";
 import {participantPopulated} from "./conversations.js";
 import {Player, Table} from "@chevtek/poker-engine"
 import {exclude} from "../utils/index.js";
+import {withFilter} from "graphql-subscriptions";
 
 const resolvers = {
     Query: {
@@ -33,13 +34,13 @@ const resolvers = {
 
                 return exclude(table, ['deck'])
             } catch (e) {
-                console.log('unable to get poker table: ', e)
+                throw new GraphQLError('Failed to get poker table.')
             }
 
         }
     },
     Mutation: {
-        createPokerTable: async (_, { participantIds }, { userInfo, prisma, pubsub }) => {
+        createPokerTable: async (_, { participantIds, seat }, { userInfo, prisma, pubsub }) => {
 
             if (!userInfo) throw new GraphQLError('Not authorised')
             const { userId } = userInfo
@@ -50,12 +51,18 @@ const resolvers = {
                     data: {
                         host_id: userId,
                         participants: {
-                            createMany: {
-                                data: participantIds.map(id => ({
-                                    user_id: id,
-                                    has_seen_latest_message: id === userId
-                                }))
+                            create: {
+                                user_id: userId,
+                                has_seen_latest_message: true,
+                                seat: seat,
+                                show_cards: false
                             }
+                            // createMany: {
+                            //     data: participantIds.map(id => ({
+                            //         user_id: id,
+                            //         has_seen_latest_message: id === userId
+                            //     }))
+                            // }
                         },
                         poker_table_pots: {
                             create: {
@@ -89,6 +96,7 @@ const resolvers = {
                 }
 
             } catch (e) {
+                console.log('Failed create: ', e)
                 throw new GraphQLError('Error creating poker table.', e)
             }
 
@@ -99,31 +107,20 @@ const resolvers = {
             try {
                 const tableInit = await initPokerTable(prisma, pubsub, pokerTableId)
                 if (tableInit.status === 'IN_PROGRESS') throw new GraphQLError('Game has already started.')
-                if (tableInit.host_id !== userInfo.userId) throw new GraphQLError('Only the host can start this game.')
+                // if (tableInit.host_id !== userInfo.userId) throw new GraphQLError('Only the host can start this game.')
                 await tableInit.table.dealCards()
 
-                const clonePlayers = [...tableInit.table.players]
+                tableInit.table.players.map(player => {
+                    player.holeCards.map(playerCard => {
+                        playerCard.hex = playerCard.color
+                        playerCard.char = playerCard.suitChar
+                    })
+                })
 
-                const VettedTableData = {
-                    status: tableInit.status,
-                    buyIn: tableInit.table.buyIn,
-                    communityCards: tableInit.table.communityCards,
-                    handNumber: tableInit.table.handNumber,
-                    players: clonePlayers.map(player => {
-                        delete player.table
-                        return player
-                    }),
-                    pots: tableInit.table.pots,
-                    dealerPosition: tableInit.table.dealerPosition,
-                    smallBlindPosition: tableInit.table.smallBlindPosition,
-                    bigBlindPosition: tableInit.table.bigBlindPosition,
-                    currentRound: tableInit.table.currentRound,
-                    currentPosition: tableInit.table.currentPosition,
-                    lastPosition: tableInit.table.lastPosition
-                }
-
+                const table = await getPokerTable(pokerTableId, prisma)
+                const vettedTable = await vetPokerTable(table, userInfo)
                 pubsub.publish('POKER_TABLE_UPDATED', {
-                    pokerTable: VettedTableData
+                    pokerTableUpdated: vettedTable
                 })
 
                 await prisma.$transaction([
@@ -156,17 +153,123 @@ const resolvers = {
             }
 
         },
+        sitPlayerAtPokerTable: async (_, { pokerTableId, seat }, { userInfo, prisma, pubsub }) => {
+            if (!userInfo) throw new GraphQLError('Please log in to continue.')
+            const { userId } = userInfo
+
+            try {
+
+                await prisma.poker_table.update({
+                    where: {
+                        id: pokerTableId
+                    },
+                    data: {
+                        participants: {
+                            create: {
+                                user_id: userId,
+                                seat: seat,
+                                left: false,
+                                has_seen_latest_message: true,
+                            }
+                        }
+                    }
+                })
+
+                const table = await getPokerTable(pokerTableId, prisma)
+                const vettedTable = await vetPokerTable(table, userInfo)
+                pubsub.publish('POKER_TABLE_UPDATED', {
+                    pokerTableUpdated: vettedTable
+                })
+
+                return true
+
+            } catch (e) {
+                console.log('Error seating player: ', e)
+                throw new GraphQLError('Failed to seat player.')
+            }
+
+        },
+        standPlayerAtPokerTable: async (_, { pokerTableId, participantId }, { userInfo, prisma, pubsub }) => {
+            if (!userInfo) throw new GraphQLError('Please log in to continue.')
+
+            try {
+
+                await prisma.poker_table_participant.update({
+                    where: {
+                        id: participantId
+                    },
+                    data: {
+                        left: true
+                    }
+                })
+
+                const table = await getPokerTable(pokerTableId, prisma)
+                const vettedTable = await vetPokerTable(table, userInfo)
+                pubsub.publish('POKER_TABLE_UPDATED', {
+                    pokerTableUpdated: vettedTable
+                })
+
+                return true
+
+            } catch (e) {
+                console.log('Error standing player: ', e)
+                throw new GraphQLError('Failed to stand player.')
+            }
+
+        }
     },
     Subscription: {
-        pokerTableUpdated: (_, __, ___) => {
-            console.log('Yup..')
-
-            return {
-                id: "123"
-            }
+        pokerTableUpdated: {
+            subscribe: withFilter(
+                (_, __, { pubsub }) => pubsub.asyncIterator(['POKER_TABLE_UPDATED']),
+                (payload, { pokerTableId }, { userInfo }) => {
+                    return payload.pokerTableUpdated.id === pokerTableId
+                }
+            )
         }
     }
 
+}
+
+const vetPokerTable = async (table, userInfo) => {
+    await table.participants.map((particiant) => {
+        if (particiant.user.id !== userInfo.userId){
+            particiant.holeCards = null
+        }
+    })
+
+    return table
+}
+
+const getPokerTable = async (pokerTableId, prisma) => {
+    try {
+
+        return await prisma.poker_table.findUnique({
+            where:{
+                id: pokerTableId
+            },
+            include: {
+                participants: {
+                    include: participantPopulated
+                },
+                latest_message: {
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                username: true
+                            }
+                        }
+                    }
+                },
+                poker_table_pots: true
+            }
+        })
+
+    } catch (e) {
+        console.log('Unable to get poker table.')
+        throw new GraphQLError('Unable to retrieve the poker table.')
+    }
 }
 
 const initPokerTable = async (prisma, pubsub, pokerTableId) => {
@@ -178,32 +281,36 @@ const initPokerTable = async (prisma, pubsub, pokerTableId) => {
             },
             include: {
                 participants: {
+                    include: participantPopulated
+                },
+                latest_message: {
                     include: {
-                        user: {
+                        sender: {
                             select: {
                                 id: true,
-                                last_seen: true,
-                                username: true,
-                                avatar: true,
+                                username: true
                             }
                         }
                     }
                 },
-                poker_table_pots: {
-                    include: {
-                        eligible_players: true
-                    }
-                }
+                poker_table_pots: true
             }
         })
 
         const table = new Table()
+        table.id = pokerTableId
         table.deck = pokerTable.deck
         table.handNumber = pokerTable.hand_number
         table.dealerPosition = 0
         table.smallBlindPosition = 1
         table.bigBlindPosition = 2
-        table.players = pokerTable.participants.map((player) => {
+        table.players = [
+            null, null, null,
+            null, null, null,
+            null, null, null,
+            null
+        ]
+        pokerTable.participants.map((player) => {
             const newPlayer = new Player()
             newPlayer.id = player.id
             newPlayer.user_id = player.user_id
@@ -217,7 +324,8 @@ const initPokerTable = async (prisma, pubsub, pokerTableId) => {
             newPlayer.has_seen_latest_message = pokerTable.has_seen_latest_message
             newPlayer.user = player.user
 
-            return newPlayer
+            return table.players[player.seat - 1] = newPlayer
+
         })
         table.pots = [{ amount: pokerTable.poker_table_pots[0].amount, eligiblePlayers: pokerTable.poker_table_pots[0].eligible_players }]
 
@@ -227,7 +335,7 @@ const initPokerTable = async (prisma, pubsub, pokerTableId) => {
         }
 
     } catch (e) {
-        console.log('Error getting poker table data')
+        console.log('Error getting poker table data', e)
     }
 
 }

@@ -14,6 +14,7 @@ import ecologiTypeDefs from './ecologi.js'
 import immutablexTypeDefs from './immutablex.js'
 import communityTypeDefs from './community.js'
 import pokerTypeDefs from './poker.js'
+import uptimeTypeDefs from './uptime.js'
 
 const typeDefs = [
     scalarDefs,
@@ -31,7 +32,8 @@ const typeDefs = [
     ecologiTypeDefs,
     immutablexTypeDefs,
     communityTypeDefs,
-    pokerTypeDefs
+    pokerTypeDefs,
+    uptimeTypeDefs
 ]
 
 export default typeDefs

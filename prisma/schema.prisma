@@ -848,7 +848,7 @@ model poker_table_participant {
   left                    Boolean     @default(false)
   has_seen_latest_message Boolean
   updatedAt               DateTime    @updatedAt
-  user_id                 String
+  user_id                 String      @unique
   user                    users       @relation(fields: [user_id], references: [id])
 }
 

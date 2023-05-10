@@ -7,12 +7,14 @@ const typeDefs = gql`
     }
     
     type Mutation {
-        createPokerTable(participantIds: [String]) : CreatePokerTableResponse
+        createPokerTable(participantIds: [String], seat: Int!) : CreatePokerTableResponse
         startPokerTable(pokerTableId: ID!): Boolean 
+        sitPlayerAtPokerTable(pokerTableId: ID!, seat: Int!) : Boolean
+        standPlayerAtPokerTable(pokerTableId: ID!, participantId: ID!) : Boolean
     }
     
     type Subscription {
-        pokerTableUpdated: PokerTableUpdatedPayload
+        pokerTableUpdated(pokerTableId: ID!): PokerTable
     }
     
     type PokerTableUpdatedPayload {
@@ -21,7 +23,7 @@ const typeDefs = gql`
         communityCards: [PlayingCard]
         handNumber: Int
         players: [PokerParticipant]
-        pots: [Pot]
+        poker_table_pots: [Pot]
         dealerPosition: Int
         smallBlindPosition: Int
         bigBlindPosition: Int
@@ -31,7 +33,10 @@ const typeDefs = gql`
     }
     
     type PlayingCard {
-        id: String
+        rank: String
+        suit: String
+        hex: String
+        char: String
     }
     
     type Pot {
@@ -41,20 +46,25 @@ const typeDefs = gql`
     
     type PokerTable {
         id: String
-        round: Int
+        buy_in: Int
+        hand_number: Int
+        current_round: String
+        current_bet: Int
+        current_position: Int
+        last_position: Int
         status: String
-        pot: Int
         participants: [PokerParticipant]
+        poker_table_pots: [Pot]
     }
     
     type PokerParticipant {
         id: String
-        stackSize: Int
+        stack_size: Int
         bet: Int
         folded: Boolean
-        showCards: Boolean
+        show_cards: Boolean
         left: Boolean
-        holeCards: [PlayingCard]
+        hole_cards: [PlayingCard]
         seat: Int
         has_seen_latest_message: Boolean
         updatedAt: DateTime
