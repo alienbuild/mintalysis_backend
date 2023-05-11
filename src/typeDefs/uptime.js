@@ -25,7 +25,7 @@ const typeDefs = gql`
         status: Boolean
         msg: String
         time: DateTime
-        ping: Int
+        ping: Float
         duration: Int
         down_count: Int
     }
