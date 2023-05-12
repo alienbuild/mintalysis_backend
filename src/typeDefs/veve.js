@@ -7,6 +7,7 @@ const typeDefs = gql`
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
         veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions): CollectiblesConnection
         veveComics(uniqueCoverId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions): ComicsConnection
+        veveBrands(pagingOptions: pagingOptions, sortOptions: sortOptions, search:String) : BrandsConnection
         veveSeries(collectibleId: String, brandId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
         veveValuations : VeveValuationsPayload
@@ -181,6 +182,29 @@ const typeDefs = gql`
         edges: [Collectible]!
         totalCount: Int
         pageInfo: PageInfo
+    }
+    
+    type BrandsConnection {
+        edges: [VeVeBrand]!
+        totalCount: Int
+        pageInfo: PageInfo
+    }
+    
+    type VeVeBrand {
+        brand_id: String!
+        name: String
+        description: String
+        theme_logo_image_url: String
+        theme_logo_image_thumbnail_url: String
+        square_image_url: String
+        square_image_thumbnail_url: String
+        square_image_low_resolution_url: String
+        landscape_image_thumbnail_url: String
+        theme_background_image_thumbnail_url: String
+        theme_footer_image_thumbnail_url: String
+        licensor_id: String
+        slug: String
+        market_cap: Float
     }
 
     type Collectible {
