@@ -313,7 +313,8 @@ const resolvers = {
                 edges: brands,
                 pageInfo: {
                     endCursor: brands.length > 1 ? encodeCursor(brands[brands.length - 1].brand_id) : null,
-                }
+                },
+                totalCount: brands.length
             }
         },
         veveSeries: async (_, { brandId, pagingOptions, sortOptions, search}, { prisma }) => {
