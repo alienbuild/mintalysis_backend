@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
-import ComicPrice from "../../models/ComicPrices.js"
-import {cookieRotator} from "./cookieRotator.js";
-import { prisma } from '../../src/index.js'
+import ComicPrice from "../../../models/ComicPrices.js"
+import {cookieRotator} from "../cookieRotator.js";
+import { prisma } from '../../../src/index.js'
 
 // Setup proxy
 const proxy_string = process.env.PROXY

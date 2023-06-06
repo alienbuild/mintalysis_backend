@@ -1,12 +1,12 @@
 import fetch from 'node-fetch'
-import CollectiblePrice from "../../models/CollectiblePrices.js"
-import MarketPrice from "../../models/MarketPrice.js"
+import CollectiblePrice from "../../../models/CollectiblePrices.js"
+import MarketPrice from "../../../models/MarketPrice.js"
 import slugify from 'slugify'
 import HttpsProxyAgent from "https-proxy-agent"
-import {cookieRotator} from "./cookieRotator.js"
+import {cookieRotator} from "../cookieRotator.js"
 
-import { prisma } from "../../src/index.js"
-import { pubsub } from "../../src/index.js"
+import { prisma } from "../../../src/index.js"
+import { pubsub } from "../../../src/index.js"
 
 // Setup proxy
 const proxy_string = process.env.PROXY
