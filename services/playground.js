@@ -691,11 +691,10 @@ const __dirname = path.dirname(__filename);
 
 export const removeCollectibleBackgrounds = async () => {
 
-
     const collectibles = await prisma.veve_collectibles.findMany({
         where: {
           // drop_date: { gt: Date.now() }
-          drop_date: { gt: moment().subtract(7, 'days').format() }
+          drop_date: { gt: moment().subtract(14, 'days').format() }
         },
         select:{
             name: true,
