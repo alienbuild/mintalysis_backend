@@ -55,6 +55,12 @@ const typeDefs = gql`
         email: String!
         mobile: Boolean
     }
+    
+    input MarketProductInput {
+        title: String!
+        age: Int
+        price: Float
+    }
 
 `
 

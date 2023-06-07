@@ -15,6 +15,7 @@ import immutablexTypeDefs from './immutablex.js'
 import communityTypeDefs from './community.js'
 import pokerTypeDefs from './poker.js'
 import uptimeTypeDefs from './uptime.js'
+import marketTypeDefs from './marketplace.js'
 
 const typeDefs = [
     scalarDefs,
@@ -33,7 +34,8 @@ const typeDefs = [
     immutablexTypeDefs,
     communityTypeDefs,
     pokerTypeDefs,
-    uptimeTypeDefs
+    uptimeTypeDefs,
+    marketTypeDefs
 ]
 
 export default typeDefs

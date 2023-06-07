@@ -82,30 +82,30 @@ model comments {
 }
 
 model communities {
-  id                              String             @id
-  name                            String             @unique
-  type                            communities_type   @default(PUBLIC)
-  creator_id                      String
-  member_count                    Int?
-  createdAt                       DateTime           @default(now())
-  updatedAt                       DateTime
-  cover_image                     String?
-  image                           String?
-  slug                            String             @unique
-  project_id                      String?
-  veve_collectible_id             String?
-  veve_comic_id                   String?
-  gate_key                        String?
-  users_communitiesTousers        users              @relation(fields: [creator_id], references: [id])
-  projects                        projects?          @relation(fields: [project_id], references: [id])
-  veve_collectibles               veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
-  veve_comics                     veve_comics?       @relation(fields: [veve_comic_id], references: [unique_cover_id])
-  comments                        comments[]
-  community_posts                 community_posts[]
-  posts                           posts[]
-  utilities                       utilities[]
-  users_member                    users[]            @relation("member")
-  users_users_communities_invites users[]            @relation("users_communities_invites")
+  id                  String             @id @default(uuid())
+  name                String             @unique
+  type                CommunityPrivacy   @default(PUBLIC)
+  creator_id          String
+  member_count        Int?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  cover_image         String?
+  image               String?
+  slug                String             @unique
+  project_id          String?
+  veve_collectible_id String?
+  veve_comic_id       String?
+  gate_key            String?
+  creator             users              @relation("creator", fields: [creator_id], references: [id])
+  project             projects?          @relation(fields: [project_id], references: [id])
+  veve_collectible    veve_collectibles? @relation(fields: [veve_collectible_id], references: [collectible_id])
+  veve_comic          veve_comics?       @relation(fields: [veve_comic_id], references: [unique_cover_id])
+  comments            comments[]
+  community_posts     community_posts[]
+  posts               posts[]
+  utilities           utilities[]
+  members             users[]            @relation("member")
+  invited_users       users[]            @relation("users_communities_invites")
 
   @@index([creator_id], map: "communities_creator_id_fkey")
   @@index([project_id], map: "communities_project_id_fkey")
@@ -134,40 +134,40 @@ model community_posts {
 }
 
 model conversation {
-  id                                              String                     @id
-  createdAt                                       DateTime                   @default(now())
-  updatedAt                                       DateTime
-  latest_message_id                               String?                    @unique
-  owner_id                                        String?
-  message_conversation_latest_message_idTomessage message?                   @relation("conversation_latest_message_idTomessage", fields: [latest_message_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users                                           users?                     @relation(fields: [owner_id], references: [id])
-  conversation_participant                        conversation_participant[]
-  message_conversationTomessage_conversationId    message[]                  @relation("conversationTomessage_conversationId")
+  id                String                     @id @default(uuid())
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  latest_message_id String?                    @unique
+  owner_id          String?
+  owner             users?                     @relation(fields: [owner_id], references: [id])
+  latest_message    message?                   @relation("latest_conversation_message", fields: [latest_message_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  participants      conversation_participant[]
+  messages          message[]
 
-  @@index([owner_id], map: "conversation_owner_id_fkey")
   @@index([latest_message_id], map: "latest_message_id")
+  @@index([owner_id], map: "conversation_owner_id_fkey")
 }
 
 model conversation_participant {
-  id                      String       @id
+  id                      String       @id @default(uuid())
   user_id                 String
   conversation_id         String
   createdAt               DateTime     @default(now())
   has_seen_latest_message Boolean
-  updatedAt               DateTime
+  updatedAt               DateTime     @updatedAt
   conversation            conversation @relation(fields: [conversation_id], references: [id])
-  users                   users        @relation(fields: [user_id], references: [id])
+  user                    users        @relation(fields: [user_id], references: [id])
 
+  @@index([has_seen_latest_message], map: "has_seen_latest_message")
   @@index([conversation_id], map: "conversation_participant_conversation_id_fkey")
   @@index([user_id], map: "conversation_participant_user_id_fkey")
-  @@index([has_seen_latest_message], map: "has_seen_latest_message")
 }
 
 model follows {
-  followerId                       String
-  followingId                      String
-  users_follows_followerIdTousers  users  @relation("follows_followerIdTousers", fields: [followerId], references: [id])
-  users_follows_followingIdTousers users  @relation("follows_followingIdTousers", fields: [followingId], references: [id])
+  followerId  String
+  followingId String
+  follower    users  @relation("follower", fields: [followerId], references: [id])
+  following   users  @relation("following", fields: [followingId], references: [id])
 
   @@id([followerId, followingId])
   @@index([followingId], map: "follows_followingId_fkey")
@@ -219,29 +219,29 @@ model leaderboard {
 }
 
 model login_history {
-  id         String   @id
+  id         String   @id @default(uuid())
   createdAt  DateTime @default(now())
   browser    String?
   user_id    String
   ip_address String
-  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user       users    @relation("user_login_history", fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id], map: "login_history_user_id_fkey")
 }
 
 model message {
-  id                                                   String         @id
-  conversationId                                       String
-  senderId                                             String
-  body                                                 String         @db.Text
-  createdAt                                            DateTime       @default(now())
-  updatedAt                                            DateTime
-  type                                                 message_type   @default(TEXT)
-  status                                               message_status @default(SENT)
-  conversation_conversationTomessage_conversationId    conversation   @relation("conversationTomessage_conversationId", fields: [conversationId], references: [id])
-  users                                                users          @relation(fields: [senderId], references: [id])
-  conversation_conversation_latest_message_idTomessage conversation?  @relation("conversation_latest_message_idTomessage")
-  offers                                               offers[]
+  id             String         @id @default(uuid())
+  conversationId String
+  senderId       String
+  body           String         @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  type           message_type   @default(TEXT)
+  status         message_status @default(SENT)
+  conversation   conversation   @relation(fields: [conversationId], references: [id])
+  sender         users          @relation(fields: [senderId], references: [id])
+  is_latest_in   conversation?  @relation("latest_conversation_message")
+  offer          offers[]
 
   @@index([conversationId], map: "message_conversationId_fkey")
   @@index([senderId], map: "message_senderId_fkey")
@@ -267,14 +267,14 @@ model mints_daily {
 }
 
 model notifications {
-  id                                      String             @id
-  type                                    notifications_type
-  content                                 String
-  createdAt                               DateTime           @default(now())
-  from_user_id                            String?
-  to_user_id                              String?
-  users_notifications_from_user_idTousers users?             @relation("notifications_from_user_idTousers", fields: [from_user_id], references: [id], onDelete: Cascade)
-  users_notifications_to_user_idTousers   users?             @relation("notifications_to_user_idTousers", fields: [to_user_id], references: [id], onDelete: Cascade)
+  id           String           @id @default(uuid())
+  type         NotificationType
+  content      String
+  createdAt    DateTime         @default(now())
+  from_user_id String?
+  to_user_id   String?
+  from_user    users?           @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
+  to_user      users?           @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
 
   @@index([from_user_id], map: "notifications_from_user_id_fkey")
   @@index([to_user_id], map: "notifications_to_user_id_fkey")
@@ -310,6 +310,7 @@ model odb_tokens {
   licensor_id     String?   @db.VarChar(255)
   brand_id        String?   @db.VarChar(255)
   series_id       String?   @db.VarChar(255)
+  wallet_id       String?   @db.VarChar(255)
 
   @@index([edition], map: "edition")
   @@index([last_updated], map: "last_updated")
@@ -469,54 +470,54 @@ model transfers_daily {
 }
 
 model users {
-  id                                              String                     @id
-  email                                           String                     @unique
-  createdAt                                       DateTime                   @default(now())
-  updatedAt                                       DateTime
-  role                                            users_role                 @default(BASIC)
-  username                                        String                     @unique
-  avatar                                          String?
-  last_seen                                       DateTime?                  @default(now())
-  activated                                       Boolean                    @default(false)
-  stripe_customer_id                              String?
-  ecomiwiki_user                                  Boolean?                   @default(false)
-  onboarded                                       Boolean                    @default(false)
-  name                                            String?
-  impressions                                     Int?
-  viewed_profile                                  Int?
-  cover_image                                     String?
-  status                                          users_status               @default(ACTIVE)
-  poker_table_potsId                              String?
-  poker_table_pots                                poker_table_pots?          @relation(fields: [poker_table_potsId], references: [id])
-  comments_commentsTousers                        comments[]
-  communities_communitiesTousers                  communities[]
-  community_posts_community_postsTousers          community_posts[]
-  conversation                                    conversation[]
-  conversation_participant                        conversation_participant[]
-  follows_follows_followerIdTousers               follows[]                  @relation("follows_followerIdTousers")
-  follows_follows_followingIdTousers              follows[]                  @relation("follows_followingIdTousers")
-  login_history                                   login_history[]
-  message                                         message[]
-  notifications_notifications_from_user_idTousers notifications[]            @relation("notifications_from_user_idTousers")
-  notifications_notifications_to_user_idTousers   notifications[]            @relation("notifications_to_user_idTousers")
-  poker_table                                     poker_table[]
-  poker_table_message                             poker_table_message[]
-  poker_table_participant                         poker_table_participant[]
-  posts_postsTousers                              posts[]
-  profile                                         profile?
-  veve_watchlist                                  veve_watchlist[]
-  comments_likes_comments                         comments[]                 @relation("likes_comments")
-  community_posts_likes_community_posts           community_posts[]          @relation("likes_community_posts")
-  posts_likes_posts                               posts[]                    @relation("likes_posts")
-  communities_member                              communities[]              @relation("member")
-  projects                                        projects[]
-  communities_users_communities_invites           communities[]              @relation("users_communities_invites")
-  posts_users_posts_tag                           posts[]                    @relation("users_posts_tag")
+  id                      String                     @id @default(uuid())
+  email                   String                     @unique
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  role                    Role                       @default(BASIC)
+  username                String                     @unique
+  avatar                  String?
+  last_seen               DateTime?                  @default(now())
+  activated               Boolean                    @default(false)
+  stripe_customer_id      String?
+  ecomiwiki_user          Boolean?                   @default(false)
+  onboarded               Boolean                    @default(false)
+  name                    String?
+  impressions             Int?
+  viewed_profile          Int?
+  cover_image             String?
+  status                  UserStatus                 @default(ACTIVE)
+  comments                comments[]
+  communities_created     communities[]              @relation("creator")
+  community_posts         community_posts[]
+  conversation            conversation[]
+  conversations           conversation_participant[]
+  following               follows[]                  @relation("follower")
+  followers               follows[]                  @relation("following")
+  login_history           login_history[]            @relation("user_login_history")
+  messages                message[]
+  from_notifications      notifications[]            @relation("from_notifications")
+  to_notifications        notifications[]            @relation("to_notifications")
+  posts                   posts[]
+  profile                 profile?
+  veve_watchlist          veve_watchlist[]
+  likes_comments          comments[]                 @relation("likes_comments")
+  likes_community_posts   community_posts[]          @relation("likes_community_posts")
+  likes_posts             posts[]                    @relation("likes_posts")
+  communities             communities[]              @relation("member")
+  projects                projects[]
+  invited_in_communities  communities[]              @relation("users_communities_invites")
+  tagged_in_posts         posts[]                    @relation("users_posts_tag")
+  poker_table             poker_table[]
+  poker_table_message     poker_table_message[]
+  poker_table_participant poker_table_participant[]
+  poker_table_pots        poker_table_pots?          @relation(fields: [poker_table_potsId], references: [id])
+  poker_table_potsId      String?
+  marketplace_product     marketplace_product[]
 
   @@index([email], map: "email")
-  @@index([stripe_customer_id], map: "stripe_customer_id")
   @@index([username], map: "username")
-  @@index([poker_table_potsId], map: "users_poker_table_potsId_fkey")
+  @@index([stripe_customer_id], map: "stripe_customer_id")
 }
 
 model utilities {
@@ -928,6 +929,29 @@ model writers {
   veve_comics veve_comics[]
 }
 
+model marketplace_product {
+  id                    Int                    @id @default(autoincrement())
+  title                 String
+  description           String?
+  age                   Int?
+  price                 Float
+  category              marketplace_category[]
+  receipt_available     Boolean?               @default(false)
+  warranty_available    Boolean?               @default(false)
+  accessories_available Boolean?               @default(false)
+  box_available         Boolean?               @default(false)
+  user_id               String
+  seller                users                  @relation(fields: [user_id], references: [id])
+  status                MarketProductStatus    @default(PENDING)
+}
+
+model marketplace_category {
+  id                    Int                  @id @default(autoincrement())
+  name                  String
+  marketplace_product   marketplace_product? @relation(fields: [marketplace_productId], references: [id])
+  marketplace_productId Int?
+}
+
 enum notifications_type {
   POST
   FOLLOWER
@@ -935,13 +959,12 @@ enum notifications_type {
   OFFER
 }
 
-enum communities_type {
-  PUBLIC
-  PRIVATE
-  HODLERS
+enum MarketProductStatus {
+  PENDING
+  COMPLETE
 }
 
-enum users_role {
+enum Role {
   BASIC
   ADMIN
 }
@@ -982,8 +1005,21 @@ enum posts_audience {
   SPECIFIC
 }
 
-enum users_status {
+enum CommunityPrivacy {
+  PUBLIC
+  PRIVATE
+  HODLERS
+}
+
+enum UserStatus {
   ACTIVE
   IDLE
   LOGOUT
+}
+
+enum NotificationType {
+  POST
+  FOLLOWER
+  COMMUNITY
+  OFFER
 }
