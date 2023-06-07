@@ -417,7 +417,7 @@ export const sendMagicLink = ({ email, mobile, token }) => {
             console.log(error.message);
             return process.exit(1);
         }
-        console.log('Message sent successfully!');
+        console.log('Message sent successfully!', token);
         transporter.close();
 
         return true
