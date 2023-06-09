@@ -4,6 +4,7 @@ const typeDefs = gql`
 
     type Query {
         getMarketProducts: [MarketProduct]
+        getMarketProduct(id: ID!): MarketProduct
     }
     
     type Mutation {
@@ -16,6 +17,7 @@ const typeDefs = gql`
         description: String
         age: Int
         price: Float
+        condition: String
         receipt_available: Boolean
         warranty_available: Boolean
         accessories_available: Boolean
