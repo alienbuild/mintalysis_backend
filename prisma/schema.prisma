@@ -935,6 +935,7 @@ model marketplace_product {
   description           String?
   age                   Int?
   price                 Float
+  condition             String?
   category              marketplace_category[]
   receipt_available     Boolean?               @default(false)
   warranty_available    Boolean?               @default(false)
@@ -943,6 +944,8 @@ model marketplace_product {
   user_id               String
   seller                users                  @relation(fields: [user_id], references: [id])
   status                MarketProductStatus    @default(PENDING)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 model marketplace_category {
