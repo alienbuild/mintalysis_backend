@@ -930,7 +930,7 @@ model writers {
 }
 
 model marketplace_product {
-  id                    Int                    @id @default(autoincrement())
+  id                    String                 @id @default(uuid())
   title                 String
   description           String?
   age                   Int?
@@ -949,7 +949,7 @@ model marketplace_category {
   id                    Int                  @id @default(autoincrement())
   name                  String
   marketplace_product   marketplace_product? @relation(fields: [marketplace_productId], references: [id])
-  marketplace_productId Int?
+  marketplace_productId String?
 }
 
 enum notifications_type {
