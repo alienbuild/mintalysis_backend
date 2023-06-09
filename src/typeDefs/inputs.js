@@ -58,8 +58,15 @@ const typeDefs = gql`
     
     input MarketProductInput {
         title: String!
+        description: String
         age: Int
-        price: Float
+        price: Int
+        category: String
+        condition: String
+        receipt_available: Boolean
+        warranty_available: Boolean
+        box_available: Boolean
+        accessories_available: Boolean
     }
 
 `
