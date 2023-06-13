@@ -57,6 +57,7 @@ const typeDefs = gql`
     }
     
     input MarketProductInput {
+        id: String
         title: String!
         description: String
         age: Int
