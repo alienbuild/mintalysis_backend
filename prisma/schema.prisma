@@ -930,22 +930,32 @@ model writers {
 }
 
 model marketplace_product {
-  id                    String                 @id @default(uuid())
+  id                    String                       @id @default(uuid())
   title                 String
   description           String?
   age                   Int?
   price                 Float
   condition             String?
   category              marketplace_category[]
-  receipt_available     Boolean?               @default(false)
-  warranty_available    Boolean?               @default(false)
-  accessories_available Boolean?               @default(false)
-  box_available         Boolean?               @default(false)
+  receipt_available     Boolean?                     @default(false)
+  warranty_available    Boolean?                     @default(false)
+  accessories_available Boolean?                     @default(false)
+  box_available         Boolean?                     @default(false)
   user_id               String
-  seller                users                  @relation(fields: [user_id], references: [id])
-  status                MarketProductStatus    @default(PENDING)
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
+  seller                users                        @relation(fields: [user_id], references: [id])
+  status                MarketProductStatus          @default(PENDING)
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+  images                marketplace_product_images[]
+}
+
+model marketplace_product_images {
+  url        String
+  product_id String
+  product    marketplace_product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@id([url, product_id])
+  @@index([product_id])
 }
 
 model marketplace_category {

@@ -17,11 +17,11 @@ const resolvers = {
             }
 
         },
-        getMarketProduct: async (_, { id }, { prisma, userInfo }) => {
+        getMarketProduct: async (_, { id }, { prisma }) => {
             try {
 
-                const product = await prisma.marketplace_product.findUnique({
-                    where:{
+                return await prisma.marketplace_product.findUnique({
+                    where: {
                         id: id
                     },
                     include: {
@@ -29,12 +29,7 @@ const resolvers = {
                     }
                 })
 
-                if (userInfo.userId !== product.seller.id) throw new GraphQLError('Unauthorised.')
-
-                return product
-
             } catch (e) {
-                console.log('Nah: ', e)
                 throw new GraphQLError('Unable to fetch marketplace product')
             }
         }
@@ -46,8 +41,6 @@ const resolvers = {
 
                 product.user_id = userInfo.userId
 
-                console.log('product to add is: ', product)
-
                 return  await prisma.marketplace_product.create({
                     data: product
                 })
@@ -58,6 +51,59 @@ const resolvers = {
             }
 
         },
+        updateMarketProduct: async (_, { product }, { userInfo, prisma }) => {
+            if (!userInfo) throw new GraphQLError('Unauthorised.')
+            if (!product.id) throw new GraphQLError('Please supply a market product id.')
+
+            const exisitingProduct = await prisma.marketplace_product.findUnique({
+                where:{
+                    id: product.id
+                },
+                include: {
+                    seller: true
+                }
+            })
+
+            if (exisitingProduct.seller.id !== userInfo.userId) throw new GraphQLError('This product does not belong to you.')
+
+            return await prisma.marketplace_product.update({
+                where: {
+                    id: product.id
+                },
+                data: product
+            })
+
+        },
+        removeMarketProduct: async (_, { id }, { prisma, userInfo }) => {
+
+            if (!userInfo) throw new GraphQLError('Unauthorised.')
+            if (!id) throw new GraphQLError('Please supply a market product id.')
+
+            try {
+                const product = await prisma.marketplace_product.findUnique({
+                    where: {
+                        id: id
+                    },
+                    include: {
+                        seller: true
+                    }
+                })
+
+                if (product.seller.id !== userInfo.userId) throw new GraphQLError('This product does not belong to you.')
+
+                await prisma.marketplace_product.delete({
+                    where: {
+                        id: id
+                    }
+                })
+
+                return true
+
+            } catch (e) {
+                throw new GraphQLError('Unable to remove market product.')
+            }
+
+        }
     }
 }
 
