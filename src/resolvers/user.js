@@ -238,6 +238,8 @@ const resolvers = {
                     }))
                 })
 
+                console.log('avatar result is: ', result)
+
                 // TODO: Remove users old image from cloudinary to free up space.
                 // TODO: Add Amazons Image Rekognition to cloudinary for image moderation (nudity prevention etc)
                 // https://cloudinary.com/documentation/aws_rekognition_ai_moderation_addon

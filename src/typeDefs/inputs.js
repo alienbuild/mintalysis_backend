@@ -63,7 +63,8 @@ const typeDefs = gql`
         age: Int
         price: Int
         category: String
-        condition: String 
+        condition: String
+        images: [Upload]
         receipt_available: Boolean
         warranty_available: Boolean
         box_available: Boolean
