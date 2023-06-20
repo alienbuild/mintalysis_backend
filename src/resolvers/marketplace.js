@@ -1,4 +1,11 @@
 import {GraphQLError} from "graphql";
+import * as cloudinary from "cloudinary";
+
+cloudinary.v2.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
 
 const resolvers = {
     Query: {
@@ -41,12 +48,39 @@ const resolvers = {
 
                 product.user_id = userInfo.userId
 
-                return  await prisma.marketplace_product.create({
-                    data: product
+                let imageUrls = []
+
+                for (let i = 0; i < product.images.length; i++) {
+                    const imageExists = await product.images[i].file
+                    if (imageExists){
+                        const result = await new Promise(async (resolve, reject) => {
+                            await imageExists.createReadStream().pipe(cloudinary.v2.uploader.upload_stream((error, result) => {
+                                if (error) {
+                                    reject(error)
+                                }
+
+                                resolve(result)
+                            }))
+                        })
+                        imageUrls.push({ "url": result.secure_url })
+                    }
+                }
+
+                delete product.images
+
+                return await prisma.marketplace_product.create({
+                    data: {
+                        ...product,
+                        images: {
+                            create: imageUrls.map(url => url)
+                        }
+                    },
+                    include: {
+                        images: true
+                    }
                 })
 
             } catch (e) {
-                console.log('nah: ', e)
                 throw new GraphQLError('Unable to create new product')
             }
 
