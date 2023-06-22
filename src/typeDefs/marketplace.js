@@ -28,6 +28,11 @@ const typeDefs = gql`
         seller: User
         createdAt: DateTime
         updatedAt: DateTime
+        images: [MarketProductImages]
+    }
+    
+    type MarketProductImages {
+        url: String
     }
 
 `

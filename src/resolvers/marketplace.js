@@ -15,7 +15,8 @@ const resolvers = {
 
                 return await prisma.marketplace_product.findMany({
                     include: {
-                        seller: true
+                        seller: true,
+                        images: true
                     }
                 })
 
@@ -32,7 +33,8 @@ const resolvers = {
                         id: id
                     },
                     include: {
-                        seller: true
+                        seller: true,
+                        images: true
                     }
                 })
 
