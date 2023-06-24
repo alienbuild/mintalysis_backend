@@ -944,6 +944,7 @@ model marketplace_product {
   user_id               String
   seller                users                        @relation(fields: [user_id], references: [id])
   status                MarketProductStatus          @default(PENDING)
+  type                  MarketProductType            @default(PHYSICAL_PRODUCT)
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
   images                marketplace_product_images[]
@@ -975,6 +976,11 @@ enum notifications_type {
 enum MarketProductStatus {
   PENDING
   COMPLETE
+}
+
+enum MarketProductType {
+  PHYSICAL_PRODUCT
+  DIGITAL_PRODUCT
 }
 
 enum Role {
