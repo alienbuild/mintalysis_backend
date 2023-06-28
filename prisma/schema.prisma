@@ -985,7 +985,7 @@ enum MarketProductType {
 
 enum Role {
   BASIC
-  ADMIN
+  SUPREME
 }
 
 enum poker_table_message_type {
