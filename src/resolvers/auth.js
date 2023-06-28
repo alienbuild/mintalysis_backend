@@ -19,7 +19,6 @@ const resolvers = {
                 return true
 
             } catch (e) {
-                console.log('nah: ', e)
                 return false
             }
 
@@ -45,7 +44,7 @@ const resolvers = {
                 }
             })
             if (userExists){
-                const token = jwt.sign({ userId: userExists.id, username: userExists.username }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
+                const token = jwt.sign({ userId: userExists.id, username: userExists.username, role: userExists.role }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
                 await sendMagicLink({ email, mobile, token })
 
                 return {
@@ -78,7 +77,6 @@ const resolvers = {
                     }
 
                 } catch (e) {
-                    console.log('[ERROR] Unable to register the user: ', e)
                     throw new GraphQLError('Unable to register the user.')
                 }
             }
