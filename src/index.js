@@ -44,6 +44,9 @@ const main = async () => {
         path: "/graphql/subscriptions",
     });
 
+    const identifyFn = context => {
+        return context.request.ip
+    }
     // Context parameters
 
     const getSubscriptionContext = async ( ctx ) => {

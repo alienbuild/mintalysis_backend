@@ -1,5 +1,6 @@
 import {GraphQLError} from "graphql";
 import * as cloudinary from "cloudinary";
+import {decodeCursor, encodeCursor} from "../utils/index.js";
 
 cloudinary.v2.config({
     cloud_name: process.env.CLOUDINARY_NAME,
@@ -9,22 +10,6 @@ cloudinary.v2.config({
 
 const resolvers = {
     Query: {
-        getMarketProducts: async (_, __, { prisma }) => {
-
-            try {
-
-                return await prisma.marketplace_product.findMany({
-                    include: {
-                        seller: true,
-                        images: true
-                    }
-                })
-
-            } catch (e) {
-                throw new GraphQLError('Unable to fetch marketplace products')
-            }
-
-        },
         getMarketProduct: async (_, { id }, { prisma }) => {
             try {
 
@@ -41,7 +26,36 @@ const resolvers = {
             } catch (e) {
                 throw new GraphQLError('Unable to fetch marketplace product')
             }
-        }
+        },
+        getMarketProducts: async (_, { pagingOptions, sortOptions }, { prisma }) => {
+
+            let limit = 20
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 150) return null
+
+            let queryParams = { take: limit }
+            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: decodeCursor(pagingOptions.after) } }
+
+            queryParams = { ...queryParams, include: { seller: true, images: true } }
+
+            try {
+
+                const marketProducts = await prisma.marketplace_product.findMany(queryParams)
+
+                return {
+                    edges: marketProducts,
+                    pageInfo: {
+                        endCursor: marketProducts.length > 1 ? encodeCursor(marketProducts[marketProducts.length - 1].id) : null
+                    },
+                    totalCount: await prisma.marketplace_product.count()
+                }
+
+            } catch (e) {
+                throw new GraphQLError('Unable to fetch marketplace products')
+            }
+
+        },
     },
     Mutation: {
         addMarketProduct: async (_, { product }, { userInfo, prisma }) => {

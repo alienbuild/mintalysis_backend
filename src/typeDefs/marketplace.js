@@ -3,14 +3,20 @@ import gql from "graphql-tag"
 const typeDefs = gql`
 
     type Query {
-        getMarketProducts: [MarketProduct]
         getMarketProduct(id: ID!): MarketProduct
+        getMarketProducts(pagingOptions: pagingOptions, sortOptions: sortOptions): MarketProductConnection
     }
     
     type Mutation {
         addMarketProduct(product: MarketProductInput): MarketProduct
         updateMarketProduct(product: MarketProductInput) : MarketProduct
         removeMarketProduct(id: ID!): Boolean
+    }
+    
+    type MarketProductConnection {
+        edges: [MarketProduct]
+        totalCount: Int
+        pageInfo: PageInfo
     }
     
     type MarketProduct {

@@ -99,14 +99,18 @@ const resolvers = {
             let queryParams = { take: limit }
             if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: decodeCursor(pagingOptions.after) } }
 
-            const users = await prisma.users.findMany(queryParams)
+            try {
+                const users = await prisma.users.findMany(queryParams)
 
-            return {
-                edges: users,
-                pageInfo: {
-                    endCursor: users.length > 1 ? encodeCursor(users[users.length - 1].id) : null
-                },
-                totalCount: await prisma.users.count()
+                return {
+                    edges: users,
+                    pageInfo: {
+                        endCursor: users.length > 1 ? encodeCursor(users[users.length - 1].id) : null
+                    },
+                    totalCount: await prisma.users.count()
+                }
+            } catch (e) {
+                throw new GraphQLError('Unable to get users')
             }
 
         },
