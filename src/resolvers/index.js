@@ -13,7 +13,7 @@ import writerResolvers from './writers.js'
 import ecologiResolvers from './ecologi.js'
 import immutablexResolvers from './immutablex.js'
 import communityResolvers from './community.js'
-import pokerResolvers from './poker.js'
+// import pokerResolvers from './poker.js'
 import uptimeResolvers from './uptime.js'
 import marketplaceResolvers from './marketplace.js'
 
@@ -32,7 +32,7 @@ const resolvers = merge({},
     ecologiResolvers,
     immutablexResolvers,
     communityResolvers,
-    pokerResolvers,
+    // pokerResolvers,
     uptimeResolvers,
     marketplaceResolvers
 )

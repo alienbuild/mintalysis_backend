@@ -44,7 +44,7 @@ const resolvers = {
                 }
             })
             if (userExists){
-                const token = jwt.sign({ userId: userExists.id, username: userExists.username, role: userExists.role }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
+                const token = jwt.sign({ userId: userExists.id, username: userExists.username, role: userExists.role }, process.env.JSON_SIGNATURE, { expiresIn: "28d" })
                 await sendMagicLink({ email, mobile, token })
 
                 return {
@@ -67,7 +67,7 @@ const resolvers = {
                         }
                     })
 
-                    const token = jwt.sign({ userId: user.id, username: userExists.username }, process.env.JSON_SIGNATURE, { expiresIn: "1d" })
+                    const token = jwt.sign({ userId: user.id, username: userExists.username }, process.env.JSON_SIGNATURE, { expiresIn: "28d" })
                     await sendMagicLink({ email, mobile, token })
 
                     return {
