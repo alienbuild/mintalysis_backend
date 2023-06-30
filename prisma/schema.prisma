@@ -975,7 +975,9 @@ enum notifications_type {
 
 enum MarketProductStatus {
   PENDING
+  LISTED
   COMPLETE
+  REJECTED
 }
 
 enum MarketProductType {
