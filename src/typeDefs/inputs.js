@@ -69,6 +69,7 @@ const typeDefs = gql`
         warranty_available: Boolean
         box_available: Boolean
         accessories_available: Boolean
+        status: String
     }
 
 `
