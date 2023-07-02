@@ -230,18 +230,19 @@ model login_history {
 }
 
 model message {
-  id             String         @id @default(uuid())
-  conversationId String
-  senderId       String
-  body           String         @db.Text
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  type           message_type   @default(TEXT)
-  status         message_status @default(SENT)
-  conversation   conversation   @relation(fields: [conversationId], references: [id])
-  sender         users          @relation(fields: [senderId], references: [id])
-  is_latest_in   conversation?  @relation("latest_conversation_message")
-  offer          offers[]
+  id                   String         @id @default(uuid())
+  conversationId       String
+  senderId             String
+  body                 String         @db.Text
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  type                 message_type   @default(TEXT)
+  status               message_status @default(SENT)
+  conversation         conversation   @relation(fields: [conversationId], references: [id])
+  sender               users          @relation(fields: [senderId], references: [id])
+  is_latest_in         conversation?  @relation("latest_conversation_message")
+  marketplace_offer_id String?
+  offer                offers[]
 
   @@index([conversationId], map: "message_conversationId_fkey")
   @@index([senderId], map: "message_senderId_fkey")
@@ -470,51 +471,52 @@ model transfers_daily {
 }
 
 model users {
-  id                         String                       @id @default(uuid())
-  email                      String                       @unique
-  createdAt                  DateTime                     @default(now())
-  updatedAt                  DateTime                     @updatedAt
-  role                       Role                         @default(BASIC)
-  username                   String                       @unique
-  avatar                     String?
-  last_seen                  DateTime?                    @default(now())
-  activated                  Boolean                      @default(false)
-  stripe_customer_id         String?
-  ecomiwiki_user             Boolean?                     @default(false)
-  onboarded                  Boolean                      @default(false)
-  name                       String?
-  impressions                Int?
-  viewed_profile             Int?
-  cover_image                String?
-  status                     UserStatus                   @default(ACTIVE)
-  comments                   comments[]
-  communities_created        communities[]                @relation("creator")
-  community_posts            community_posts[]
-  conversation               conversation[]
-  conversations              conversation_participant[]
-  following                  follows[]                    @relation("follower")
-  followers                  follows[]                    @relation("following")
-  login_history              login_history[]              @relation("user_login_history")
-  messages                   message[]
-  from_notifications         notifications[]              @relation("from_notifications")
-  to_notifications           notifications[]              @relation("to_notifications")
-  posts                      posts[]
-  profile                    profile?
-  veve_watchlist             veve_watchlist[]
-  likes_comments             comments[]                   @relation("likes_comments")
-  likes_community_posts      community_posts[]            @relation("likes_community_posts")
-  likes_posts                posts[]                      @relation("likes_posts")
-  communities                communities[]                @relation("member")
-  projects                   projects[]
-  invited_in_communities     communities[]                @relation("users_communities_invites")
-  tagged_in_posts            posts[]                      @relation("users_posts_tag")
-  poker_table                poker_table[]
-  poker_table_message        poker_table_message[]
-  poker_table_participant    poker_table_participant[]
-  poker_table_pots           poker_table_pots?            @relation(fields: [poker_table_potsId], references: [id])
-  poker_table_potsId         String?
-  marketplace_product        marketplace_product[]
-  marketplace_product_offers marketplace_product_offers[]
+  id                          String                       @id @default(uuid())
+  email                       String                       @unique
+  createdAt                   DateTime                     @default(now())
+  updatedAt                   DateTime                     @updatedAt
+  role                        Role                         @default(BASIC)
+  username                    String                       @unique
+  avatar                      String?
+  last_seen                   DateTime?                    @default(now())
+  activated                   Boolean                      @default(false)
+  stripe_customer_id          String?
+  ecomiwiki_user              Boolean?                     @default(false)
+  onboarded                   Boolean                      @default(false)
+  name                        String?
+  impressions                 Int?
+  viewed_profile              Int?
+  cover_image                 String?
+  status                      UserStatus                   @default(ACTIVE)
+  comments                    comments[]
+  communities_created         communities[]                @relation("creator")
+  community_posts             community_posts[]
+  conversation                conversation[]
+  conversations               conversation_participant[]
+  following                   follows[]                    @relation("follower")
+  followers                   follows[]                    @relation("following")
+  login_history               login_history[]              @relation("user_login_history")
+  messages                    message[]
+  from_notifications          notifications[]              @relation("from_notifications")
+  to_notifications            notifications[]              @relation("to_notifications")
+  posts                       posts[]
+  profile                     profile?
+  veve_watchlist              veve_watchlist[]
+  likes_comments              comments[]                   @relation("likes_comments")
+  likes_community_posts       community_posts[]            @relation("likes_community_posts")
+  likes_posts                 posts[]                      @relation("likes_posts")
+  communities                 communities[]                @relation("member")
+  projects                    projects[]
+  invited_in_communities      communities[]                @relation("users_communities_invites")
+  tagged_in_posts             posts[]                      @relation("users_posts_tag")
+  poker_table                 poker_table[]
+  poker_table_message         poker_table_message[]
+  poker_table_participant     poker_table_participant[]
+  poker_table_pots            poker_table_pots?            @relation(fields: [poker_table_potsId], references: [id])
+  poker_table_potsId          String?
+  marketplace_product         marketplace_product[]
+  marketplace_sent_offers     marketplace_product_offers[] @relation("buyer")
+  marketplace_received_offers marketplace_product_offers[] @relation("seller")
 
   @@index([email], map: "email")
   @@index([username], map: "username")
@@ -962,14 +964,24 @@ model marketplace_product_images {
 }
 
 model marketplace_product_offers {
+  id         String              @id @default(uuid())
   offer      Float
   message    String?             @db.Text
   product_id String
   product    marketplace_product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  user_id    String
-  buyer      users               @relation(fields: [user_id], references: [id])
+  buyer_id   String
+  buyer      users               @relation("buyer", fields: [buyer_id], references: [id])
+  seller_id  String
+  seller     users               @relation("seller", fields: [seller_id], references: [id])
 
-  @@id([offer, product_id])
+  //    from_user_id String?
+  //    to_user_id   String?
+  //    from_user    users?           @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
+  //    to_user      users?           @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([product_id])
 }
 
@@ -1020,6 +1032,7 @@ enum message_type {
   TEXT
   IMAGE
   OFFER
+  MARKETPLACE_OFFER
 }
 
 enum poker_table_message_status {

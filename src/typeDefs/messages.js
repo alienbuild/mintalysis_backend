@@ -6,6 +6,8 @@ const typeDefs = gql`
         sender: User
         body: String
         createdAt: DateTime
+        type: String
+        marketplace_offer_id: String
     }
 
     type Query {
@@ -19,6 +21,7 @@ const typeDefs = gql`
     type Subscription {
         messageSent(conversationId: String): Message
     }
+    
 `
 
 export default typeDefs
