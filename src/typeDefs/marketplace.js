@@ -11,6 +11,7 @@ const typeDefs = gql`
         addMarketProduct(product: MarketProductInput): MarketProduct
         updateMarketProduct(product: MarketProductInput) : MarketProduct
         removeMarketProduct(id: ID!): Boolean
+        placeMarketOffer(id: ID!, offer: Float!, message: String, seller_id: String! ) : Boolean
     }
     
     type MarketProductConnection {
@@ -35,6 +36,15 @@ const typeDefs = gql`
         createdAt: DateTime
         updatedAt: DateTime
         images: [MarketProductImages]
+        offers: [MarketProductOffer]
+    }
+    
+    type MarketProductOffer {
+        offer: Float!
+        message: String
+        createdAt: DateTime
+        updatedAt: DateTime
+        buyer: User
     }
     
     type MarketProductImages {
