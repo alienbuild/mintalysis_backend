@@ -5,6 +5,7 @@ const typeDefs = gql`
     type Query {
         getMarketProduct(id: ID!): MarketProduct
         getMarketProducts(pagingOptions: pagingOptions, sortOptions: sortOptions): MarketProductConnection
+        getMarketOffer(id:ID!): MarketOffer
     }
     
     type Mutation {
@@ -12,6 +13,14 @@ const typeDefs = gql`
         updateMarketProduct(product: MarketProductInput) : MarketProduct
         removeMarketProduct(id: ID!): Boolean
         placeMarketOffer(id: ID!, offer: Float!, message: String, seller_id: String! ) : Boolean
+    }
+    
+    type MarketOffer {
+        offer: Float
+        message: String
+        product: MarketProduct
+        buyer: User
+        createdAt: DateTime
     }
     
     type MarketProductConnection {

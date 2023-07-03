@@ -271,6 +271,8 @@ model notifications {
   id           String           @id @default(uuid())
   type         NotificationType
   content      String
+  link         String?
+  read         Boolean          @default(false)
   createdAt    DateTime         @default(now())
   from_user_id String?
   to_user_id   String?
@@ -973,14 +975,9 @@ model marketplace_product_offers {
   buyer      users               @relation("buyer", fields: [buyer_id], references: [id])
   seller_id  String
   seller     users               @relation("seller", fields: [seller_id], references: [id])
-
-  //    from_user_id String?
-  //    to_user_id   String?
-  //    from_user    users?           @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
-  //    to_user      users?           @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  expires    DateTime?           
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 
   @@index([product_id])
 }
@@ -990,13 +987,6 @@ model marketplace_category {
   name                  String
   marketplace_product   marketplace_product? @relation(fields: [marketplace_productId], references: [id])
   marketplace_productId String?
-}
-
-enum notifications_type {
-  POST
-  FOLLOWER
-  COMMUNITY
-  OFFER
 }
 
 enum MarketProductStatus {
@@ -1070,4 +1060,5 @@ enum NotificationType {
   FOLLOWER
   COMMUNITY
   OFFER
+  MARKETPLACE_OFFER
 }
