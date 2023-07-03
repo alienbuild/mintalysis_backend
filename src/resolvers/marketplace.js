@@ -64,6 +64,24 @@ const resolvers = {
             }
 
         },
+        getMarketOffer: async (_, { id }, { userInfo, prisma }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised')
+
+            return await prisma.marketplace_product_offers.findUnique({
+                where: {
+                    id: id
+                },
+                include: {
+                    product: {
+                        include: {
+                            images: true
+                        }
+                    },
+                    buyer: true,
+                }
+            })
+
+        }
     },
     Mutation: {
         addMarketProduct: async (_, { product }, { userInfo, prisma }) => {
