@@ -182,8 +182,6 @@ const resolvers = {
         placeMarketOffer: async (_, { id, offer, seller_id, message }, { userInfo, prisma, pubsub }) => {
             if (!userInfo) throw new GraphQLError('Not authorised')
 
-            console.log('userInfo : ', userInfo)
-
             const { userId } = userInfo
 
             try {
@@ -219,14 +217,12 @@ const resolvers = {
                         },
                         include: messagePopulated
                     })
-
                     const participant = await prisma.conversation_participant.findFirst({
                         where: {
                             user_id: userId,
                             conversation_id: existingConversation[0].id,
                         }
                     })
-
                     const conversation = await prisma.conversation.update({
                         where: {
                             id: existingConversation[0].id,
@@ -256,7 +252,6 @@ const resolvers = {
                         },
                         include: conversationPopulated
                     })
-
                     pubsub.publish('MESSAGE_SENT', { messageSent: newMessage })
                     pubsub.publish('CONVERSATION_UPDATED', { conversationUpdated: { conversation } })
 
@@ -286,8 +281,17 @@ const resolvers = {
                     })
                 }
 
+                await prisma.notifications.create({
+                    data:{
+                        type: "MARKETPLACE_OFFER",
+                        content: `has placed an offer`,
+                        reference: id,
+                        from_user_id: userId,
+                        to_user_id: seller_id
+                    }
+                })
+
             } catch (e) {
-                console.log('nah : ', e)
                 throw new GraphQLError('Unable to create product offering')
             }
 
