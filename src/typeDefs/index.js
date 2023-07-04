@@ -16,6 +16,7 @@ import communityTypeDefs from './community.js'
 import pokerTypeDefs from './poker.js'
 import uptimeTypeDefs from './uptime.js'
 import marketTypeDefs from './marketplace.js'
+import notificationsTypeDefs from './notifications.js'
 
 const typeDefs = [
     scalarDefs,
@@ -35,7 +36,8 @@ const typeDefs = [
     communityTypeDefs,
     pokerTypeDefs,
     uptimeTypeDefs,
-    marketTypeDefs
+    marketTypeDefs,
+    notificationsTypeDefs
 ]
 
 export default typeDefs

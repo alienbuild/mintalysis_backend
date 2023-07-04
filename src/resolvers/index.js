@@ -16,6 +16,7 @@ import communityResolvers from './community.js'
 // import pokerResolvers from './poker.js'
 import uptimeResolvers from './uptime.js'
 import marketplaceResolvers from './marketplace.js'
+import notificationResolvers from './notifications.js'
 
 const resolvers = merge({},
     DateTime,
@@ -34,7 +35,8 @@ const resolvers = merge({},
     communityResolvers,
     // pokerResolvers,
     uptimeResolvers,
-    marketplaceResolvers
+    marketplaceResolvers,
+    notificationResolvers
 )
 
 export default resolvers

@@ -271,7 +271,7 @@ model notifications {
   id           String           @id @default(uuid())
   type         NotificationType
   content      String
-  link         String?
+  reference    String?
   read         Boolean          @default(false)
   createdAt    DateTime         @default(now())
   from_user_id String?
@@ -975,7 +975,7 @@ model marketplace_product_offers {
   buyer      users               @relation("buyer", fields: [buyer_id], references: [id])
   seller_id  String
   seller     users               @relation("seller", fields: [seller_id], references: [id])
-  expires    DateTime?           
+  expires    DateTime?
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
 
