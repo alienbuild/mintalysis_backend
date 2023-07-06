@@ -139,8 +139,8 @@ model conversation {
   updatedAt         DateTime                   @updatedAt
   latest_message_id String?                    @unique
   owner_id          String?
-  owner             users?                     @relation(fields: [owner_id], references: [id])
   latest_message    message?                   @relation("latest_conversation_message", fields: [latest_message_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  owner             users?                     @relation(fields: [owner_id], references: [id])
   participants      conversation_participant[]
   messages          message[]
 
@@ -199,11 +199,19 @@ model hro_transfers {
 }
 
 model imx_stats {
-  project_id          String @unique
-  token_count         Int
-  wallet_count        Int
-  transaction_count   Int
-  unique_owners_count Int
+  project_id                   String @unique
+  token_count                  Int
+  wallet_count                 Int
+  transaction_count            Int
+  unique_owners_count          Int
+  max_mints_token_id           Int?
+  max_veve_tokens_id           Int?
+  max_mints_txn_id             Int?
+  max_transfers_txn_id         Int?
+  veve_tokens_count            Int?
+  last_updated_mint_txn_id     Int?
+  last_updated_transfer_txn_id Int?
+  veve_metadata_missing_count  Int?
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -238,10 +246,10 @@ model message {
   updatedAt            DateTime       @updatedAt
   type                 message_type   @default(TEXT)
   status               message_status @default(SENT)
+  marketplace_offer_id String?
   conversation         conversation   @relation(fields: [conversationId], references: [id])
   sender               users          @relation(fields: [senderId], references: [id])
   is_latest_in         conversation?  @relation("latest_conversation_message")
-  marketplace_offer_id String?
   offer                offers[]
 
   @@index([conversationId], map: "message_conversationId_fkey")
@@ -271,11 +279,11 @@ model notifications {
   id           String           @id @default(uuid())
   type         NotificationType
   content      String
-  reference    String?
-  read         Boolean          @default(false)
   createdAt    DateTime         @default(now())
   from_user_id String?
   to_user_id   String?
+  read         Boolean          @default(false)
+  reference    String?
   from_user    users?           @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
   to_user      users?           @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
 
@@ -940,20 +948,22 @@ model marketplace_product {
   description           String?
   age                   Int?
   price                 Float
-  condition             String?
-  category              marketplace_category[]
   receipt_available     Boolean?                     @default(false)
   warranty_available    Boolean?                     @default(false)
   accessories_available Boolean?                     @default(false)
   box_available         Boolean?                     @default(false)
   user_id               String
-  seller                users                        @relation(fields: [user_id], references: [id])
   status                MarketProductStatus          @default(PENDING)
-  type                  MarketProductType            @default(PHYSICAL_PRODUCT)
   createdAt             DateTime                     @default(now())
   updatedAt             DateTime                     @updatedAt
+  condition             String?
+  type                  MarketProductType            @default(PHYSICAL_PRODUCT)
+  seller                users                        @relation(fields: [user_id], references: [id])
+  category              marketplace_category[]
   images                marketplace_product_images[]
   offers                marketplace_product_offers[]
+
+  @@index([user_id], map: "marketplace_product_user_id_fkey")
 }
 
 model marketplace_product_images {
@@ -985,8 +995,15 @@ model marketplace_product_offers {
 model marketplace_category {
   id                    Int                  @id @default(autoincrement())
   name                  String
-  marketplace_product   marketplace_product? @relation(fields: [marketplace_productId], references: [id])
   marketplace_productId String?
+  marketplace_product   marketplace_product? @relation(fields: [marketplace_productId], references: [id])
+
+  @@index([marketplace_productId], map: "marketplace_category_marketplace_productId_fkey")
+}
+
+model veve_metadata_missing {
+  token_id  Int     @id
+  to_wallet String? @db.VarChar(255)
 }
 
 enum MarketProductStatus {
