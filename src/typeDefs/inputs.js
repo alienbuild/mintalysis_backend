@@ -55,6 +55,22 @@ const typeDefs = gql`
         email: String!
         mobile: Boolean
     }
+    
+    input MarketProductInput {
+        id: String
+        title: String!
+        description: String
+        age: Int
+        price: Int
+        category: String
+        condition: String
+        images: [Upload]
+        receipt_available: Boolean
+        warranty_available: Boolean
+        box_available: Boolean
+        accessories_available: Boolean
+        status: String
+    }
 
 `
 

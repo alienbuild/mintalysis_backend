@@ -5,11 +5,17 @@ const typeDefs = gql`
     type Query {
         me: User
         getUser(username: String!): UserConnection
-        getUsers: [User]
+        getUsers(pagingOptions: pagingOptions, sortOptions: sortOptions): UsersConnection
         searchUsers(username: String!): [User]
         getUserFollowing(userId: String! type: String) : User
         getUserCommunities(userId: String!): [Community]
         getUserProjects(userId: ID!): Boolean
+    }
+    
+    type UsersConnection {
+        edges: [User]!
+        totalCount: Int
+        pageInfo: PageInfo
     }
     
     type UserConnection {

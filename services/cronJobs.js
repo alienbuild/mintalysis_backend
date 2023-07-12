@@ -1,7 +1,7 @@
 import * as schedule from "node-schedule"
 import {VEVE_IMX_TRANSACTIONS} from "./live/VEVE_IMX_TRANSACTIONS.js"
 
-import { VEVE_GET_COLLECTIBLE_FLOORS } from "./alice/VEVE_GET_COLLECTIBLE_FLOORS.js";
+import { VEVE_GET_COLLECTIBLE_FLOORS } from "./alice/VEVE/VEVE_GET_COLLECTIBLE_FLOORS.js";
 import {VEVE_IMX_MINTS} from "./live/VEVE_IMX_MINTS.js";
 import moment from "moment";
 

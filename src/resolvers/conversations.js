@@ -89,7 +89,6 @@ const resolvers = {
                 }
 
             } catch (err) {
-                console.log('nah: ', err)
                 throw new GraphQLError('Error creating conversation.')
             }
         },
@@ -167,7 +166,8 @@ export const participantPopulated = Prisma.validator()({
         select: {
             id: true,
             username: true,
-            last_seen: true
+            last_seen: true,
+            avatar: true
         }
     }
 })

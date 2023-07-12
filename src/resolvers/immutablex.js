@@ -16,7 +16,7 @@ const resolvers = {
             let limit = 10
             if (pagingOptions && pagingOptions.limit) limit = pagingOptions.limit
 
-            let queryParams = { take: limit }
+            let queryParams = { take: limit, orderBy: { timestamp: 'desc' } }
             let transfers
             if (token_id){
                 transfers = await prisma.veve_transfers.findMany({

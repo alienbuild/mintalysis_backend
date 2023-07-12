@@ -18,12 +18,14 @@ import { getUserFromToken } from "./utils/getUserFromToken.js"
 import mongoose from "mongoose"
 import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
 import {scheduledRapidJobs, scheduledLiveJobs} from "../services/cronJobs.js";
+import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
 
 export const prisma = new PrismaClient();
 export const pubsub = new PubSub();
 
 const main = async () => {
     dotenv.config();
+
     // Create the schema, which will be used separately by ApolloServer and
     // the WebSocket server.
     const schema = makeExecutableSchema({
@@ -42,6 +44,9 @@ const main = async () => {
         path: "/graphql/subscriptions",
     });
 
+    const identifyFn = context => {
+        return context.request.ip
+    }
     // Context parameters
 
     const getSubscriptionContext = async ( ctx ) => {
@@ -91,6 +96,7 @@ const main = async () => {
     await server.start();
 
     const corsOptions = {
+        methods: ['GET', 'POST', 'OPTIONS'],
         origin: [process.env.BASE_URL, '67.225.248.251', '81.136.110.55', 'http://localhost:3002'],
         credentials: true,
     };
@@ -99,6 +105,10 @@ const main = async () => {
         "/graphql",
         cors(corsOptions),
         json(),
+        graphqlUploadExpress({
+            maxFileSize: 30000000,
+            maxFiles: 20,
+        }),
         expressMiddleware(server, {
             context: async ({ req }) => {
                 const ipAddress = req.header('x-forwarded-for') || req.socket.remoteAddress
@@ -108,7 +118,6 @@ const main = async () => {
             },
         })
     );
-
     // server.applyMiddleware({ app, path: "/graphql", cors: corsOptions });
 
     // MongoDB Database

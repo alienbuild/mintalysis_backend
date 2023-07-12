@@ -89,9 +89,30 @@ const resolvers = {
             }
 
         },
-        getUsers: async (_, __, { prisma, userInfo}) => {
+        getUsers: async (_, { pagingOptions, sortOptions }, { prisma, userInfo}) => {
 
-            return await prisma.users.findMany({})
+            let limit = 20
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 100) return null
+
+            let queryParams = { take: limit }
+            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: decodeCursor(pagingOptions.after) } }
+
+            try {
+                const users = await prisma.users.findMany(queryParams)
+
+                return {
+                    edges: users,
+                    pageInfo: {
+                        endCursor: users.length > 1 ? encodeCursor(users[users.length - 1].id) : null
+                    },
+                    totalCount: await prisma.users.count()
+                }
+            } catch (e) {
+                throw new GraphQLError('Unable to get users')
+            }
+
         },
         searchUsers: async (_, { username: searchedUsername }, { prisma, userInfo }) => {
 
@@ -237,6 +258,8 @@ const resolvers = {
                         resolve(result)
                     }))
                 })
+
+                console.log('avatar result is: ', result)
 
                 // TODO: Remove users old image from cloudinary to free up space.
                 // TODO: Add Amazons Image Rekognition to cloudinary for image moderation (nudity prevention etc)

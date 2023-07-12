@@ -13,6 +13,10 @@ import writerResolvers from './writers.js'
 import ecologiResolvers from './ecologi.js'
 import immutablexResolvers from './immutablex.js'
 import communityResolvers from './community.js'
+// import pokerResolvers from './poker.js'
+import uptimeResolvers from './uptime.js'
+import marketplaceResolvers from './marketplace.js'
+import notificationResolvers from './notifications.js'
 
 const resolvers = merge({},
     DateTime,
@@ -28,7 +32,11 @@ const resolvers = merge({},
     writerResolvers,
     ecologiResolvers,
     immutablexResolvers,
-    communityResolvers
+    communityResolvers,
+    // pokerResolvers,
+    uptimeResolvers,
+    marketplaceResolvers,
+    notificationResolvers
 )
 
 export default resolvers

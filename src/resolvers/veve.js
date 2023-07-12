@@ -292,6 +292,31 @@ const resolvers = {
             }
 
         },
+        veveBrands: async (_, { pagingOptions, sortOptions, search }, { prisma }) => {
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 100) return null
+
+            let queryParams = { take: limit }
+            let whereParams = {}
+
+            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
+            if (search) whereParams = { ...whereParams, name: { contains: search } }
+
+            queryParams = { ...queryParams, where: { ...whereParams } }
+
+            const brands = await prisma.veve_brands.findMany(queryParams)
+
+            return {
+                edges: brands,
+                pageInfo: {
+                    endCursor: brands.length > 1 ? encodeCursor(brands[brands.length - 1].brand_id) : null,
+                },
+                totalCount: brands.length
+            }
+        },
         veveSeries: async (_, { brandId, pagingOptions, sortOptions, search}, { prisma }) => {
 
             const series = await prisma.veve_collectibles.findMany({

@@ -13,6 +13,10 @@ import writerTypeDefs from './writers.js'
 import ecologiTypeDefs from './ecologi.js'
 import immutablexTypeDefs from './immutablex.js'
 import communityTypeDefs from './community.js'
+import pokerTypeDefs from './poker.js'
+import uptimeTypeDefs from './uptime.js'
+import marketTypeDefs from './marketplace.js'
+import notificationsTypeDefs from './notifications.js'
 
 const typeDefs = [
     scalarDefs,
@@ -29,7 +33,11 @@ const typeDefs = [
     writerTypeDefs,
     ecologiTypeDefs,
     immutablexTypeDefs,
-    communityTypeDefs
+    communityTypeDefs,
+    pokerTypeDefs,
+    uptimeTypeDefs,
+    marketTypeDefs,
+    notificationsTypeDefs
 ]
 
 export default typeDefs
