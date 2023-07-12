@@ -199,16 +199,13 @@ model hro_transfers {
 }
 
 model imx_stats {
-  project_id                   String @unique
+  project_id                   String  @unique
   token_count                  Int
   wallet_count                 Int
   transaction_count            Int
   unique_owners_count          Int
-  max_mints_token_id           Int?
-  max_veve_tokens_id           Int?
-  max_mints_txn_id             Int?
-  max_transfers_txn_id         Int?
-  veve_tokens_count            Int?
+  max_mints_timestamp          String?
+  max_transfers_timestamp      String?
   last_updated_mint_txn_id     Int?
   last_updated_transfer_txn_id Int?
   veve_metadata_missing_count  Int?
