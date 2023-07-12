@@ -215,7 +215,7 @@ model imx_stats {
 model leaderboard {
   wallet            String? @db.Text
   token_count       Float?
-  date              String? @db.Textgit pus
+  date              String? @db.Text
   sales             Float?
   purchases         Float?
   net_trade_balance Float?
