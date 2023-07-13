@@ -532,20 +532,22 @@ model users {
 }
 
 model users_preferences_accessibility {
-  id                String  @id
-  screen_reader     Boolean @default(false)
-  magnifier         Boolean @default(false)
-  readable_font     Boolean @default(false)
-  img_descriptions  Boolean @default(false)
-  highlight_links   Boolean @default(false)
-  highlight_headers Boolean @default(false)
-  text_magnifier    Boolean @default(false)
-  virtual_keyboard  Boolean @default(false)
-  monochrome        Boolean @default(false)
-  dark_contrast     Boolean @default(false)
-  light_contrast    Boolean @default(false)
-  user_id           String
-  user              users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id                Int          @id @default(autoincrement())
+  screen_reader     Boolean      @default(false)
+  magnifier         Boolean      @default(false)
+  readable_font     Boolean      @default(false)
+  dyslexia_font     Boolean      @default(false)
+  img_descriptions  Boolean      @default(false)
+  highlight_links   Boolean      @default(false)
+  highlight_headers Boolean      @default(false)
+  text_magnifier    Boolean      @default(false)
+  virtual_keyboard  Boolean      @default(false)
+  monochrome        Boolean      @default(false)
+  dark_contrast     Boolean      @default(false)
+  light_contrast    Boolean      @default(true)
+  cursor_option     CursorOption @default(DEFAULT)
+  user_id           String       @unique
+  user              users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model utilities {
@@ -1093,4 +1095,10 @@ enum NotificationType {
   COMMUNITY
   OFFER
   MARKETPLACE_OFFER
+}
+
+enum CursorOption {
+  DEFAULT
+  BLACK
+  WHITE
 }

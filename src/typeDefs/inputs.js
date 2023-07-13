@@ -56,6 +56,22 @@ const typeDefs = gql`
         mobile: Boolean
     }
     
+    input AccessibilityPreferencesInput {
+        screen_reader: Boolean,
+        magnifier: Boolean,
+        dyslexia_font: Boolean,
+        readable_font: Boolean,
+        img_descriptions: Boolean,
+        highlight_links: Boolean,
+        highlight_headers: Boolean,
+        text_magnifier: Boolean,
+        virtual_keyboard: Boolean,
+        monochrome: Boolean,
+        dark_contrast: Boolean,
+        light_contrast: Boolean,
+        cursor_option: String
+    }
+    
     input MarketProductInput {
         id: String
         title: String!
