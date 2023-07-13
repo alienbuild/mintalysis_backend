@@ -235,7 +235,22 @@ const resolvers = {
                 console.log('nah: ', e)
             }
 
-        }
+        },
+        getUserAccessibilityPreferences: async (_, __, { userInfo, prisma }) => {
+            if (!userInfo.userId) throw new GraphQLError('Unauthorised.')
+
+            try {
+                return await prisma.users_preferences_accessibility.findUnique({
+                    where: {
+                        user_id: userInfo.userId
+                    }
+                })
+
+            } catch (e) {
+                throw new GraphQLError('Unable to get user accessibility preferences.')
+            }
+
+        },
     },
     Mutation: {
         avatarUpload: async (_, { file }, { userInfo, prisma }) => {
@@ -336,6 +351,23 @@ const resolvers = {
                 })
             } catch (e) {
                 throw new GraphQLError('Not authorised.')
+            }
+
+        },
+        saveUserAccessibilityPreferences: async (_, {preferences}, { userInfo, prisma }) => {
+            if (!userInfo.userId) throw new GraphQLError('Unauthorised.')
+
+            try {
+                await prisma.users_preferences_accessibility.update({
+                    where:{
+                        user_id: userInfo.userId
+                    },
+                    data: preferences,
+                })
+
+                return true
+            } catch (e) {
+                throw new GraphQLError('Unable to save user accessibility preferences.')
             }
 
         }
