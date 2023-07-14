@@ -546,6 +546,7 @@ model users_preferences_accessibility {
   dark_contrast     Boolean      @default(false)
   light_contrast    Boolean      @default(true)
   cursor_option     CursorOption @default(DEFAULT)
+  font_size         Float          @default(1)
   user_id           String       @unique
   user              users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
