@@ -92,6 +92,7 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
 
             const collectibleTypeList = latest_collectibles.data.collectibleTypeList.edges
 
+
             collectibleTypeList.map(async (collectible) => {
 
                 try {
@@ -134,13 +135,18 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
                     })
                     console.log(`[SUCCESS][VEVE]: ${collectible.node.name} added to prisma db.`)
                 } catch (e) {
-                    console.log(`[FAIL][VEVE]: ${collectible.node.name} was not added to prisma db.`, e)
-
+                    // console.log(`[FAIL][VEVE]: ${collectible.node.name} was not added to prisma db.`, e)
                 }
 
             })
+
+            if (latest_collectibles.data.collectibleTypeList.pageInfo?.hasNextPage){
+                console.log('next page is: ', latest_collectibles.data.collectibleTypeList.pageInfo.endCursor)
+            }
 
         })
         .catch(err => console.log('[ERROR][VEVE] Unable to get latest collectibles. ', err))
 
 }
+
+VEVE_GET_LATEST_COLLECTIBLES()
