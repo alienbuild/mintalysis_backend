@@ -29,6 +29,7 @@ const typeDefs = gql`
         screen_reader: Boolean
         magnifier: Boolean
         readable_font: Boolean
+        dyslexia_font: Boolean
         img_descriptions: Boolean
         highlight_links: Boolean
         highlight_headers: Boolean
@@ -37,7 +38,7 @@ const typeDefs = gql`
         monochrome: Boolean
         dark_contrast: Boolean
         light_contrast: Boolean
-        cursor_type: String
+        cursor_option: String
     }
 
     type UsersConnection {
