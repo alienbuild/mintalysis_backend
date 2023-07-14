@@ -70,6 +70,7 @@ const typeDefs = gql`
         dark_contrast: Boolean,
         light_contrast: Boolean,
         cursor_option: String
+        font_size: Float
     }
     
     input MarketProductInput {
