@@ -12,6 +12,7 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 import tinify from 'tinify'
 import mongoose from "mongoose"
+import crypto from 'crypto';
 
 const prisma = new PrismaClient()
 
@@ -781,10 +782,41 @@ export const tinifyImages = async () => {
 
 }
 
-const getCollectibleSalesDataQuery = (endCursor) => {
+
+const delay = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
+
+const retryFetch = (
+    url,
+    fetchOptions = {},
+    retries = 3,
+    retryDelay = 1000,
+    timeout
+) => {
+    return new Promise((resolve, reject) => {
+        // check for timeout
+        if (timeout) setTimeout(() => reject('error: timeout'), timeout);
+
+        const wrapper = (n) => {
+            fetch(url, fetchOptions)
+                .then((res) => resolve(res))
+                .catch(async (err) => {
+                    if (n > 0) {
+                        await delay(retryDelay);
+                        wrapper(--n);
+                    } else {
+                        reject(err);
+                    }
+                });
+        };
+
+        wrapper(retries);
+    });
+};
+
+const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}, after: "${endCursor}"){
+    collectibleList(first: 250, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
         pageInfo {
             hasNextPage
             endCursor
@@ -799,6 +831,9 @@ const getCollectibleSalesDataQuery = (endCursor) => {
                 collectibleType{
                     id
                 }
+                brand {
+                    id
+                }
                 transactions {
                     pageInfo {
                         hasNextPage
@@ -809,6 +844,14 @@ const getCollectibleSalesDataQuery = (endCursor) => {
                             id
                             createdAt
                             amountUsd
+                            buyer{
+                                id
+                                username
+                            }
+                            seller{
+                                id
+                                username
+                            }
                         }
                     }
                 }
@@ -818,7 +861,7 @@ const getCollectibleSalesDataQuery = (endCursor) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 500, filterOptions: {rarity: COMMON, brandId: "f401d217-983d-4805-88ec-caf4fd8bbab7"}){
+    collectibleList(first: 250, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
         pageInfo {
             hasNextPage
             endCursor
@@ -833,6 +876,9 @@ const getCollectibleSalesDataQuery = (endCursor) => {
                 collectibleType{
                     id
                 }
+                brand {
+                    id
+                }
                 transactions {
                     pageInfo {
                         hasNextPage
@@ -843,6 +889,14 @@ const getCollectibleSalesDataQuery = (endCursor) => {
                             id
                             createdAt
                             amountUsd
+                            buyer{
+                                id
+                                username
+                            }
+                            seller{
+                                id
+                                username
+                            }
                         }
                     }
                 }
@@ -858,163 +912,223 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
 
     const cookieToUse = cookieRotator()
 
-    await fetch(`https://web.api.prod.veve.me/graphql`, {
+    await retryFetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'cookie': cookieToUse,
+            'cookie': "veve=s%3AAUbLV_hdwqgSds39ba-LlSIWPctzMBvz.jqXB%2BtkpAX7pk3gAPUIXNfWJbJuasxn0HNolxuGRsKI",
             'client-name': 'veve-web-app',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
             'client-operation': 'AuthUserDetails',
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery(endCursor)
+            query: getCollectibleSalesDataQuery("SECRET_RARE", "01bd76dd-6d19-4c75-906e-a2df2f5d741f", endCursor)
         }),
-    })
+    }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())
         .then(async veve_usernames => {
-            const pageInfo = veve_usernames.data.collectibleList.pageInfo
-            const veveUsers = veve_usernames.data.collectibleList.edges
+            if (typeof veve_usernames.data === undefined || veve_usernames.data === null){
+                console.log('Nah: ', veve_usernames)
+            } else {
+                const pageInfo = veve_usernames.data.collectibleList?.pageInfo
+                const veveUsers = veve_usernames.data.collectibleList?.edges
 
-            console.log('****[VEVE DATA RECEIVED]****')
-            await veveUsers.map(async (user, index) => {
-                if (user.node?.blockchainId && user.node?.owner?.username){
+                console.log('****[VEVE DATA RECEIVED]****')
 
-                    const username = user.node.owner.username
-                    const userId = user.node.owner.id
-                    const blockchainId = user.node.blockchainId
-                    const transactions = user.node.transactions?.edges
-                    const collectibleTypeId = user.node.collectibleType?.id
-                    const hasMoreTxs = user.node.transactions?.pageInfo.hasNextPage
+                await prisma.tmp_cursors.create({
+                    data:{
+                        collectible_id: veveUsers[0].node.collectibleType?.id,
+                        brand_id: veveUsers[0].node.brand?.id,
+                        cursor: pageInfo.endCursor,
+                    }
+                })
 
-                    const exisitingUser = await prisma.veve_wallets.findUnique({
-                        where: {
-                            veve_username: username
-                        }
-                    })
+                await veveUsers.map(async (user, index) => {
 
-                    if (!exisitingUser) {
-                        try {
-                            // await setTimeout(1000 * index)
-                            // const wallet_address = await lookupUserWallet(blockchainId)
+                    try {
+                        const newId = crypto.randomUUID()
+                        await prisma.tmp_veve_tokens_collectibles.create({
+                            data: {
+                                connector_id: newId,
+                                blockchain_id: user.node.blockchainId,
+                                owner_id: user.node.owner.id,
+                                owner_username: user.node.owner.username,
+                                collectible_type_id: user.node.collectibleType?.id,
+                                txn_cursor: user.node.transactions?.pageInfo.hasNextPage ? user.node.transactions?.pageInfo.endCursor : null
+                            }
+                        })
 
-                            const wallet_add = await prisma.veve_transfers.findFirst({
-                                where: {
-                                    token_id: Number(blockchainId)
-                                },
-                                orderBy: {
-                                    timestamp: 'desc',
-                                },
-                                select: {
-                                    to_wallet: true
-                                }
-                            })
-
-                            if (wallet_add?.to_wallet){
-                                console.log(`[FOUND]: Wallet: ${wallet_add.to_wallet} for user ${username} `)
-                                const saved_wallets = await prisma.veve_wallets.upsert({
-                                    where: {
-                                        id: wallet_add.to_wallet
-                                    },
-                                    update: {
-                                        veve_username: username,
-                                        veve_id: userId
-                                    },
-                                    create: {
-                                        id: wallet_add.to_wallet,
-                                        veve_username: username,
-                                        veve_id: userId
-                                    },
-                                    select: {
-                                        veve_username: true
+                        if (user.node.transactions?.edges){
+                            await prisma.tmp_veve_transactions.createMany({
+                                data: user.node.transactions?.edges.map((txn) => {
+                                    return {
+                                        connector_id: newId,
+                                        transaction_id: txn.node.id,
+                                        transfer_id: txn.node.transferId,
+                                        createdAt: txn.node.createdAt,
+                                        amount_usd: Number(txn.node.amountUsd),
+                                        buyer_id: txn.node.buyer?.id,
+                                        buyer_username: txn.node.buyer?.username,
+                                        seller_id: txn.node.seller?.id,
+                                        seller_username: txn.node.seller?.username,
+                                        collectible_type_id: user.node.collectibleType?.id
                                     }
                                 })
-                                console.log(`[SUCCESS] Saved wallet: ${saved_wallets.veve_username}`, pageInfo.endCursor)
-                            }
-
-
-                        } catch (err) {
-                            console.log(`[FAILED] `, err)
+                            })
                         }
+                    } catch (e) {
+                        console.log('[FAILED]')
                     }
 
-                    await transactions && transactions.map(async (transaction) => {
-                        try {
-                            const amountUsd = transaction.node.amountUsd
-                            const createdAt = transaction.node.createdAt
+                    // if (user.node?.blockchainId && user.node?.owner?.username){
+                    //
+                    //     const username = user.node.owner.username
+                    //     const userId = user.node.owner.id
+                    //     const blockchainId = user.node.blockchainId
+                    //     const transactions = user.node.transactions?.edges
+                    //     const collectibleTypeId = user.node.collectibleType?.id
+                    //     const hasMoreTxs = user.node.transactions?.pageInfo.hasNextPage
+                    //
+                    //     const exisitingUser = await prisma.veve_wallets.findUnique({
+                    //         where: {
+                    //             veve_username: username
+                    //         }
+                    //     })
+                    //
+                    //     if (!exisitingUser) {
+                    //         try {
+                    //             // await setTimeout(1000 * index)
+                    //             // const wallet_address = await lookupUserWallet(blockchainId)
+                    //
+                    //             const wallet_add = await prisma.veve_transfers.findFirst({
+                    //                 where: {
+                    //                     token_id: Number(blockchainId)
+                    //                 },
+                    //                 orderBy: {
+                    //                     timestamp: 'desc',
+                    //                 },
+                    //                 select: {
+                    //                     to_wallet: true
+                    //                 }
+                    //             })
+                    //
+                    //             if (wallet_add?.to_wallet){
+                    //                 console.log(`[FOUND]: Wallet: ${wallet_add.to_wallet} for user ${username} `)
+                    //                 const saved_wallets = await prisma.veve_wallets.upsert({
+                    //                     where: {
+                    //                         id: wallet_add.to_wallet
+                    //                     },
+                    //                     update: {
+                    //                         veve_username: username,
+                    //                         veve_id: userId
+                    //                     },
+                    //                     create: {
+                    //                         id: wallet_add.to_wallet,
+                    //                         veve_username: username,
+                    //                         veve_id: userId
+                    //                     },
+                    //                     select: {
+                    //                         veve_username: true
+                    //                     }
+                    //                 })
+                    //                 console.log(`[SUCCESS] Saved wallet: ${saved_wallets.veve_username}`, pageInfo.endCursor)
+                    //             }
+                    //
+                    //
+                    //         } catch (err) {
+                    //             console.log(`[FAILED] `, err)
+                    //         }
+                    //     }
+                    //
+                    //     await transactions && transactions.map(async (transaction) => {
+                    //         try {
+                    //
+                    //             const txnId = transaction.node.id
+                    //             const transferId = transaction.node.transferId
+                    //             const buyerUsername = transaction.node.buyer.username
+                    //             const buyerId = transaction.node.buyer.id
+                    //             const sellerUsername = transaction.node.seller.username
+                    //             const sellerId = transaction.node.seller.id
+                    //
+                    //             const amountUsd = transaction.node.amountUsd
+                    //             const createdAt = transaction.node.createdAt
+                    //
+                    //             const litmusTest = await prisma.veve_transfers.findMany({
+                    //                 where: {
+                    //                     token_id: Number(blockchainId)
+                    //                 }
+                    //             })
+                    //
+                    //             await litmusTest.map(async (tx) => {
+                    //
+                    //                 const imxTxDate = tx.timestamp
+                    //                 const pastGive = moment(imxTxDate).subtract(30, 'seconds')
+                    //                 const futureGive = moment(imxTxDate).add(30, 'seconds')
+                    //                 const matchingTx = moment(createdAt).isBetween(pastGive, futureGive)
+                    //
+                    //                 if (matchingTx && !tx.entry_price) {
+                    //
+                    //                     const checkTx = await prisma.veve_transfers.findFirst({
+                    //                         where: {
+                    //                             id: tx.id
+                    //                         }
+                    //                     })
+                    //
+                    //                     if (checkTx.entry_price === null){
+                    //                         await prisma.veve_transfers.update({
+                    //                             where: {
+                    //                                 id: tx.id
+                    //                             },
+                    //                             data: {
+                    //                                 entry_price: Number(amountUsd)
+                    //                             },
+                    //                         })
+                    //                         console.log(`[UPDATED] Transaction updated with price. ${tx.id}`, pageInfo.endCursor)
+                    //                     }
+                    //
+                    //                 }
+                    //             })
+                    //
+                    //         } catch (err) {
+                    //             console.log('[FAILED TXS] ', err)
+                    //         }
+                    //
+                    //     })
+                    //
+                    //     if (hasMoreTxs) {
+                    //         try {
+                    //             const txEndCursor = user.node.transactions?.pageInfo.endCursor
+                    //             fs.writeFileSync("./tx.txt", `{"collectibleTypeId": ${collectibleTypeId}}, "endCursor": "${txEndCursor}",\n`)
+                    //         } catch (e) {
+                    //             console.log('[FAILED] Unable to write to tx.txt', pageInfo.endCursor)
+                    //         }
+                    //
+                    //     }
+                    //
+                    // }
+                })
 
-                            const litmusTest = await prisma.veve_transfers.findMany({
-                                where: {
-                                    token_id: Number(blockchainId)
-                                }
-                            })
+                if (!pageInfo.hasNextPage) fullCapture = true
 
-                            await litmusTest.map(async (tx) => {
-
-                                const imxTxDate = tx.timestamp
-                                const pastGive = moment(imxTxDate).subtract(30, 'seconds')
-                                const futureGive = moment(imxTxDate).add(30, 'seconds')
-                                const matchingTx = moment(createdAt).isBetween(pastGive, futureGive)
-
-                                if (matchingTx && !tx.entry_price) {
-
-                                    const checkTx = await prisma.veve_transfers.findFirst({
-                                        where: {
-                                            id: tx.id
-                                        }
-                                    })
-
-                                    if (checkTx.entry_price === null){
-                                        await prisma.veve_transfers.update({
-                                            where: {
-                                                id: tx.id
-                                            },
-                                            data: {
-                                                entry_price: Number(amountUsd)
-                                            },
-                                        })
-                                        console.log(`[UPDATED] Transaction updated with price. ${tx.id}`, pageInfo.endCursor)
-                                    }
-
-                                }
-                            })
-
-                        } catch (err) {
-                            console.log('[FAILED TXS] ', err)
-                        }
-
-                    })
-
-                    if (hasMoreTxs) {
-                        try {
-                            const txEndCursor = user.node.transactions?.pageInfo.endCursor
-                            fs.writeFileSync("./tx.txt", `{"collectibleTypeId": ${collectibleTypeId}}, "endCursor": "${txEndCursor}",\n`)
-                        } catch (e) {
-                            console.log('[FAILED] Unable to write to tx.txt', pageInfo.endCursor)
-                        }
-
-                    }
-
+                if (!fullCapture) {
+                    console.log('[AWAITING] Found more wallets to scrape.', pageInfo.endCursor)
+                    await setTimeout(20000)
+                    await getCollectibleSalesData(fullCapture, pageInfo.endCursor)
+                } else {
+                    console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
                 }
-            })
-
-            if (!pageInfo.hasNextPage) fullCapture = true
-
-            if (!fullCapture) {
-                console.log('[AWAITING] Found more wallets to scrape.', pageInfo.endCursor)
-                await setTimeout(14000)
-                await getCollectibleSalesData(fullCapture, pageInfo.endCursor)
-            } else {
-                console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
             }
 
         })
-        .catch(e => console.log('[ERROR] Unable to get usernames from veve.', e))
+        .catch(async e => {
+            console.log('[ERROR] Unable to get usernames from veve.', e)
+        })
 
 }
 
+getCollectibleSalesData()
 // removeCollectibleBackgrounds()
 // tinifyImages()
 // getTokenWalletAddressOwners()

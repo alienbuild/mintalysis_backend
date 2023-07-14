@@ -546,7 +546,7 @@ model users_preferences_accessibility {
   dark_contrast     Boolean      @default(false)
   light_contrast    Boolean      @default(true)
   cursor_option     CursorOption @default(DEFAULT)
-  font_size         Float          @default(1)
+  font_size         Float        @default(1)
   user_id           String       @unique
   user              users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
@@ -644,15 +644,15 @@ model veve_brands {
 }
 
 model veve_collectibles {
-  collectible_id                       String           @id
+  collectible_id                       String                         @id
   name                                 String?
   rarity                               String?
-  description                          String?          @db.Text
+  description                          String?                        @db.Text
   edition_type                         String?
-  store_price                          Decimal?         @db.Decimal(10, 2)
+  store_price                          Decimal?                       @db.Decimal(10, 2)
   drop_date                            DateTime?
-  market_fee                           Decimal?         @db.Decimal(10, 3)
-  createdAt                            DateTime         @default(now())
+  market_fee                           Decimal?                       @db.Decimal(10, 3)
+  createdAt                            DateTime                       @default(now())
   updatedAt                            DateTime?
   background_image_direction           String?
   background_image_full_resolution_url String?
@@ -668,7 +668,7 @@ model veve_collectibles {
   image_med_resolution_url             String?
   image_thumbnail_url                  String?
   image_url                            String?
-  is_unlimited                         Boolean?         @default(false)
+  is_unlimited                         Boolean?                       @default(false)
   total_available                      Int?
   total_issued                         Int?
   total_likes                          Int?
@@ -677,26 +677,27 @@ model veve_collectibles {
   licensor_id                          String?
   series_id                            String?
   drop_method                          String?
-  is_free                              Boolean?         @default(false)
+  is_free                              Boolean?                       @default(false)
   total_store_allocation               Int?
-  all_time_high                        Decimal?         @db.Decimal(10, 2)
-  all_time_low                         Decimal?         @db.Decimal(10, 2)
-  floor_price                          Decimal?         @db.Decimal(10, 2)
-  market_cap                           Decimal?         @db.Decimal(10, 2)
-  one_day_change                       Decimal?         @db.Decimal(10, 2)
-  one_mo_change                        Decimal?         @db.Decimal(10, 2)
-  one_wk_change                        Decimal?         @db.Decimal(10, 2)
-  one_year_change                      Decimal?         @db.Decimal(10, 2)
-  six_mo_change                        Decimal?         @db.Decimal(10, 2)
-  three_mo_change                      Decimal?         @db.Decimal(10, 2)
+  all_time_high                        Decimal?                       @db.Decimal(10, 2)
+  all_time_low                         Decimal?                       @db.Decimal(10, 2)
+  floor_price                          Decimal?                       @db.Decimal(10, 2)
+  market_cap                           Decimal?                       @db.Decimal(10, 2)
+  one_day_change                       Decimal?                       @db.Decimal(10, 2)
+  one_mo_change                        Decimal?                       @db.Decimal(10, 2)
+  one_wk_change                        Decimal?                       @db.Decimal(10, 2)
+  one_year_change                      Decimal?                       @db.Decimal(10, 2)
+  six_mo_change                        Decimal?                       @db.Decimal(10, 2)
+  three_mo_change                      Decimal?                       @db.Decimal(10, 2)
   total_listings                       Int?
-  all_time_change                      Decimal?         @db.Decimal(10, 2)
-  slug                                 String?          @unique
+  all_time_change                      Decimal?                       @db.Decimal(10, 2)
+  slug                                 String?                        @unique
   unique_holders                       BigInt?
-  veve_series                          veve_series?     @relation(fields: [series_id], references: [series_id])
+  veve_series                          veve_series?                   @relation(fields: [series_id], references: [series_id])
   communities                          communities[]
   veve_watchlist                       veve_watchlist[]
   veve_tokens                          veve_tokens[]
+  tmp_veve_tokens_collectibles         tmp_veve_tokens_collectibles[]
 
   @@index([brand_id], map: "collectibles_brand_id_fkey")
   @@index([licensor_id], map: "collectibles_licensor_id_fkey")
@@ -911,6 +912,42 @@ model veve_transfers {
   entry_price Float?
 
   @@index([token_id, from_wallet, to_wallet])
+}
+
+model tmp_veve_tokens_collectibles {
+  id                  Int                     @id @default(autoincrement())
+  connector_id        String?                 @unique
+  blockchain_id       String?
+  owner_id            String?
+  owner_username      String?
+  collectible_type_id String?
+  transaction_id      String?
+  transactions        tmp_veve_transactions[]
+  txn_cursor          String?
+  veve_collectibles   veve_collectibles?      @relation(fields: [collectible_type_id], references: [collectible_id])
+}
+
+model tmp_veve_transactions {
+  id                  Int                           @id @default(autoincrement())
+  transaction_id      String?
+  transfer_id         String?
+  connector_id        String?
+  createdAt           DateTime?
+  amount_usd          Float?
+  buyer_id            String?
+  buyer_username      String?
+  seller_id           String?
+  seller_username     String?
+  collectible_type_id String?
+  transactions        tmp_veve_tokens_collectibles? @relation(fields: [connector_id], references: [connector_id])
+}
+
+model tmp_cursors {
+  id             Int      @id @default(autoincrement())
+  collectible_id String
+  brand_id       String?
+  cursor         String
+  date           DateTime @default(now())
 }
 
 model veve_wallets {
