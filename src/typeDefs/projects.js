@@ -17,6 +17,7 @@ export const typeDefs = gql`
         active: Boolean!
         slug: String
         icon: String
+        tile: String
         users: [User]
     }
 

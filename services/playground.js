@@ -934,7 +934,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery("COMMON", "840f7c83-d180-47a8-8f87-f3cfe73144a9", endCursor)
+            query: getCollectibleSalesDataQuery("COMMON", "e04418e2-2f3e-4316-b8e8-e39909db128c", endCursor)
         }),
     }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())
