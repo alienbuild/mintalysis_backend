@@ -148,5 +148,3 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
         .catch(err => console.log('[ERROR][VEVE] Unable to get latest collectibles. ', err))
 
 }
-
-VEVE_GET_LATEST_COLLECTIBLES()

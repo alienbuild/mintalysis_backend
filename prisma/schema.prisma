@@ -443,13 +443,15 @@ model profile {
 }
 
 model projects {
-  id          String        @id
+  id          String        @id @default(uuid())
   name        String?       @unique
   abbr        String?       @unique
   active      Boolean       @default(false)
   icon        String?
   slug        String?       @unique
   communities communities[]
+  tile       String?
+  sort        Int           @default(10)
   users       users[]
 }
 
@@ -934,7 +936,7 @@ model tmp_veve_transactions {
   connector_id        String?
   createdAt           DateTime?
   status              String?
-  type              String?
+  type                String?
   fee_rate            Float?
   fee_gem             Float?
   amount_usd          Float?
