@@ -917,7 +917,7 @@ model veve_transfers {
 model tmp_veve_tokens_collectibles {
   id                  Int                     @id @default(autoincrement())
   connector_id        String?                 @unique
-  blockchain_id       String?
+  blockchain_id       String?                 @unique
   owner_id            String?
   owner_username      String?
   collectible_type_id String?
@@ -933,6 +933,10 @@ model tmp_veve_transactions {
   transfer_id         String?
   connector_id        String?
   createdAt           DateTime?
+  status              String?
+  type              String?
+  fee_rate            Float?
+  fee_gem             Float?
   amount_usd          Float?
   buyer_id            String?
   buyer_username      String?
@@ -946,6 +950,7 @@ model tmp_cursors {
   id             Int      @id @default(autoincrement())
   collectible_id String
   brand_id       String?
+  rarity         String?
   cursor         String
   date           DateTime @default(now())
 }
