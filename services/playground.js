@@ -16,6 +16,14 @@ import crypto from 'crypto';
 
 const prisma = new PrismaClient()
 
+prisma.$on('beforeExit', async () => {
+    await prisma.message.create({
+        data: {
+            message: '[SHUT DOWN] Bye world.',
+        },
+    })
+})
+
 // MongoDB Database
 mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log('Connected to MongoDB'))
@@ -1134,6 +1142,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
                 } else {
                     console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
                     await prisma.$disconnect()
+                    process.exit(1)
                 }
             }
 
