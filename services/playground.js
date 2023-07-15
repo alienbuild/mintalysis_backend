@@ -816,7 +816,7 @@ const retryFetch = (
 const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 250, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
+    collectibleList(first: 400, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
         pageInfo {
             hasNextPage
             endCursor
@@ -830,6 +830,7 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
                 }
                 collectibleType{
                     id
+                    rarity
                 }
                 brand {
                     id
@@ -843,7 +844,11 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
                         node{
                             id
                             createdAt
+                            feeRate
+                            feeGem
                             amountUsd
+                            status
+                            type
                             buyer{
                                 id
                                 username
@@ -861,7 +866,7 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 250, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
+    collectibleList(first: 400, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
         pageInfo {
             hasNextPage
             endCursor
@@ -875,6 +880,7 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
                 }
                 collectibleType{
                     id
+                    rarity
                 }
                 brand {
                     id
@@ -888,7 +894,11 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
                         node{
                             id
                             createdAt
+                            feeRate
+                            feeGem
                             amountUsd
+                            status
+                            type
                             buyer{
                                 id
                                 username
@@ -924,7 +934,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery("SECRET_RARE", "01bd76dd-6d19-4c75-906e-a2df2f5d741f", endCursor)
+            query: getCollectibleSalesDataQuery("RARE", "564bbde5-1fb8-4a21-848d-aee3a517a3bc", endCursor)
         }),
     }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())
@@ -941,6 +951,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
                     data:{
                         collectible_id: veveUsers[0].node.collectibleType?.id,
                         brand_id: veveUsers[0].node.brand?.id,
+                        rarity: veveUsers[0].node.collectibleType?.rarity,
                         cursor: pageInfo.endCursor,
                     }
                 })
@@ -968,6 +979,10 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
                                         transaction_id: txn.node.id,
                                         transfer_id: txn.node.transferId,
                                         createdAt: txn.node.createdAt,
+                                        status: txn.node.status,
+                                        type: txn.node.type,
+                                        fee_rate: Number(txn.node.feeRate),
+                                        fee_gem: Number(txn.node.feeGem),
                                         amount_usd: Number(txn.node.amountUsd),
                                         buyer_id: txn.node.buyer?.id,
                                         buyer_username: txn.node.buyer?.username,
