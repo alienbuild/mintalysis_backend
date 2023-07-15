@@ -934,7 +934,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery("RARE", "564bbde5-1fb8-4a21-848d-aee3a517a3bc", endCursor)
+            query: getCollectibleSalesDataQuery("COMMON", "840f7c83-d180-47a8-8f87-f3cfe73144a9", endCursor)
         }),
     }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())
@@ -1133,6 +1133,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
                     await getCollectibleSalesData(fullCapture, pageInfo.endCursor)
                 } else {
                     console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
+                    await prisma.$disconnect()
                 }
             }
 
