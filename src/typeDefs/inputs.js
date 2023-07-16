@@ -49,6 +49,8 @@ const typeDefs = gql`
     
     input filterOptions {
         underRRP: Boolean
+        category: String
+        type: String
     }
 
     input CredentialsInput {

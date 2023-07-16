@@ -3,7 +3,7 @@ import gql from "graphql-tag"
 const typeDefs = gql`
     
     type Query {
-        getNotifications: [Notification]
+        getNotifications(filterOptions: filterOptions, pagingOptions: pagingOptions, sortOptions: sortOptions): NotificationConnection
     }
     
     type Mutation {
@@ -14,6 +14,11 @@ const typeDefs = gql`
         notification: Boolean
     }
     
+    type NotificationConnection {
+        edges: [Notification]!
+        pageInfo: PageInfo
+    }
+    
     type Notification {
         id: String
         type: String
@@ -22,6 +27,7 @@ const typeDefs = gql`
         read: Boolean
         createdAt: DateTime
         from_user: User
+        project: Project
     }
 `
 

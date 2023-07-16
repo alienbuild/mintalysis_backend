@@ -1,17 +1,35 @@
 import {withFilter} from "graphql-subscriptions";
 import {GraphQLError} from "graphql";
+import {encodeCursor} from "../utils/index.js";
 
 const resolvers = {
     Query: {
-        getNotifications: async (_, __, { userInfo, prisma }) => {
+        getNotifications: async (_, { filterOptions, pagingOptions, sortOptions }, { userInfo, prisma }) => {
+
+            if (!userInfo.userId) throw new GraphQLError('Unauthorised.')
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+            if (limit > 100) return null
+
+            let queryParams = { take: limit }
+            let whereParams = { to_user_id: userInfo.userId }
+
+            if (filterOptions && filterOptions.type) whereParams = {...whereParams, type: filterOptions.type}
+            if (filterOptions && filterOptions.category) whereParams = {...whereParams, category: filterOptions.category}
+
+            queryParams = { ...queryParams, where: { ...whereParams }, include: { project: true } }
 
             try {
-                return await prisma.notifications.findMany({
-                    where: {
-                        to_user_id: userInfo.userId
-                    },
-                    take: 20
-                })
+                const notifications = await prisma.notifications.findMany(queryParams)
+                console.log('notifications are: ', notifications)
+
+                return {
+                    edges: notifications,
+                    pageInfo: {
+                        endCursor: notifications.length > 1 ? encodeCursor(notifications[notifications.length - 1].id) : null
+                    }
+                }
 
             } catch (e) {
                 throw new GraphQLError('Unable to fetch notifications')
