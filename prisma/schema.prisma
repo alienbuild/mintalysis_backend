@@ -272,17 +272,32 @@ model mints_daily {
   @@ignore
 }
 
+model price_alerts {
+  id         Int                 @id @default(autoincrement())
+  value      Float
+  direction  PriceAlertDirection
+  user_id    String?
+  user       users?              @relation("price_alerts", fields: [user_id], references: [id], onDelete: Cascade)
+  project_id String?
+  project    projects?           @relation(fields: [project_id], references: [id])
+  type       CollectibleType     @default(COLLECTIBLE)
+}
+
 model notifications {
-  id           String           @id @default(uuid())
-  type         NotificationType
+  id           String               @id @default(uuid())
+  type         NotificationType     @default(DEFAULT)
+  category     NotificationCategory @default(DEFAULT)
   content      String
-  createdAt    DateTime         @default(now())
+  createdAt    DateTime             @default(now())
   from_user_id String?
   to_user_id   String?
-  read         Boolean          @default(false)
+  read         Boolean              @default(false)
   reference    String?
-  from_user    users?           @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
-  to_user      users?           @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
+  project_id   String?
+  project      projects?            @relation(fields: [project_id], references: [id])
+
+  from_user users? @relation("from_notifications", fields: [from_user_id], references: [id], onDelete: Cascade)
+  to_user   users? @relation("to_notifications", fields: [to_user_id], references: [id], onDelete: Cascade)
 
   @@index([from_user_id], map: "notifications_from_user_id_fkey")
   @@index([to_user_id], map: "notifications_to_user_id_fkey")
@@ -443,16 +458,18 @@ model profile {
 }
 
 model projects {
-  id          String        @id @default(uuid())
-  name        String?       @unique
-  abbr        String?       @unique
-  active      Boolean       @default(false)
-  icon        String?
-  slug        String?       @unique
-  communities communities[]
-  tile       String?
-  sort        Int           @default(10)
-  users       users[]
+  id            String          @id @default(uuid())
+  name          String?         @unique
+  abbr          String?         @unique
+  active        Boolean         @default(false)
+  icon          String?
+  slug          String?         @unique
+  communities   communities[]
+  tile          String?
+  sort          Int             @default(10)
+  users         users[]
+  notifications notifications[]
+  price_alerts  price_alerts[]
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -508,6 +525,9 @@ model users {
   messages                        message[]
   from_notifications              notifications[]                   @relation("from_notifications")
   to_notifications                notifications[]                   @relation("to_notifications")
+  price_alerts                    price_alerts[]                    @relation("price_alerts")
+  notification_count              Int                               @default(0)
+  message_count                   Int                               @default(0)
   posts                           posts[]
   profile                         profile?
   veve_watchlist                  veve_watchlist[]
@@ -1134,12 +1154,32 @@ enum UserStatus {
   LOGOUT
 }
 
+enum NotificationCategory {
+  DEFAULT
+  MARKETPLACE
+  COMMUNITY
+  ALERT
+}
+
+enum PriceAlertDirection {
+  ABOVE
+  BELOW
+}
+
+enum CollectibleType {
+  COLLECTIBLE
+  COMIC
+}
+
 enum NotificationType {
+  DEFAULT
   POST
   FOLLOWER
   COMMUNITY
   OFFER
   MARKETPLACE_OFFER
+  PRICE_ALERT
+  WALLET_ACTIVITY
 }
 
 enum CursorOption {

@@ -934,7 +934,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery("COMMON", "e04418e2-2f3e-4316-b8e8-e39909db128c", endCursor)
+            query: getCollectibleSalesDataQuery("RARE", "3bf75a49-5990-47dc-9723-9d8ab3ac34f4", endCursor)
         }),
     }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())
@@ -994,7 +994,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
                             })
                         }
                     } catch (e) {
-                        console.log('[FAILED]')
+                        console.log('[FAILED]', e)
                     }
 
                     // if (user.node?.blockchainId && user.node?.owner?.username){
@@ -1141,6 +1141,8 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
         })
         .catch(async e => {
             console.log('[ERROR] Unable to get usernames from veve.', e)
+            await prisma.$disconnect()
+            process.exit(1)
         })
 
 }
