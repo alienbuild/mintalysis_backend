@@ -816,7 +816,7 @@ const retryFetch = (
 const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 400, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
+    collectibleList(first: 200, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
         pageInfo {
             hasNextPage
             endCursor
@@ -866,7 +866,7 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 400, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
+    collectibleList(first: 200, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
         pageInfo {
             hasNextPage
             endCursor
@@ -934,7 +934,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery("RARE", "3bf75a49-5990-47dc-9723-9d8ab3ac34f4", endCursor)
+            query: getCollectibleSalesDataQuery("UNCOMMON", "53472239-3ae6-43eb-bbd7-bd88d8567a66", endCursor)
         }),
     }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())

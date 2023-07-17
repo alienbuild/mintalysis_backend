@@ -466,6 +466,7 @@ model projects {
   slug          String?         @unique
   communities   communities[]
   tile          String?
+  motiff_url    String?
   sort          Int             @default(10)
   users         users[]
   notifications notifications[]
