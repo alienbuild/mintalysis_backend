@@ -22,7 +22,6 @@ const resolvers = {
 
             try {
                 const notifications = await prisma.notifications.findMany(queryParams)
-                console.log('notifications are: ', notifications)
 
                 return {
                     edges: notifications,

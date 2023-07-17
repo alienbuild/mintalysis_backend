@@ -18,6 +18,7 @@ export const typeDefs = gql`
         slug: String
         icon: String
         tile: String
+        motiff_url: String
         users: [User]
     }
 
