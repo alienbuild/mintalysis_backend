@@ -1,4 +1,5 @@
 import {slugify} from "../utils/index.js";
+import {GraphQLError} from "graphql";
 
 const resolvers = {
     Query: {
@@ -10,20 +11,28 @@ const resolvers = {
             if (active) whereParams = { ...whereParams, active: true }
             if (id){ return [prisma.projects.findUnique({ where: whereParams })]
             } else {
-                return prisma.projects.findMany({ where: whereParams })
+                return prisma.projects.findMany({ where: whereParams, orderBy: { sort: 'asc' } })
             }
         }
     },
     Mutation: {
         createProject: async (_, { name, abbr, active }, { prisma, userInfo }) => {
-            return prisma.projects.create({
-                data: {
-                    name,
-                    abbr,
-                    active,
-                    slug: slugify(name)
-                }
-            })
+
+            try {
+                return  await prisma.projects.create({
+                    data: {
+                        name,
+                        abbr,
+                        active,
+                        slug: slugify(name)
+                    }
+                })
+
+            } catch (e) {
+                console.log('Nah ', e)
+                throw new GraphQLError('Unable to create project.')
+            }
+
         }
     },
 }

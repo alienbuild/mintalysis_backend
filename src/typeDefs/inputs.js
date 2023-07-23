@@ -49,11 +49,30 @@ const typeDefs = gql`
     
     input filterOptions {
         underRRP: Boolean
+        category: String
+        type: String
     }
 
     input CredentialsInput {
         email: String!
         mobile: Boolean
+    }
+    
+    input AccessibilityPreferencesInput {
+        screen_reader: Boolean,
+        magnifier: Boolean,
+        dyslexia_font: Boolean,
+        readable_font: Boolean,
+        img_descriptions: Boolean,
+        highlight_links: Boolean,
+        highlight_headers: Boolean,
+        text_magnifier: Boolean,
+        virtual_keyboard: Boolean,
+        monochrome: Boolean,
+        dark_contrast: Boolean,
+        light_contrast: Boolean,
+        cursor_option: String
+        font_size: Float
     }
     
     input MarketProductInput {

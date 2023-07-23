@@ -10,18 +10,7 @@ const typeDefs = gql`
         getUserFollowing(userId: String! type: String) : User
         getUserCommunities(userId: String!): [Community]
         getUserProjects(userId: ID!): Boolean
-    }
-    
-    type UsersConnection {
-        edges: [User]!
-        totalCount: Int
-        pageInfo: PageInfo
-    }
-    
-    type UserConnection {
-        user: User,
-        isMyProfile: Boolean
-        userIsFollowing: Boolean
+        getUserAccessibilityPreferences: UserAccessibilityPreferences
     }
     
     type Mutation {
@@ -29,12 +18,42 @@ const typeDefs = gql`
         updateLastSeen(now: String) : Boolean
         followUser(userId: ID!) : Boolean
         unfollowUser(userId: ID!): Boolean
+        saveUserAccessibilityPreferences(preferences: AccessibilityPreferencesInput!): Boolean
     }
     
     type Subscription {
         getOnlineUsers: [User]
     }
+    
+    type UserAccessibilityPreferences {
+        screen_reader: Boolean
+        magnifier: Boolean
+        readable_font: Boolean
+        dyslexia_font: Boolean
+        img_descriptions: Boolean
+        highlight_links: Boolean
+        highlight_headers: Boolean
+        text_magnifier: Boolean
+        virtual_keyboard: Boolean
+        monochrome: Boolean
+        dark_contrast: Boolean
+        light_contrast: Boolean
+        cursor_option: String
+        font_size: Int
+    }
 
+    type UsersConnection {
+        edges: [User]!
+        totalCount: Int
+        pageInfo: PageInfo
+    }
+
+    type UserConnection {
+        user: User,
+        isMyProfile: Boolean
+        userIsFollowing: Boolean
+    }
+    
     type User {
         id: ID!
         username: String
