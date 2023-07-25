@@ -500,6 +500,7 @@ model transfers_daily {
 model users {
   id                              String                            @id @default(uuid())
   email                           String                            @unique
+  email_veriied                   Boolean                           @default(false)
   createdAt                       DateTime                          @default(now())
   updatedAt                       DateTime                          @updatedAt
   role                            Role                              @default(BASIC)
@@ -548,10 +549,29 @@ model users {
   marketplace_sent_offers         marketplace_product_offers[]      @relation("buyer")
   marketplace_received_offers     marketplace_product_offers[]      @relation("seller")
   users_preferences_accessibility users_preferences_accessibility[]
+  accounts                        account[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
   @@index([stripe_customer_id], map: "stripe_customer_id")
+}
+
+model account {
+  id                  String  @id @default(uuid())
+  user_id             String  @unique
+  user                users   @relation(fields: [user_id], references: [id])
+  type                String
+  provider            String
+  provider_account_id String
+  refresh_token       String?
+  access_token        String?
+  expires_at          Int?
+  token_type          String?
+  scope               String?
+  id_token            String?
+  session_state       String?
+
+  @@unique([provider, providerAccountId])
 }
 
 model users_preferences_accessibility {
@@ -987,6 +1007,7 @@ model veve_wallets {
   veve_id             String?
   active              Boolean?      @default(true)
   merged_to           String?
+  KYC                 Boolean?      @default(false)
   tagsId              Int?
   first_activity_date DateTime?
   last_activity_date  DateTime?

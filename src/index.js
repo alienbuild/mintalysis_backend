@@ -97,7 +97,7 @@ const main = async () => {
 
     const corsOptions = {
         methods: ['GET', 'POST', 'OPTIONS'],
-        origin: [process.env.BASE_URL, '67.225.248.251', '81.136.110.55', 'http://localhost:3002'],
+        origin: [process.env.BASE_URL, '67.225.248.251', '81.136.110.55', 'http://localhost:3002', 'http://localhost:3000'],
         credentials: true,
     };
 
@@ -142,3 +142,9 @@ const main = async () => {
 };
 
 main()
+    .then(() => {
+        console.log('Server is waiting to do sometihng.')
+    })
+    .catch((e) => {
+        console.log('Server failed to start. ', e)
+    })
