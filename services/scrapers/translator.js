@@ -31,14 +31,7 @@ const translateCollectibles = async () => {
     const translateTo = "Chinese"
     const languageKey = "CN"
 
-    const collectibles = await prisma.veve_collectibles.findMany({
-        skip: 3,
-        where: {
-            translations: {
-                language:
-            }
-        }
-    })
+    const collectibles = await prisma.veve_collectibles.findMany()
 
     console.log('COLLECTIBLES RECEIVED..TRANSLATING...')
 
