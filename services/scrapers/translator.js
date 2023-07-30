@@ -90,7 +90,7 @@ const translateCollectibles = async () => {
                 }
             })
 
-            console.log('save is: ', save)
+            console.log(`[TRANSLATED ARTICLE] index is ${index}. Collectible id ${collectible.collectible_id}: `, save)
 
         } catch (e) {
             console.log('[FAILED TRANSLATING] ', e)
