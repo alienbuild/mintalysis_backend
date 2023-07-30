@@ -19,9 +19,14 @@ import mongoose from "mongoose"
 import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
 import {scheduledRapidJobs, scheduledLiveJobs} from "../services/cronJobs.js";
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
+import Slack from '@slack/bolt'
 
 export const prisma = new PrismaClient();
 export const pubsub = new PubSub();
+export const slack = new Slack.App({
+    signingSecret: process.env.SLACK_SIGNING_SECRET,
+    token: process.env.SLACK_BOT_TOKEN
+})
 
 const main = async () => {
     dotenv.config();
@@ -54,10 +59,10 @@ const main = async () => {
         if (ctx.connectionParams && ctx.connectionParams.authorization) {
             const { authorization } = ctx.connectionParams;
             const userInfo = await getUserFromToken(authorization)
-            return { userInfo, prisma, pubsub };
+            return { userInfo, prisma, pubsub, slack };
         }
         // Otherwise let our resolvers know we don't have a current user
-        return { userInfo: null, prisma, pubsub };
+        return { userInfo: null, prisma, pubsub, slack };
     };
 
     // Save the returned server's info so we can shutdown this server later
@@ -114,7 +119,7 @@ const main = async () => {
                 const ipAddress = req.header('x-forwarded-for') || req.socket.remoteAddress
                 const userAgent = req.headers["user-agent"]
                 const userInfo = await getUserFromToken(req.headers.authorization)
-                return { ipAddress, userAgent, userInfo, prisma, pubsub };
+                return { ipAddress, userAgent, userInfo, prisma, pubsub, slack };
             },
         })
     );

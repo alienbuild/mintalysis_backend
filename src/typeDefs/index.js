@@ -18,6 +18,7 @@ import uptimeTypeDefs from './uptime.js'
 import marketTypeDefs from './marketplace.js'
 import notificationsTypeDefs from './notifications.js'
 import articlesTypeDefs from './articles.js'
+import feedbackTypeDefs from './feedback.js'
 
 const typeDefs = [
     scalarDefs,
@@ -39,7 +40,8 @@ const typeDefs = [
     uptimeTypeDefs,
     marketTypeDefs,
     notificationsTypeDefs,
-    articlesTypeDefs
+    articlesTypeDefs,
+    feedbackTypeDefs
 ]
 
 export default typeDefs

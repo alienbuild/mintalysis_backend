@@ -18,6 +18,7 @@ import uptimeResolvers from './uptime.js'
 import marketplaceResolvers from './marketplace.js'
 import notificationResolvers from './notifications.js'
 import articleResolvers from './articles.js'
+import feedbackResolvers from './feedback.js'
 
 const resolvers = merge({},
     DateTime,
@@ -38,7 +39,8 @@ const resolvers = merge({},
     uptimeResolvers,
     marketplaceResolvers,
     notificationResolvers,
-    articleResolvers
+    articleResolvers,
+    feedbackResolvers
 )
 
 export default resolvers
