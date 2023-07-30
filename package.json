@@ -15,6 +15,7 @@
     "@apollo/server": "^4.3.0",
     "@graphql-tools/schema": "^9.0.5",
     "@prisma/client": "^4.8.1",
+    "@slack/bolt": "^3.13.2",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "bcryptjs": "^2.4.3",

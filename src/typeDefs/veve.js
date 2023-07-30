@@ -8,6 +8,7 @@ const typeDefs = gql`
         veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions, lang: String): CollectiblesConnection
         veveComics(uniqueCoverId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions): ComicsConnection
         veveBrands(pagingOptions: pagingOptions, sortOptions: sortOptions, search:String) : BrandsConnection
+        veveLicensors(pagingOptions: pagingOptions, sortOptions: sortOptions, search:String) : LicensorsConnection
         veveSeries(collectibleId: String, brandId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, lang: String): CollectiblesConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
         veveValuations : VeveValuationsPayload
@@ -189,6 +190,12 @@ const typeDefs = gql`
         totalCount: Int
         pageInfo: PageInfo
     }
+
+    type LicensorsConnection {
+        edges: [VeVeLicensors]!
+        totalCount: Int
+        pageInfo: PageInfo
+    }
     
     type VeVeBrand {
         brand_id: String!
@@ -203,6 +210,22 @@ const typeDefs = gql`
         theme_background_image_thumbnail_url: String
         theme_footer_image_thumbnail_url: String
         licensor_id: String
+        slug: String
+        market_cap: Float
+    }
+    
+    type VeVeLicensors {
+        licensor_id: String!
+        name: String
+        description: String
+        theme_logo_image_url: String
+        theme_logo_image_thumbnail_url: String
+        square_image_url: String
+        square_image_thumbnail_url: String
+        square_image_low_resolution_url: String
+        landscape_image_thumbnail_url: String
+        theme_background_image_thumbnail_url: String
+        theme_footer_image_thumbnail_url: String
         slug: String
         market_cap: Float
     }

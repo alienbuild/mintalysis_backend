@@ -304,7 +304,7 @@ const resolvers = {
             let queryParams = { take: limit }
             let whereParams = {}
 
-            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
+            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { brand_id: decodeCursor(pagingOptions.after) } }
             if (search) whereParams = { ...whereParams, name: { contains: search } }
 
             queryParams = { ...queryParams, where: { ...whereParams } }
@@ -317,6 +317,31 @@ const resolvers = {
                     endCursor: brands.length > 1 ? encodeCursor(brands[brands.length - 1].brand_id) : null,
                 },
                 totalCount: brands.length
+            }
+        },
+        veveLicensors: async (_, { pagingOptions, sortOptions, search }, { prisma }) => {
+
+            let limit = 25
+            if (pagingOptions?.limit) limit = pagingOptions.limit
+
+            if (limit > 100) return null
+
+            let queryParams = { take: limit }
+            let whereParams = {}
+
+            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { licensor_id: decodeCursor(pagingOptions.after) } }
+            if (search) whereParams = { ...whereParams, name: { contains: search } }
+
+            queryParams = { ...queryParams, where: { ...whereParams } }
+
+            const licensors = await prisma.veve_licensors.findMany(queryParams)
+
+            return {
+                edges: licensors,
+                pageInfo: {
+                    endCursor: licensors.length > 1 ? encodeCursor(licensors[licensors.length - 1].licensor_id) : null,
+                },
+                totalCount: licensors.length
             }
         },
         veveSeries: async (_, { brandId, pagingOptions, sortOptions, search, lang = "EN" }, { prisma }) => {

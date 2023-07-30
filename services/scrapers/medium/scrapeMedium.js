@@ -290,6 +290,7 @@ const translateArticles = async () => {
 
     const articles = await prisma.article.findMany({
         select: {
+            id: true,
             translations: {
                 where: {
                     language: "EN"
@@ -297,8 +298,6 @@ const translateArticles = async () => {
             }
         }
     })
-
-    console.log('articles is: ', articles)
 
     const chatgpt = new ChatGPTAPI({
         apiKey: chatGptKey
@@ -310,69 +309,65 @@ const translateArticles = async () => {
         const translationKey = "CN" // ES, DE, FR, CN, IN, IT
 
         try {
-            if (index > 0) return
-
             await setTimeout(120000 * index)
             console.log('[WAITING 120 SECONDS]')
 
-            // BELOW WONT WORK YOU NEED TO CHANGE TITLE TO ACCESS THE TRANSLATION RELATION ETC
-            // const title = await chatgpt.sendMessage(`rewrite the below title in ${translateTo}\n ${article.title}`)
-            // await setTimeout(3000 * index)
-            // const subtitle = await chatgpt.sendMessage(`rewrite the below subtitle in ${translateTo}\n ${article.subtitle}`)
-            // await setTimeout(3000 * index)
-            //
-            // const message = `rewrite the below article in ${translateTo} .\n ${article.updated_html}`
-            // console.log('[ADDING HTML5]', article.article_id)
-            // const translation = await chatgpt.sendMessage(message)
-            // const finishReason = translation.detail.choices[0].finish_reason
-            //
-            // if (finishReason === 'length'){
-            //     console.log('[CHATGPT PAUSED DUE TO LENGTH, GRABBING MORE...')
-            //     await setTimeout(120000 * index)
-            //     const expand = await chatgpt.sendMessage(`continue`, {
-            //         parentMessageId: translation.id
-            //     })
-            //     const output = translation.text
-            //     const result = output.concat(expand.text)
-            //
-            //     await prisma.tmp_medium_article_html.update({
-            //         where: {
-            //             article_id: article.article_id
-            //         },
-            //         data: {
-            //             translations: {
-            //                 create: {
-            //                     data: {
-            //                         content: result,
-            //                         title: title.text,
-            //                         language: translationKey
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     })
-            //
-            //     console.log(`[ARTICLE UPDATED] `, article.id)
-            //
-            // } else {
-            //     await prisma.article.update({
-            //         where: {
-            //             id: article.id
-            //         },
-            //         data: {
-            //             translations: {
-            //                 create: {
-            //                     data: {
-            //                         content: translation.text,
-            //                         title: title.text,
-            //                         language: translationKey
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     })
-            //     console.log(`[ARTICLE UPDATED] `, article.id)
-            // }
+            const title = await chatgpt.sendMessage(`rewrite the below title in ${translateTo}\n ${article.translations[0].title}`)
+            await setTimeout(3000 * index)
+            const subtitle = await chatgpt.sendMessage(`rewrite the below subtitle in ${translateTo}\n ${article.translations[0].subtitle}`)
+            await setTimeout(3000 * index)
+
+            const message = `rewrite the below article in ${translateTo} .\n ${article.translations[0].content}`
+            console.log('[TRANSLATING ARTICLE]' , translateTo)
+
+            const translation = await chatgpt.sendMessage(message)
+            const finishReason = translation.detail.choices[0].finish_reason
+
+            if (finishReason === 'length'){
+                console.log('[CHATGPT PAUSED DUE TO LENGTH, GRABBING MORE...')
+                await setTimeout(120000 * index)
+                const expand = await chatgpt.sendMessage(`continue`, {
+                    parentMessageId: translation.id
+                })
+                const output = translation.text
+                const result = output.concat(expand.text)
+
+                await prisma.article.update({
+                    where: {
+                        id: article.id
+                    },
+                    data: {
+                        translations: {
+                            create: {
+                                content: result,
+                                title: title.text,
+                                subtitle: subtitle.text,
+                                language: translationKey
+                            }
+                        }
+                    }
+                })
+
+                console.log(`[ARTICLE UPDATED] - index is: ${index}`, article.id)
+
+            } else {
+                await prisma.article.update({
+                    where: {
+                        id: article.id
+                    },
+                    data: {
+                        translations: {
+                            create: {
+                                content: translation.text,
+                                title: title.text,
+                                subtitle: subtitle.text,
+                                language: translationKey
+                            }
+                        }
+                    }
+                })
+                console.log(`[ARTICLE UPDATED] - index is: ${index}`, article.id)
+            }
 
         } catch (e) {
             console.log('[FAILED]: ', e)
@@ -381,7 +376,8 @@ const translateArticles = async () => {
 
 }
 
-migrateTmpArticles()
+translateArticles()
+// migrateTmpArticles()
 // addHTML2Articles()
 // rewriteArticles()
 // getUserId()
