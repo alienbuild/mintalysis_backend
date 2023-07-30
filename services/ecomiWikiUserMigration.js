@@ -24,7 +24,7 @@ const EcomiWikiUserMigration = async () => {
         if (subscriptions.length > 0) subscriber = true
 
         try {
-            const newUser = await prisma.users.create({
+            const newUser = await prisma.User.create({
                 data: {
                     name,
                     username: generateFromEmail(email, 4),
@@ -56,13 +56,13 @@ EcomiWikiUserMigration()
 import { generateFromEmail, generateUsername } from "unique-username-generator";
 
 const generateUsernames = async () => {
-    const totalUserCount = await prisma.users.count()
+    const totalUserCount = await prisma.User.count()
     console.log('totalUserCount are: ', totalUserCount)
 
     for (let i = 0; i < totalUserCount; i++) {
         console.log('[PROCESSING] Batch: ', i + 1)
 
-        const users = await prisma.users.findMany({
+        const users = await prisma.User.findMany({
             skip: i * 10000,
             take: 10000
         })
@@ -72,7 +72,7 @@ const generateUsernames = async () => {
 
             try {
 
-                await prisma.users.update({
+                await prisma.User.update({
                     where: { id: user.id },
                     data: { username }
                 })

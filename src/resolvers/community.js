@@ -60,9 +60,9 @@ const resolvers = {
             })
 
             if (userInfo) {
-                const memberOf = await prisma.users.findUnique({
+                const memberOf = await prisma.User.findUnique({
                     where: {
-                        id: userInfo.userId
+                        id: userInfo.sub
                     },
                     select: {
                         communities: true
@@ -117,7 +117,7 @@ const resolvers = {
                         },
                         liked_by: {
                             where: {
-                                id: userInfo.userId
+                                id: userInfo.sub
                             },
                             select: {
                                 id: true
@@ -140,7 +140,7 @@ const resolvers = {
                                 like_count: true,
                                 liked_by: {
                                     where: {
-                                        id: userInfo.userId
+                                        id: userInfo.sub
                                     },
                                     select: {
                                         id: true
@@ -187,7 +187,7 @@ const resolvers = {
                         },
                         liked_by: {
                             where: {
-                                id: userInfo.userId
+                                id: userInfo.sub
                             },
                             select: {
                                 id: true
@@ -210,7 +210,7 @@ const resolvers = {
                                 like_count: true,
                                 liked_by: {
                                     where: {
-                                        id: userInfo.userId
+                                        id: userInfo.sub
                                     },
                                     select: {
                                         id: true
@@ -281,7 +281,7 @@ const resolvers = {
                     },
                     liked_by: {
                         where: {
-                            id: userInfo.userId
+                            id: userInfo.sub
                         },
                         select: {
                             id: true
@@ -308,9 +308,9 @@ const resolvers = {
             })
 
             const communityIdTest = post.community.id
-            const user = await prisma.users.findUnique({
+            const user = await prisma.User.findUnique({
                 where: {
-                    id: userInfo.userId
+                    id: userInfo.sub
                 },
                 select: {
                     communities: {
@@ -380,7 +380,7 @@ const resolvers = {
                 case project_id === 'de2180a8-4e26-402a-aed1-a09a51e6e33d':
                     user_wallet = await prisma.veve_wallets.findFirst({
                         where: {
-                            user_id: userInfo.userId
+                            user_id: userInfo.sub
                         },
                         select: {
                             id: true
@@ -391,7 +391,7 @@ const resolvers = {
                 case project_id === 'e01fd52f-3e85-4036-b531-5f626f425862':
                     user_wallet = await prisma.hro_wallets.findFirst({
                         where: {
-                            user_id: userInfo.userId
+                            user_id: userInfo.sub
                         },
                         select: {
                             id: true
@@ -442,7 +442,7 @@ const resolvers = {
                         ...payload,
                         members: {
                             connect: {
-                                id: userInfo.userId
+                                id: userInfo.sub
                             }
                         }
                     }
@@ -461,7 +461,7 @@ const resolvers = {
                     member_count: {increment: 1},
                     members: {
                         connect: {
-                            id: userInfo.userId
+                            id: userInfo.sub
                         }
                     }
                 }
@@ -483,7 +483,7 @@ const resolvers = {
                     member_count: {decrement: 1},
                     members: {
                         disconnect: {
-                            id: userInfo.userId
+                            id: userInfo.sub
                         }
                     }
                 }
@@ -535,7 +535,7 @@ const resolvers = {
                     like_count: {increment: 1},
                     liked_by: {
                         connect: {
-                            id: userInfo.userId
+                            id: userInfo.sub
                         }
                     }
                 },
@@ -554,7 +554,7 @@ const resolvers = {
                     like_count: {decrement: 1},
                     liked_by: {
                         disconnect: {
-                            id: userInfo.userId
+                            id: userInfo.sub
                         }
                     }
                 },
@@ -567,9 +567,9 @@ const resolvers = {
         },
         createComment: async (_, { parent_id, post_id, community_id, body }, { userInfo, prisma }) => {
 
-            const user = await prisma.users.findUnique({
+            const user = await prisma.User.findUnique({
                 where: {
-                    id: userInfo.userId,
+                    id: userInfo.sub,
                 },
                 select: {
                     communities: {
@@ -597,7 +597,7 @@ const resolvers = {
                                 parent_id: parent_id,
                                 community_id: community_id,
                                 body: body,
-                                author_id: userInfo.userId,
+                                author_id: userInfo.sub,
                                 like_count: 0
                             },
                             select: {
@@ -626,7 +626,7 @@ const resolvers = {
                         })
                         return await prisma.comments.create({
                             data: {
-                                author_id: userInfo.userId,
+                                author_id: userInfo.sub,
                                 post_id: post_id,
                                 community_id: community_id,
                                 body: body,
@@ -662,7 +662,7 @@ const resolvers = {
                         like_count: { increment: 1 },
                         liked_by: {
                             connect: {
-                                id: userInfo.userId
+                                id: userInfo.sub
                             }
                         }
                     }
@@ -686,7 +686,7 @@ const resolvers = {
                         like_count: { decrement: 1 },
                         liked_by: {
                             disconnect: {
-                                id: userInfo.userId
+                                id: userInfo.sub
                             }
                         }
                     }

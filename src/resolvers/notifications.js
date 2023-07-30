@@ -6,14 +6,14 @@ const resolvers = {
     Query: {
         getNotifications: async (_, { filterOptions, pagingOptions, sortOptions }, { userInfo, prisma }) => {
 
-            if (!userInfo.userId) throw new GraphQLError('Unauthorised.')
+            if (!userInfo.sub) throw new GraphQLError('Unauthorised.')
 
             let limit = 25
             if (pagingOptions?.limit) limit = pagingOptions.limit
             if (limit > 100) return null
 
             let queryParams = { take: limit }
-            let whereParams = { to_user_id: userInfo.userId }
+            let whereParams = { to_user_id: userInfo.sub }
 
             if (filterOptions && filterOptions.type) whereParams = {...whereParams, type: filterOptions.type}
             if (filterOptions && filterOptions.category) whereParams = {...whereParams, category: filterOptions.category}
@@ -44,7 +44,7 @@ const resolvers = {
                     type: 'MARKETPLACE_OFFER',
                     content: 'This is a test notification',
                     reference: '123',
-                    to_user_id: userInfo.userId
+                    to_user_id: userInfo.sub
                 }
             })
             console.log('notification created: ', test)

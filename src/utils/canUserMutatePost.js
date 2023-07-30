@@ -1,5 +1,5 @@
 export const canUserMutatePost = async ({ userId, postId, prisma }) => {
-    const user = await prisma.users.findUnique({
+    const user = await prisma.User.findUnique({
         where: {
             id: userId
         }

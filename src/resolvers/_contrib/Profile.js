@@ -1,6 +1,6 @@
 const Profile ={
     user: (parent, __, { userInfo, prisma }) => {
-        return prisma.users.findUnique({
+        return prisma.User.findUnique({
             where: {
                 id: parent.user_id
             }

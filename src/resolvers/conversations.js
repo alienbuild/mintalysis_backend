@@ -6,7 +6,7 @@ import {userIsConversationParticipant} from "../utils/userIsConversationParticip
 const resolvers = {
     Query: {
         conversations: async ( _, __, { userInfo, prisma }) => {
-            if (!userInfo.userId) throw new GraphQLError('Not authorised.')
+            if (!userInfo.sub) throw new GraphQLError('Not authorised.')
 
             const { userId } = userInfo
 

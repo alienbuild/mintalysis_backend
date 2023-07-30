@@ -205,7 +205,7 @@ const resolvers = {
             }
 
         },
-        veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions, filterOptions }, { prisma }) => {
+        veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions, filterOptions, lang = "EN" }, { prisma }) => {
 
             let limit = 25
             if (pagingOptions?.limit) limit = pagingOptions.limit
@@ -214,12 +214,14 @@ const resolvers = {
 
             let queryParams = { take: limit }
             let whereParams = {}
+            let selectParams = { translations: { where: { language: lang } } }
 
             if (collectibleId) {
                 whereParams = {...whereParams, collectible_id: collectibleId }
 
                 const collectibles = await prisma.veve_collectibles.findUnique({
-                    where: whereParams
+                    where: whereParams,
+                    include: selectParams
                 })
 
                 return {
@@ -254,7 +256,7 @@ const resolvers = {
             if (filterOptions && filterOptions.underRRP) whereParams = { ...whereParams, floor_price: { lt: await prisma.veve_collectibles.fields.store_price }}
             if (search) whereParams = { ...whereParams, name: { contains: search } }
 
-            queryParams = { ...queryParams, where: { ...whereParams } }
+            queryParams = { ...queryParams, where: { ...whereParams }, include: { ...selectParams } }
 
             const collectibles = await prisma.veve_collectibles.findMany(queryParams)
 
@@ -317,12 +319,15 @@ const resolvers = {
                 totalCount: brands.length
             }
         },
-        veveSeries: async (_, { brandId, pagingOptions, sortOptions, search}, { prisma }) => {
+        veveSeries: async (_, { brandId, pagingOptions, sortOptions, search, lang = "EN" }, { prisma }) => {
+
+            let selectParams = { translations: { where: { language: lang } } }
 
             const series = await prisma.veve_collectibles.findMany({
                 where: {
                     brand_id: brandId
                 },
+                include: selectParams
             })
 
             return {
@@ -356,7 +361,7 @@ const resolvers = {
 
             const user_wallet = await prisma.veve_wallets.findFirst({
                 where: {
-                    user_id: userInfo.userId
+                    user_id: userInfo.sub
                 },
                 select: {
                     id: true
@@ -416,7 +421,7 @@ const resolvers = {
             const groupBy = await prisma.veve_tokens.groupBy({
                 by: ['edition'],
                 where: {
-                    user_id: userInfo.userId,
+                    user_id: userInfo.sub,
                     series_id: seriesId
                 },
                 _count: {
@@ -439,7 +444,7 @@ const resolvers = {
                             where: {
                                 edition: edition,
                                 series_id: seriesId,
-                                user_id: userInfo.userId,
+                                user_id: userInfo.sub,
                             },
                             select: {
                                 name: true,
@@ -471,7 +476,7 @@ const resolvers = {
 
             const user_wallet = await prisma.veve_wallets.findFirst({
                 where: {
-                    user_id: userInfo.userId
+                    user_id: userInfo.sub
                 },
                 select: {
                     id: true
@@ -507,7 +512,7 @@ const resolvers = {
 
             // return await prisma.veve_tokens.findMany({
             //     where: {
-            //         user_id: userInfo.userId
+            //         user_id: userInfo.sub
             //     },
             //     distinct: ['collectible_id'],
             //     take: limit
@@ -522,7 +527,7 @@ const resolvers = {
             if (limit > 100) return null
 
             let queryParams = { take: limit, select: { collectible: true } }
-            let whereParams = { user_id: userInfo.userId, NOT: [{ collectible_id: null }] }
+            let whereParams = { user_id: userInfo.sub, NOT: [{ collectible_id: null }] }
             if (after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(after) } }
             if (search) whereParams = {...whereParams, name: { contains: search } }
 
@@ -551,7 +556,7 @@ const resolvers = {
             if (limit > 100) return null
 
             let queryParams = { take: limit, select: { comic: true } }
-            let whereParams = { user_id: userInfo.userId, NOT: [{ unique_cover_id: null }] }
+            let whereParams = { user_id: userInfo.sub, NOT: [{ unique_cover_id: null }] }
             if (after) queryParams = { ...queryParams, skip: 1, cursor: { unique_cover_id: decodeCursor(after) } }
             if (search) whereParams = {...whereParams, name: { contains: search } }
 
@@ -697,7 +702,7 @@ const resolvers = {
 
             await pubsub.publish('VEVE_VAULT_IMPORT', {
                 veveVaultImport: {
-                    user_id: userInfo.userId,
+                    user_id: userInfo.sub,
                     message: `Wallet found: ${truncate(wallet_address, 20)}`,
                     complete: false
                 }
@@ -759,7 +764,7 @@ const resolvers = {
 
                 await pubsub.publish('VEVE_VAULT_IMPORT', {
                     veveVaultImport: {
-                        user_id: userInfo.userId,
+                        user_id: userInfo.sub,
                         message: `Your vault has been successfully imported, thank you.`,
                         complete: true
                     }
@@ -781,7 +786,7 @@ const resolvers = {
                 if (uniqueCoverId){
                     await prisma.veve_watchlist.create({
                         data:{
-                            user_id: userInfo.userId,
+                            user_id: userInfo.sub,
                             unique_cover_id: uniqueCoverId
                         }
                     })
@@ -792,7 +797,7 @@ const resolvers = {
                 if (collectibleId){
                     await prisma.veve_watchlist.create({
                         data:{
-                            user_id: userInfo.userId,
+                            user_id: userInfo.sub,
                             collectible_id: collectibleId
                         }
                     })
@@ -855,7 +860,7 @@ const resolvers = {
             try {
                 const user_wallet = await prisma.veve_wallets.findFirst({
                     where: {
-                        user_id: userInfo.userId
+                        user_id: userInfo.sub
                     },
                     select: {
                         id: true
@@ -946,7 +951,7 @@ const resolvers = {
             try {
                 const watching = await prisma.veve_watchlist.findFirst({
                     where: {
-                        user_id: userInfo.userId,
+                        user_id: userInfo.sub,
                         collectible_id: collectible_id
                     }
                 })
@@ -983,7 +988,7 @@ const resolvers = {
             try {
                 const user_wallet = await prisma.veve_wallets.findFirst({
                     where: {
-                        user_id: userInfo.userId
+                        user_id: userInfo.sub
                     },
                     select: {
                         id: true
@@ -1074,7 +1079,7 @@ const resolvers = {
             try {
                 const watching = await prisma.veve_watchlist.findFirst({
                     where: {
-                        user_id: userInfo.userId,
+                        user_id: userInfo.sub,
                         unique_cover_id: unique_cover_id
                     }
                 })

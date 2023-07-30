@@ -5,10 +5,10 @@ const typeDefs = gql`
     type Query {
         validateVeveUsername(username: String!): [String!]!
         veveCollectiblePriceData(collectibleId: String! type: String! period: DateTime): [VeveCollectiblePriceDataPayload]
-        veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions): CollectiblesConnection
+        veveCollectibles(collectibleId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions, lang: String): CollectiblesConnection
         veveComics(uniqueCoverId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, filterOptions: filterOptions): ComicsConnection
         veveBrands(pagingOptions: pagingOptions, sortOptions: sortOptions, search:String) : BrandsConnection
-        veveSeries(collectibleId: String, brandId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String): CollectiblesConnection
+        veveSeries(collectibleId: String, brandId: String, pagingOptions: pagingOptions, sortOptions: sortOptions, search: String, lang: String): CollectiblesConnection
         veveDropDates(startDate: String, endDate: String) : [VeveDropDatePayload]
         veveValuations : VeveValuationsPayload
         getCollectibleWatchlist(pagingOptions: pagingOptions): CollectibleWatchlistConnection
@@ -259,6 +259,14 @@ const typeDefs = gql`
         brand: Brand
         valuations(period: Int) : [[VEVEValuationObj]]
         watching: Boolean
+        translations: [VeveCollectibleTranslations]
+    }
+    
+    type VeveCollectibleTranslations {
+        name: String
+        description: String
+        rarity: String
+        edition_type: String
     }
     
     type Brand {

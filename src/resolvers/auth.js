@@ -12,7 +12,7 @@ const resolvers = {
                     data: {
                         browser: userAgent,
                         ip_address: ipAddress,
-                        user_id: userInfo.userId
+                        user_id: userInfo.sub
                     }
                 })
 
@@ -38,7 +38,7 @@ const resolvers = {
                 }
             }
 
-            const userExists = await prisma.users.findUnique({
+            const userExists = await prisma.User.findUnique({
                 where: {
                     email: email
                 }
@@ -55,7 +55,7 @@ const resolvers = {
             } else {
                 try {
 
-                    const user = await prisma.users.create({
+                    const user = await prisma.User.create({
                         data: {
                             email,
                         }

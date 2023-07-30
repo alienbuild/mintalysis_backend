@@ -691,9 +691,13 @@ const __dirname = path.dirname(__filename);
 export const removeCollectibleBackgrounds = async () => {
 
     const collectibles = await prisma.veve_collectibles.findMany({
-        where: {
-          // drop_date: { gt: Date.now() }
-          drop_date: { gt: moment().subtract(14, 'days').format() }
+        // where: {
+        //   // drop_date: { gt: Date.now() }
+        //   drop_date: { gt: moment().subtract(130, 'days').format() }
+        // },
+        take: 60,
+        orderBy: {
+            createdAt: 'desc'
         },
         select:{
             name: true,
@@ -701,8 +705,6 @@ export const removeCollectibleBackgrounds = async () => {
             image_high_resolution_url: true
         }
     })
-
-    console.log('collectibles is: ', collectibles)
 
     await collectibles.map(async (collectible, index) => {
         await setTimeout(1000 * index)
@@ -742,9 +744,13 @@ export const tinifyImages = async () => {
     tinify.key = "k8qvNnJ14WtCtTP6FZYVXcNfgghM9WWL";
 
     const collectibles = await prisma.veve_collectibles.findMany({
-        where: {
-            // drop_date: { gt: Date.now() }
-            drop_date: { gt: moment().subtract(40, 'days').format() }
+        // where: {
+        //     // drop_date: { gt: Date.now() }
+        //     // drop_date: { gt: moment().subtract(130, 'days').format() }
+        // },
+        take: 60,
+        orderBy: {
+            createdAt: 'desc'
         },
         select: {
             name: true,
@@ -755,7 +761,7 @@ export const tinifyImages = async () => {
     await collectibles.map(async (collectible, index) => {
 
         // if (index > 0) return
-        if (index > 50) {
+        if (index > 60) {
             console.log(`[SKIPPING]`)
         } else {
             await setTimeout(1000 * (index - 500))
@@ -816,7 +822,7 @@ const retryFetch = (
 const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    collectibleList(first: 200, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
+    collectibleList(first: 100, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}, after: "${endCursor}"){
         pageInfo {
             hasNextPage
             endCursor
@@ -866,7 +872,7 @@ const getCollectibleSalesDataQuery = (rarity, brandId, endCursor) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    collectibleList(first: 200, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
+    collectibleList(first: 100, filterOptions: {rarity: ${rarity}, brandId: "${brandId}"}){
         pageInfo {
             hasNextPage
             endCursor
@@ -934,7 +940,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
             'Connection': 'keep-alive'
         },
         body: JSON.stringify({
-            query: getCollectibleSalesDataQuery("UNCOMMON", "53472239-3ae6-43eb-bbd7-bd88d8567a66", endCursor)
+            query: getCollectibleSalesDataQuery("SECRET_RARE", "94640f3b-62cf-4a19-ba4e-a2bb383d0798", endCursor)
         }),
     }, 20, 1000)
         .then(veve_usernames => veve_usernames.json())
@@ -1147,9 +1153,9 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
 
 }
 
-getCollectibleSalesData()
+// getCollectibleSalesData()
 // removeCollectibleBackgrounds()
-// tinifyImages()
+tinifyImages()
 // getTokenWalletAddressOwners()
 // getVeveUsernamesFromFeed() //
 // generateWriterSlugs()
