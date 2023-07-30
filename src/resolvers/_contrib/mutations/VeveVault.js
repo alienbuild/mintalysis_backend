@@ -113,7 +113,7 @@
 //         })
 //         console.log('all tokens have been updated.' , tokenItems.length)
 //
-//         await prisma.users.update({
+//         await prisma.User.update({
 //             data: {
 //                 projects: {
 //                     connectOrCreate: {

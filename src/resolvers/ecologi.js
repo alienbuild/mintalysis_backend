@@ -9,7 +9,7 @@ const resolvers = {
             const fetchCarbon = await fetch(`https://public.ecologi.com/users/mintalysis/carbon-offset`)
             const carbon = await fetchCarbon.json()
 
-            const userCount = await prisma.users.count()
+            const userCount = await prisma.User.count()
 
             return {
                 trees: trees.total,

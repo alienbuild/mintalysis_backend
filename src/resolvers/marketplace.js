@@ -88,7 +88,7 @@ const resolvers = {
             if (!userInfo) throw new GraphQLError('Not authorised')
             try {
 
-                product.user_id = userInfo.userId
+                product.user_id = userInfo.sub
 
                 let imageUrls = []
 
@@ -140,7 +140,7 @@ const resolvers = {
                 }
             })
 
-            if (exisitingProduct.seller.id !== userInfo.userId) throw new GraphQLError('This product does not belong to you.')
+            if (exisitingProduct.seller.id !== userInfo.sub) throw new GraphQLError('This product does not belong to you.')
 
             return await prisma.marketplace_product.update({
                 where: {
@@ -164,7 +164,7 @@ const resolvers = {
                     }
                 })
 
-                if (product.seller.id !== userInfo.userId) throw new GraphQLError('This product does not belong to you.')
+                if (product.seller.id !== userInfo.sub) throw new GraphQLError('This product does not belong to you.')
 
                 await prisma.marketplace_product.delete({
                     where: {

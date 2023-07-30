@@ -3,7 +3,7 @@ import {GraphQLError} from "graphql";
 
 const resolvers = {
     Query: {
-        projects: async (_,{ id, name, active }, { prisma }) => {
+        projects: async (_,{ id, name, active }, { prisma, userInfo }) => {
 
             let whereParams = {}
             if (id) whereParams = { ...whereParams, id}

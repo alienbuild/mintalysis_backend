@@ -13,7 +13,7 @@ const password = proxy_parts[3]
 
 const getVevelatestCollectiblesQuery = () => {
     return `query collectibleTypeList {
-        collectibleTypeList(first: 5, sortOptions: {sortBy: DROP_DATE, sortDirection: DESCENDING} ){
+        collectibleTypeList(first: 150, sortOptions: {sortBy: DROP_DATE, sortDirection: DESCENDING} ){
             pageInfo {
                 hasNextPage
                 hasPreviousPage

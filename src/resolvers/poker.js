@@ -107,7 +107,7 @@ const resolvers = {
             try {
                 const tableInit = await initPokerTable(prisma, pubsub, pokerTableId)
                 if (tableInit.status === 'IN_PROGRESS') throw new GraphQLError('Game has already started.')
-                // if (tableInit.host_id !== userInfo.userId) throw new GraphQLError('Only the host can start this game.')
+                // if (tableInit.host_id !== userInfo.sub) throw new GraphQLError('Only the host can start this game.')
                 await tableInit.table.dealCards()
 
                 tableInit.table.players.map(player => {
@@ -233,7 +233,7 @@ const resolvers = {
 
 const vetPokerTable = async (table, userInfo) => {
     await table.participants.map((particiant) => {
-        if (particiant.user.id !== userInfo.userId){
+        if (particiant.user.id !== userInfo.sub){
             particiant.holeCards = null
         }
     })

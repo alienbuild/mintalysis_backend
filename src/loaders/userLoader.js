@@ -2,7 +2,7 @@ import DataLoader from "dataloader"
 import prisma from 'prisma'
 
 const batchUsers = async (ids) => {
-    const users = await prisma.users.findMany({
+    const users = await prisma.User.findMany({
         where: {
             id: {
                 in: ids

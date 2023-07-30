@@ -6,9 +6,9 @@ const resolvers = {
     Query: {
         me: async (_, __, {userInfo, prisma}) => {
             if (!userInfo) return null
-            return await prisma.users.findUnique({
+            return await prisma.User.findUnique({
                 where: {
-                    id: userInfo.userId
+                    id: userInfo.sub
                 },
                 include: {
                     projects: true,
@@ -27,7 +27,7 @@ const resolvers = {
 
             try {
 
-                const user = await prisma.users.findUnique({
+                const user = await prisma.User.findUnique({
                     where: {
                         username: username
                     },
@@ -73,7 +73,7 @@ const resolvers = {
                 const check = await prisma.follows.findFirst({
                     where: {
                         followingId: user.id,
-                        followerId: userInfo.userId
+                        followerId: userInfo.sub
                     }
                 })
 
@@ -100,14 +100,14 @@ const resolvers = {
             if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: decodeCursor(pagingOptions.after) } }
 
             try {
-                const users = await prisma.users.findMany(queryParams)
+                const users = await prisma.User.findMany(queryParams)
 
                 return {
                     edges: users,
                     pageInfo: {
                         endCursor: users.length > 1 ? encodeCursor(users[users.length - 1].id) : null
                     },
-                    totalCount: await prisma.users.count()
+                    totalCount: await prisma.User.count()
                 }
             } catch (e) {
                 throw new GraphQLError('Unable to get users')
@@ -121,7 +121,7 @@ const resolvers = {
             const { username: myUsername } = userInfo
             
             try {
-                return await prisma.users.findMany({
+                return await prisma.User.findMany({
                     where: {
                         username: {
                             contains: searchedUsername,
@@ -170,7 +170,7 @@ const resolvers = {
             }
 
             try {
-                return await prisma.users.findUnique({
+                return await prisma.User.findUnique({
                     where: {
                         id: userId,
                     },
@@ -186,7 +186,7 @@ const resolvers = {
             console.log('hit: ', userId)
 
             try {
-                const test = await prisma.users.findUnique({
+                const test = await prisma.User.findUnique({
                     where:{
                         id: userId
                     },
@@ -218,7 +218,7 @@ const resolvers = {
 
             try {
 
-                const test = await prisma.users.findUnique({
+                const test = await prisma.User.findUnique({
                     where: {
                         id: userId
                     },
@@ -237,12 +237,12 @@ const resolvers = {
 
         },
         getUserAccessibilityPreferences: async (_, __, { userInfo, prisma }) => {
-            if (!userInfo.userId) throw new GraphQLError('Unauthorised.')
+            if (!userInfo.sub) throw new GraphQLError('Unauthorised.')
 
             try {
                 return await prisma.users_preferences_accessibility.findUnique({
                     where: {
-                        user_id: userInfo.userId
+                        user_id: userInfo.sub
                     }
                 })
 
@@ -284,7 +284,7 @@ const resolvers = {
                         avatar: result.secure_url
                     },
                     where: {
-                        user_id: userInfo.userId
+                        user_id: userInfo.sub
                     }
                 })
 
@@ -310,9 +310,9 @@ const resolvers = {
         updateLastSeen: async (_, { last_seen }, { userInfo, prisma }) => {
             if (!userInfo) throw new GraphQLError('Not authorised')
 
-            await prisma.users.update({
+            await prisma.User.update({
                 where: {
-                    id: userInfo.userId
+                    id: userInfo.sub
                 },
                 data: {
                     last_seen
@@ -324,12 +324,12 @@ const resolvers = {
         followUser: async (_, { userId }, { userInfo, prisma }) => {
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
-            if (userId === userInfo.userId) throw new GraphQLError('You can not follow yourself.')
+            if (userId === userInfo.sub) throw new GraphQLError('You can not follow yourself.')
 
             try {
                 return await prisma.follows.create({
                     data: {
-                        followerId: userInfo.userId,
+                        followerId: userInfo.sub,
                         followingId: userId
                     }
                 })
@@ -340,12 +340,12 @@ const resolvers = {
         },
         unfollowUser: async (_, { userId }, { userInfo, prisma }) => {
             if (!userInfo) throw new GraphQLError('Not authorised.')
-            if (userId === userInfo.userId) throw new GraphQLError('You can not unfollow yourself.')
+            if (userId === userInfo.sub) throw new GraphQLError('You can not unfollow yourself.')
 
             try {
                 return await prisma.follows.delete({
                     where: {
-                        followerId: userInfo.userId,
+                        followerId: userInfo.sub,
                         followingId: userId
                     }
                 })
@@ -355,12 +355,12 @@ const resolvers = {
 
         },
         saveUserAccessibilityPreferences: async (_, {preferences}, { userInfo, prisma }) => {
-            if (!userInfo.userId) throw new GraphQLError('Unauthorised.')
+            if (!userInfo.sub) throw new GraphQLError('Unauthorised.')
 
             try {
                 await prisma.users_preferences_accessibility.update({
                     where:{
-                        user_id: userInfo.userId
+                        user_id: userInfo.sub
                     },
                     data: preferences,
                 })
@@ -403,9 +403,9 @@ const resolvers = {
             queryParams = { ...queryParams, take: limit, orderBy: [sortParams] }
 
 
-            const collectibles = await prisma.users.findUnique({
+            const collectibles = await prisma.User.findUnique({
                 where: {
-                    id: userInfo.userId
+                    id: userInfo.sub
                 },
                 include: {
                     veve_collectibles: queryParams,
