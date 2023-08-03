@@ -6,7 +6,9 @@ const typeDefs = gql`
     }
     
     input FeedbackInput {
+        opinion: String!
         type: String!
+        locale: String
         url: String!
         message: String!
     }

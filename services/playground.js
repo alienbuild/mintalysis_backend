@@ -1155,7 +1155,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
 
 // getCollectibleSalesData()
 // removeCollectibleBackgrounds()
-tinifyImages()
+// tinifyImages()
 // getTokenWalletAddressOwners()
 // getVeveUsernamesFromFeed() //
 // generateWriterSlugs()
@@ -1167,7 +1167,7 @@ import VeveComicTxn from "../models/VeveComicTxns.js"
 const getComicSalesDataQuery = (endCursor, comic_id) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    marketListingListByElementType(first: 500, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
+    marketListingListByElementType(first: 10, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -1176,12 +1176,6 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
         }
         edges{
             node{
-                status
-                elementId
-                seller {
-                    id
-                    username
-                }
                 element {
                     id
                     ... on Comic {
@@ -1200,7 +1194,19 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
                                 node{
                                     id
                                     createdAt
+                                    feeRate
+                                    feeGem
                                     amountUsd
+                                    status
+                                    type
+                                    buyer{
+                                        id
+                                        username
+                                    }
+                                    seller{
+                                        id
+                                        username
+                                    }
                                 }
                             }
                         }
@@ -1212,7 +1218,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    marketListingListByElementType(first: 500, elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
+    marketListingListByElementType(first: 1, elementType: COMIC_TYPE, filterOptions: {elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -1221,12 +1227,6 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
         }
         edges{
             node{
-                status
-                elementId
-                seller {
-                    id
-                    username
-                }
                 element {
                     id
                     ... on Comic {
@@ -1245,7 +1245,19 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
                                 node{
                                     id
                                     createdAt
+                                    feeRate
+                                    feeGem
                                     amountUsd
+                                    status
+                                    type
+                                    buyer{
+                                        id
+                                        username
+                                    }
+                                    seller{
+                                        id
+                                        username
+                                    }
                                 }
                             }
                         }
@@ -1258,21 +1270,20 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
     }
 }
 
-// SELECT * FROM `veve_comics` ORDER BY `veve_comics`.`drop_date` ASC
-const comic_id = "955d3b4c-7026-4ad4-be0a-4249c24c3fc3"
+const comic_id = "c3287f46-6bfc-4b92-b256-8009ed308d96"
 
 export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
     console.log('[STARTED]: Scraping COMIC sales data and users')
 
-    const cookieToUse = cookieRotator()
+    // const cookieToUse = cookieRotator()
 
     await fetch(`https://web.api.prod.veve.me/graphql`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'cookie': "veve=s%3At7Swi7D2OjqNjk2M6lw8Me7Bdz6ERN8b.iwTXO3APW4noQ2NepyIiEWcxIS8GZlMWdG4cJG9%2BKbg",
+            'cookie': "veve=s%3AAUbLV_hdwqgSds39ba-LlSIWPctzMBvz.jqXB%2BtkpAX7pk3gAPUIXNfWJbJuasxn0HNolxuGRsKI",
             'client-name': 'veve-web-app',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
             'client-operation': 'AuthUserDetails',
@@ -1289,148 +1300,177 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
              console.log('****[VEVE DATA RECEIVED]****')
              veveSales.map(async (sale, index) => {
-                if (sale.node?.seller?.id){
 
-                    const username = sale.node.seller.username
-                    const userId = sale.node.seller.id
-                    const blockchainId = sale.node.element?.blockchainId
-                    const issueNumber = sale.node.element?.issueNumber
-                    const rarity = sale.node.element?.rarity
-                    const transactions = sale.node.element?.transactions?.edges
-                    const elementId = sale.node.elementId
-                    const hasMoreTxs = sale.node.transactions?.pageInfo.hasNextPage
+                 if (index > 0) return
 
-                    try {
-                        await prisma.veve_tokens.upsert({
-                            where: {
-                                token_id: Number(blockchainId)
-                            },
-                            update: {
-                                element_id: elementId
-                            },
-                            create: {
-                                element_id: elementId,
-                                token_id: Number(blockchainId),
-                                edition: issueNumber,
-                                type: 'comic',
-                                rarity: rarity
-                            }
-                        })
-                    } catch (e) {
-                        console.log(`[ERROR] Unable to update element_id ${elementId} for token ${blockchainId}`, e)
-                    }
+                 console.log('sale is: ', sale.node.element.transactions.edges)
+                 const hasNextPage = sale.node.element.transactions.pageInfo.hasNextPage
 
-                    const exisitingUser = await prisma.veve_wallets.findUnique({
-                        where: {
-                            veve_username: username
-                        }
-                    })
+                 // Transactions!!
+                 sale.node.element.transactions.edges.map(transaction => {
 
-                    if (!exisitingUser) {
-                        try {
-                            // await setTimeout(1000 * index)
-                            // const wallet_address = await lookupUserWallet(blockchainId)
+                     const amount_usd = transaction.node.amountUsd
+                     const createdAt = transaction.node.createdAt
+                     const type = transaction.node.type
+                     const status = transaction.node.status
+                     const buyer = transaction.node.buyer //object - access props on it
+                     const seller = transaction.node.seller // object - access props on it
+                     const transaction_id = transaction.node.id
+                     const feeRate = transaction.node.feeRate
+                     const feeGem = transaction.node.feeGem
 
-                            const wallet_add = await prisma.veve_transfers.findFirst({
-                                where: {
-                                    token_id: Number(blockchainId)
-                                },
-                                orderBy: {
-                                    timestamp: 'desc',
-                                },
-                                select: {
-                                    to_wallet: true
-                                }
-                            })
-
-                            if (wallet_add?.to_wallet){
-                                console.log(`[FOUND]: Wallet: ${wallet_add.to_wallet} for user ${username} `)
-                                const saved_wallets = await prisma.veve_wallets.upsert({
-                                    where: {
-                                        id: wallet_add.to_wallet
-                                    },
-                                    update: {
-                                        veve_username: username,
-                                        veve_id: userId
-                                    },
-                                    create: {
-                                        id: wallet_add.to_wallet,
-                                        veve_username: username,
-                                        veve_id: userId
-                                    },
-                                    select: {
-                                        veve_username: true
-                                    }
-                                })
-                                console.log(`[SUCCESS] Saved wallet: ${saved_wallets.veve_username}`, pageInfo.endCursor)
-                            }
+                 })
 
 
-                        } catch (err) {
-                            console.log(`[FAILED] `, err)
-                        }
-                    }
+                 // await prisma_tmp_veve_comic_transactions.create({
+                 //     data:{
+                 //         transaction_id:
+                 //     }
+                 // })
 
-                    await transactions && transactions.map(async (transaction) => {
-                        try {
-                            const amountUsd = transaction.node.amountUsd
-                            const createdAt = transaction.node.createdAt
 
-                            await VeveComicTxn.create({ token: Number(blockchainId), value: Number(amountUsd), date: new Date(createdAt), comic_id: comic_id })
-
-                            const litmusTest = await prisma.veve_transfers.findMany({
-                                where: {
-                                    token_id: Number(blockchainId)
-                                }
-                            })
-
-                            await litmusTest.map(async (tx) => {
-
-                                const imxTxDate = tx.timestamp
-                                const pastGive = moment(imxTxDate).subtract(30, 'seconds')
-                                const futureGive = moment(imxTxDate).add(30, 'seconds')
-                                const matchingTx = moment(createdAt).isBetween(pastGive, futureGive)
-
-                                if (matchingTx && !tx.entry_price) {
-
-                                    const checkTx = await prisma.veve_transfers.findFirst({
-                                        where: {
-                                            id: tx.id
-                                        }
-                                    })
-
-                                    if (checkTx.entry_price === null){
-                                        await prisma.veve_transfers.update({
-                                            where: {
-                                                id: tx.id
-                                            },
-                                            data: {
-                                                entry_price: Number(amountUsd)
-                                            },
-                                        })
-                                        console.log(`[UPDATED] Transaction updated with price. ${tx.id}`, pageInfo.endCursor)
-                                    }
-
-                                }
-                            })
-
-                        } catch (err) {
-                            console.log('[FAILED TXS] ', err)
-                        }
-
-                    })
-
-                    if (hasMoreTxs) {
-                        try {
-                            const txEndCursor = user.node.transactions?.pageInfo.endCursor
-                            fs.writeFileSync("./tx.txt", `{"collectibleTypeId": ${collectibleTypeId}}, "endCursor": "${txEndCursor}",\n`)
-                        } catch (e) {
-                            console.log('[FAILED] Unable to write to tx.txt', pageInfo.endCursor)
-                        }
-
-                    }
-
-                }
+                // if (sale.node?.seller?.id){
+                //
+                //     const username = sale.node.seller.username
+                //     const userId = sale.node.seller.id
+                //     const blockchainId = sale.node.element?.blockchainId
+                //     const issueNumber = sale.node.element?.issueNumber
+                //     const rarity = sale.node.element?.rarity
+                //     const transactions = sale.node.element?.transactions?.edges
+                //     const elementId = sale.node.elementId
+                //     const hasMoreTxs = sale.node.transactions?.pageInfo.hasNextPage
+                //
+                //     try {
+                //         await prisma.veve_tokens.upsert({
+                //             where: {
+                //                 token_id: Number(blockchainId)
+                //             },
+                //             update: {
+                //                 element_id: elementId
+                //             },
+                //             create: {
+                //                 element_id: elementId,
+                //                 token_id: Number(blockchainId),
+                //                 edition: issueNumber,
+                //                 type: 'comic',
+                //                 rarity: rarity
+                //             }
+                //         })
+                //     } catch (e) {
+                //         console.log(`[ERROR] Unable to update element_id ${elementId} for token ${blockchainId}`, e)
+                //     }
+                //
+                //     const exisitingUser = await prisma.veve_wallets.findUnique({
+                //         where: {
+                //             veve_username: username
+                //         }
+                //     })
+                //
+                //     if (!exisitingUser) {
+                //         try {
+                //             // await setTimeout(1000 * index)
+                //             // const wallet_address = await lookupUserWallet(blockchainId)
+                //
+                //             const wallet_add = await prisma.veve_transfers.findFirst({
+                //                 where: {
+                //                     token_id: Number(blockchainId)
+                //                 },
+                //                 orderBy: {
+                //                     timestamp: 'desc',
+                //                 },
+                //                 select: {
+                //                     to_wallet: true
+                //                 }
+                //             })
+                //
+                //             if (wallet_add?.to_wallet){
+                //                 console.log(`[FOUND]: Wallet: ${wallet_add.to_wallet} for user ${username} `)
+                //                 const saved_wallets = await prisma.veve_wallets.upsert({
+                //                     where: {
+                //                         id: wallet_add.to_wallet
+                //                     },
+                //                     update: {
+                //                         veve_username: username,
+                //                         veve_id: userId
+                //                     },
+                //                     create: {
+                //                         id: wallet_add.to_wallet,
+                //                         veve_username: username,
+                //                         veve_id: userId
+                //                     },
+                //                     select: {
+                //                         veve_username: true
+                //                     }
+                //                 })
+                //                 console.log(`[SUCCESS] Saved wallet: ${saved_wallets.veve_username}`, pageInfo.endCursor)
+                //             }
+                //
+                //
+                //         } catch (err) {
+                //             console.log(`[FAILED] `, err)
+                //         }
+                //     }
+                //
+                //     await transactions && transactions.map(async (transaction) => {
+                //         try {
+                //             const amountUsd = transaction.node.amountUsd
+                //             const createdAt = transaction.node.createdAt
+                //
+                //             await VeveComicTxn.create({ token: Number(blockchainId), value: Number(amountUsd), date: new Date(createdAt), comic_id: comic_id })
+                //
+                //             const litmusTest = await prisma.veve_transfers.findMany({
+                //                 where: {
+                //                     token_id: Number(blockchainId)
+                //                 }
+                //             })
+                //
+                //             await litmusTest.map(async (tx) => {
+                //
+                //                 const imxTxDate = tx.timestamp
+                //                 const pastGive = moment(imxTxDate).subtract(30, 'seconds')
+                //                 const futureGive = moment(imxTxDate).add(30, 'seconds')
+                //                 const matchingTx = moment(createdAt).isBetween(pastGive, futureGive)
+                //
+                //                 if (matchingTx && !tx.entry_price) {
+                //
+                //                     const checkTx = await prisma.veve_transfers.findFirst({
+                //                         where: {
+                //                             id: tx.id
+                //                         }
+                //                     })
+                //
+                //                     if (checkTx.entry_price === null){
+                //                         await prisma.veve_transfers.update({
+                //                             where: {
+                //                                 id: tx.id
+                //                             },
+                //                             data: {
+                //                                 entry_price: Number(amountUsd)
+                //                             },
+                //                         })
+                //                         console.log(`[UPDATED] Transaction updated with price. ${tx.id}`, pageInfo.endCursor)
+                //                     }
+                //
+                //                 }
+                //             })
+                //
+                //         } catch (err) {
+                //             console.log('[FAILED TXS] ', err)
+                //         }
+                //
+                //     })
+                //
+                //     if (hasMoreTxs) {
+                //         try {
+                //             const txEndCursor = user.node.transactions?.pageInfo.endCursor
+                //             fs.writeFileSync("./tx.txt", `{"collectibleTypeId": ${collectibleTypeId}}, "endCursor": "${txEndCursor}",\n`)
+                //         } catch (e) {
+                //             console.log('[FAILED] Unable to write to tx.txt', pageInfo.endCursor)
+                //         }
+                //
+                //     }
+                //
+                // }
             })
 
             if (!pageInfo.hasNextPage) fullCapture = true
@@ -1448,4 +1488,4 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
 }
 
-// getComicSalesData()
+getComicSalesData()

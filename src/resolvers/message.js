@@ -10,7 +10,7 @@ const resolvers = {
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
 
-            const { userId } = userInfo
+            const { sub } = userInfo
 
             const conversation = await prisma.conversation.findUnique({
                 where: {
@@ -21,7 +21,7 @@ const resolvers = {
 
             if (!conversation) throw new GraphQLError('Conversation does not exist.')
 
-            const allowedToView = userIsConversationParticipant(conversation.participants, userId)
+            const allowedToView = userIsConversationParticipant(conversation.participants, sub)
 
             if (!allowedToView) throw new GraphQLError('Not authorised.')
 
@@ -47,10 +47,10 @@ const resolvers = {
     Mutation: {
         sendMessage: async (_, { id, senderId, conversationId, body }, { userInfo, prisma, pubsub }) => {
 
-            const { userId } = userInfo
+            const { sub } = userInfo
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
-            if (userId !== senderId) throw new GraphQLError('Not authorised.')
+            if (sub !== senderId) throw new GraphQLError('Not authorised.')
 
             try {
                 const newMessage = await prisma.message.create({
@@ -65,7 +65,7 @@ const resolvers = {
 
                 const participant = await prisma.conversation_participant.findFirst({
                     where: {
-                        user_id: userId,
+                        user_id: sub,
                         conversation_id: conversationId
                     }
                 })
@@ -88,7 +88,7 @@ const resolvers = {
                             updateMany: {
                                 where: {
                                     NOT: {
-                                        user_id: userInfo.id
+                                        user_id: userInfo.sub
                                     }
                                 },
                                 data: {
@@ -111,7 +111,7 @@ const resolvers = {
             return true
 
         },
-        markConversationAsRead: async (_, { userId, conversationId }, { userInfo, prisma }) => {
+        markConversationAsRead: async (_, { conversationId }, { userInfo, prisma }) => {
 
             if (!userInfo) throw new GraphQLError('Not authorised.')
 
@@ -119,7 +119,7 @@ const resolvers = {
 
                 const participant = await prisma.conversation_participant.findFirst({
                     where: {
-                        user_id: userId,
+                        user_id: userInfo.sub,
                         conversation_id: conversationId
                     }
                 })

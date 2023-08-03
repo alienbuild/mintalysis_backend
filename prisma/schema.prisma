@@ -1047,6 +1047,11 @@ model tmp_veve_transactions {
   transactions        tmp_veve_tokens_collectibles? @relation(fields: [connector_id], references: [connector_id])
 }
 
+model tmp_veve_comic_transactions {
+  id                  Int                           @id @default(autoincrement())
+
+}
+
 model tmp_cursors {
   id             Int      @id @default(autoincrement())
   collectible_id String
@@ -1220,6 +1225,7 @@ enum Language {
   CN
   IN
   IT
+  JP
 }
 
 enum MarketProductStatus {

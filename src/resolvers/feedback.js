@@ -22,7 +22,11 @@ const resolvers = {
                             "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": `*Type:*\n${payload.type}`
+                                    "text": `*Type:*\n${payload.type} ${payload.type === 'Translation issue' && payload?.locale}`
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": `*Opinion:*\n${payload.opinion}`
                                 },
                                 {
                                     "type": "mrkdwn",
