@@ -1167,7 +1167,7 @@ import VeveComicTxn from "../models/VeveComicTxns.js"
 const getComicSalesDataQuery = (endCursor, comic_id) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    marketListingListByElementType(first: 10, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
+    marketListingListByElementType(first: 500, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -1182,6 +1182,10 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
                         issueNumber
                         blockchainId
                         rarity
+                         owner {
+                            id
+                            username
+                        }
                         comicType {
                             name
                         }
@@ -1218,7 +1222,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    marketListingListByElementType(first: 1, elementType: COMIC_TYPE, filterOptions: {elementTypeId: "${comic_id}"}){
+    marketListingListByElementType(first: 500, elementType: COMIC_TYPE, filterOptions: {elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -1233,6 +1237,10 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
                         issueNumber
                         blockchainId
                         rarity
+                         owner {
+                            id
+                            username
+                        }
                         comicType {
                             name
                         }
@@ -1299,35 +1307,61 @@ export const getComicSalesData = async (fullCapture = false, endCursor) => {
             const veveSales = veve_comic_sales.data.marketListingListByElementType.edges
 
              console.log('****[VEVE DATA RECEIVED]****')
+
+            await prisma.tmp_cursors.create({
+                data:{
+                    comic_id: comic_id,
+                    rarity: veveSales[0].node.element?.rarity,
+                    element_id: veveSales[0].node?.elementId,
+                    cursor: pageInfo.endCursor,
+                }
+            })
+
              veveSales.map(async (sale, index) => {
 
-                 if (index > 0) return
+                 try {
+                     // if (index > 0) return
+                     const newId = crypto.randomUUID()
+                     await prisma.tmp_veve_tokens_comics.create({
+                         data:{
+                             connector_id: newId,
+                             blockchain_id: sale.node?.element?.blockchainId,
+                             owner_id: sale.node?.element?.owner.id,
+                             owner_username: sale.node?.element?.owner.username,
+                             comic_id,
+                             txn_cursor: sale.node.element.transactions?.pageInfo.hasNextPage ? sale.node.element.transactions?.pageInfo.endCursor : null
+                         }
+                     })
 
-                 console.log('sale is: ', sale.node.element.transactions.edges)
-                 const hasNextPage = sale.node.element.transactions.pageInfo.hasNextPage
+                     if (sale.node.element.transactions?.edges) {
 
-                 // Transactions!!
-                 sale.node.element.transactions.edges.map(transaction => {
+                         await prisma.tmp_veve_comic_transactions.createMany({
+                             data: sale.node.element.transactions?.edges.map((txn) => {
+                                 return {
+                                     connector_id: newId,
+                                     transaction_id: txn.node.id,
+                                     // transfer_id: txn.node.transferId,
+                                     createdAt: txn.node.createdAt,
+                                     status: txn.node.status,
+                                     type: txn.node.type,
+                                     fee_rate: Number(txn.node.feeRate),
+                                     fee_gem: Number(txn.node.feeGem),
+                                     amount_usd: Number(txn.node.amountUsd),
+                                     buyer_id: txn.node.buyer?.id,
+                                     buyer_username: txn.node.buyer?.username,
+                                     seller_id: txn.node.seller?.id,
+                                     seller_username: txn.node.seller?.username
+                                 }
+                             })
+                         })
 
-                     const amount_usd = transaction.node.amountUsd
-                     const createdAt = transaction.node.createdAt
-                     const type = transaction.node.type
-                     const status = transaction.node.status
-                     const buyer = transaction.node.buyer //object - access props on it
-                     const seller = transaction.node.seller // object - access props on it
-                     const transaction_id = transaction.node.id
-                     const feeRate = transaction.node.feeRate
-                     const feeGem = transaction.node.feeGem
-
-                 })
+                     }
 
 
-                 // await prisma_tmp_veve_comic_transactions.create({
-                 //     data:{
-                 //         transaction_id:
-                 //     }
-                 // })
+                 } catch (e) {
+                     console.log('[FAILED]', e)
 
+                 }
 
                 // if (sale.node?.seller?.id){
                 //

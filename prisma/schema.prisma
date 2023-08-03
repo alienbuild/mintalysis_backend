@@ -1029,32 +1029,62 @@ model tmp_veve_tokens_collectibles {
 }
 
 model tmp_veve_transactions {
-  id                  Int                           @id @default(autoincrement())
-  transaction_id      String?
-  transfer_id         String?
-  connector_id        String?
-  createdAt           DateTime?
-  status              String?
-  type                String?
-  fee_rate            Float?
-  fee_gem             Float?
-  amount_usd          Float?
-  buyer_id            String?
-  buyer_username      String?
-  seller_id           String?
-  seller_username     String?
-  collectible_type_id String?
-  transactions        tmp_veve_tokens_collectibles? @relation(fields: [connector_id], references: [connector_id])
+  id                       Int                           @id @default(autoincrement())
+  transaction_id           String?
+  transfer_id              String?
+  connector_id             String?
+  createdAt                DateTime?
+  status                   String?
+  type                     String?
+  fee_rate                 Float?
+  fee_gem                  Float?
+  amount_usd               Float?
+  buyer_id                 String?
+  buyer_username           String?
+  seller_id                String?
+  seller_username          String?
+  collectible_type_id      String?
+  transactions             tmp_veve_tokens_collectibles? @relation(fields: [connector_id], references: [connector_id])
+  tmp_veve_tokens_comics   tmp_veve_tokens_comics?       @relation(fields: [tmp_veve_tokens_comicsId], references: [id])
+  tmp_veve_tokens_comicsId Int?
+}
+
+model tmp_veve_tokens_comics {
+  id                          Int                           @id @default(autoincrement())
+  connector_id                String?                       @unique
+  blockchain_id               String?
+  owner_id                    String?
+  owner_username              String?
+  comic_id                    String?
+  transaction_id              String?
+  transactions                tmp_veve_transactions[]
+  txn_cursor                  String?
+  //  veve_comics   veve_comics?      @relation(fields: [comic_id], references: [comic_id])
+  tmp_veve_comic_transactions tmp_veve_comic_transactions[]
 }
 
 model tmp_veve_comic_transactions {
-  id                  Int                           @id @default(autoincrement())
-
+  id              Int                     @id @default(autoincrement())
+  transaction_id  String?
+  transfer_id     String?
+  connector_id    String?
+  createdAt       DateTime?
+  status          String?
+  type            String?
+  fee_rate        Float?
+  fee_gem         Float?
+  amount_usd      Float?
+  buyer_id        String?
+  buyer_username  String?
+  seller_id       String?
+  seller_username String?
+  transactions    tmp_veve_tokens_comics? @relation(fields: [connector_id], references: [connector_id])
 }
 
 model tmp_cursors {
   id             Int      @id @default(autoincrement())
-  collectible_id String
+  collectible_id String?
+  comic_id       String?
   brand_id       String?
   rarity         String?
   cursor         String
