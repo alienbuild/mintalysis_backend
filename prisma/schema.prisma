@@ -1099,6 +1099,7 @@ model veve_wallets {
   veve_username       String?       @unique
   veve_id             String?
   active              Boolean?      @default(true)
+  KYC                 Boolean?      @default(false)
   merged_to           String?
   KYC                 Boolean?      @default(false)
   tagsId              Int?
