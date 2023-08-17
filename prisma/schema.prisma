@@ -7,29 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model tmp_tokens_wallet_id {
-  token_id          Int     @id
-  current_wallet_id String?
-
-  @@map("_tmp_tokens_wallet_id")
-}
-
-model tmp_wallet_first_last_active {
-  wallet       String   @id @db.VarChar(255)
-  first_active DateTime
-  last_active  DateTime
-
-  @@map("_tmp_wallet_first_last_active")
-}
-
-model tmp_wallet_first_last_active2 {
-  wallet_id    String    @id
-  first_active DateTime?
-  last_active  DateTime?
-
-  @@map("_tmp_wallet_first_last_active2")
-}
-
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model tmp_wallet_merges {
   date        DateTime @db.DateTime(0)
@@ -337,6 +314,7 @@ model odb_tokens {
   @@index([edition], map: "edition")
   @@index([last_updated], map: "last_updated")
   @@index([name], map: "name")
+  @@index([wallet_id], map: "wallet_id")
 }
 
 model offers {
@@ -724,6 +702,7 @@ model veve_collectibles {
   store_price                          Decimal?                         @db.Decimal(10, 2)
   drop_date                            DateTime?
   market_fee                           Decimal?                         @db.Decimal(10, 3)
+  mcp_low_ed_limit                     Int?
   createdAt                            DateTime                         @default(now())
   updatedAt                            DateTime?
   background_image_direction           String?
@@ -802,6 +781,7 @@ model veve_comics {
   store_price               Decimal?                   @db.Decimal(10, 2)
   publisher_id              String?
   market_fee                Decimal?                   @db.Decimal(10, 3)
+  mcp_low_ed_limit          Int?
   createdAt                 DateTime                   @default(now())
   updatedAt                 DateTime
   all_time_high             Decimal?                   @db.Decimal(10, 2)
@@ -901,6 +881,40 @@ model veve_licensors {
   veve_tokens                                veve_tokens[]
 }
 
+model veve_mcp {
+  id                     Int       @id @default(autoincrement())
+  wallet_id              String?   @unique
+  pending_daily_mcp_pts  Decimal?  @db.Decimal(10, 2)
+  mcp_rank               String?
+  mcp_level              String?
+  total_mcp              Decimal   @db.Decimal(10, 2)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime?
+
+  @@index([wallet_id])
+}
+
+model veve_mcp_daily {
+  id        Int       @id @default(autoincrement())
+  wallet_id String?   @unique
+  mcp_pts   Decimal?  @db.Decimal(10, 2)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+
+  @@index([wallet_id])
+}
+
+model veve_mcp_completed_sets {
+  id              Int       @id @default(autoincrement())
+  wallet_id       String?   @unique
+  series_id       String?
+  set_count       Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime?
+
+  @@index([wallet_id, series_id])
+}
+
 model veve_mints {
   id        Int       @id
   wallet_id String?
@@ -928,6 +942,8 @@ model veve_series {
   description                                String?             @db.Text
   season                                     Int?
   is_blindbox                                Boolean?            @default(false)
+  nbr_of_items                               Int?
+  mcp_set_points                             Int?
   theme_logo_image_url                       String?
   theme_logo_image_thumbnail_url             String?
   theme_logo_image_low_resolution_url        String?
@@ -1029,27 +1045,62 @@ model tmp_veve_tokens_collectibles {
 }
 
 model tmp_veve_transactions {
-  id                  Int                           @id @default(autoincrement())
-  transaction_id      String?
-  transfer_id         String?
-  connector_id        String?
-  createdAt           DateTime?
-  status              String?
-  type                String?
-  fee_rate            Float?
-  fee_gem             Float?
-  amount_usd          Float?
-  buyer_id            String?
-  buyer_username      String?
-  seller_id           String?
-  seller_username     String?
-  collectible_type_id String?
-  transactions        tmp_veve_tokens_collectibles? @relation(fields: [connector_id], references: [connector_id])
+  id                       Int                           @id @default(autoincrement())
+  transaction_id           String?
+  transfer_id              String?
+  connector_id             String?
+  createdAt                DateTime?
+  status                   String?
+  type                     String?
+  fee_rate                 Float?
+  fee_gem                  Float?
+  amount_usd               Float?
+  buyer_id                 String?
+  buyer_username           String?
+  seller_id                String?
+  seller_username          String?
+  collectible_type_id      String?
+  transactions             tmp_veve_tokens_collectibles? @relation(fields: [connector_id], references: [connector_id])
+  tmp_veve_tokens_comics   tmp_veve_tokens_comics?       @relation(fields: [tmp_veve_tokens_comicsId], references: [id])
+  tmp_veve_tokens_comicsId Int?
+}
+
+model tmp_veve_tokens_comics {
+  id                          Int                           @id @default(autoincrement())
+  connector_id                String?                       @unique
+  blockchain_id               String?
+  owner_id                    String?
+  owner_username              String?
+  comic_id                    String?
+  transaction_id              String?
+  transactions                tmp_veve_transactions[]
+  txn_cursor                  String?
+  //  veve_comics   veve_comics?      @relation(fields: [comic_id], references: [comic_id])
+  tmp_veve_comic_transactions tmp_veve_comic_transactions[]
+}
+
+model tmp_veve_comic_transactions {
+  id              Int                     @id @default(autoincrement())
+  transaction_id  String?
+  transfer_id     String?
+  connector_id    String?
+  createdAt       DateTime?
+  status          String?
+  type            String?
+  fee_rate        Float?
+  fee_gem         Float?
+  amount_usd      Float?
+  buyer_id        String?
+  buyer_username  String?
+  seller_id       String?
+  seller_username String?
+  transactions    tmp_veve_tokens_comics? @relation(fields: [connector_id], references: [connector_id])
 }
 
 model tmp_cursors {
   id             Int      @id @default(autoincrement())
-  collectible_id String
+  collectible_id String?
+  comic_id       String?
   brand_id       String?
   rarity         String?
   cursor         String
@@ -1066,16 +1117,16 @@ model veve_wallets {
   active              Boolean?      @default(true)
   KYC                 Boolean?      @default(false)
   merged_to           String?
-  KYC                 Boolean?      @default(false)
   tagsId              Int?
   first_activity_date DateTime?
   last_activity_date  DateTime?
+  token_count         Int? 
   wallet_tags         wallet_tags?  @relation(fields: [tagsId], references: [id])
   //  profile             profile?      @relation(fields: [user_id], references: [user_id])
   veve_tokens         veve_tokens[]
 
   @@index([tagsId], map: "veve_wallets_tagsId_fkey")
-  @@index([user_id, veve_username])
+  @@index([id, user_id, veve_username])
 }
 
 model veve_watchlist {
@@ -1221,6 +1272,7 @@ enum Language {
   CN
   IN
   IT
+  JP
 }
 
 enum MarketProductStatus {
