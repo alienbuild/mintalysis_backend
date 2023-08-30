@@ -358,15 +358,28 @@ const resolvers = {
             if (!userInfo.sub) throw new GraphQLError('Unauthorised.')
 
             try {
-                await prisma.users_preferences_accessibility.update({
-                    where:{
+
+                await prisma.users_preferences_accessibility.upsert({
+                    where: {
                         user_id: userInfo.sub
                     },
-                    data: preferences,
+                    update: preferences,
+                    create: {
+                        ...preferences,
+                        user_id: userInfo.sub
+                    },
                 })
+
+                // await prisma.users_preferences_accessibility.update({
+                //     where:{
+                //         user_id: userInfo.sub
+                //     },
+                //     data: preferences,
+                // })
 
                 return true
             } catch (e) {
+                console.log('error: ', e)
                 throw new GraphQLError('Unable to save user accessibility preferences.')
             }
 

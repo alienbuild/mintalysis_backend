@@ -154,7 +154,7 @@ export const VEVE_GET_LATEST_SERIES = async () => {
                     })
                     console.log(`[SUCCESS][VEVE][SERIES]: ${series.node.name} was added to prisma db.`)
                 } catch (e) {
-                    console.log(`[FAIL][VEVE][SERIES]: ${series.node.name} was not added to prisma db.`)
+                    // console.log(`[FAIL][VEVE][SERIES]: ${series.node.name} was not added to prisma db.`)
                 }
 
             })
@@ -163,3 +163,4 @@ export const VEVE_GET_LATEST_SERIES = async () => {
         .catch(err => console.log('[ERROR][VEVE][SERIES] Unable to get latest series. ', err))
 }
 
+// VEVE_GET_LATEST_SERIES()

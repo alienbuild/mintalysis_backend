@@ -265,6 +265,19 @@ const typeDefs = gql`
         series_id: String
         drop_method: String
         is_free: String
+        mcp_base_value: Int
+        mcp_rarity_value: Float
+        mcp_low_ed_limit: Int
+        quantity: Int
+        tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
+        brand: Brand
+        valuations(period: Int) : [[VEVEValuationObj]]
+        watching: Boolean
+        translations: [VeveCollectibleTranslations]
+        metrics: [VeveCollectibleMetrics]
+    }
+
+    type VeveCollectibleMetrics {
         floor_price: Float
         market_cap: Float
         all_time_high: Float
@@ -277,12 +290,6 @@ const typeDefs = gql`
         three_mo_change: Float
         all_time_change: Float
         total_listings: Int
-        quantity: Int
-        tokens(pagingOptions: pagingOptions, sortOptions: sortOptions): TokensConnection!
-        brand: Brand
-        valuations(period: Int) : [[VEVEValuationObj]]
-        watching: Boolean
-        translations: [VeveCollectibleTranslations]
     }
     
     type VeveCollectibleTranslations {

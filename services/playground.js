@@ -975,7 +975,7 @@ export const getCollectibleSalesData = async (fullCapture = false, endCursor) =>
                                 collectible_type_id: user.node.collectibleType?.id,
                                 txn_cursor: user.node.transactions?.pageInfo.hasNextPage ? user.node.transactions?.pageInfo.endCursor : null
                             }
-                        })
+                        }) 
 
                         if (user.node.transactions?.edges){
                             await prisma.tmp_veve_transactions.createMany({
@@ -1167,7 +1167,7 @@ import VeveComicTxn from "../models/VeveComicTxns.js"
 const getComicSalesDataQuery = (endCursor, comic_id) => {
     if (endCursor) {
         return `query OtherProfileQuery {
-    marketListingListByElementType(first: 500, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
+    marketListingListByElementType(first: 100, after: "${endCursor}", elementType: COMIC_TYPE, filterOptions: {status: CLOSED, elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -1222,7 +1222,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 }`
     } else {
         return `query OtherProfileQuery {
-    marketListingListByElementType(first: 500, elementType: COMIC_TYPE, filterOptions: {elementTypeId: "${comic_id}"}){
+    marketListingListByElementType(first: 100, elementType: COMIC_TYPE, filterOptions: {elementTypeId: "${comic_id}"}){
         pageInfo {
             hasNextPage
             hasPreviousPage
@@ -1280,7 +1280,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 
 const comic_id = "c3287f46-6bfc-4b92-b256-8009ed308d96"
 
-export const getComicSalesData = async (fullCapture = false, endCursor) => {
+export const getComicSalesData = async (fullCapture = false, endCursor = "YXJyYXljb25uZWN0aW9uOjE3NDk5") => {
 
     console.log('[STARTED]: Scraping COMIC sales data and users')
 

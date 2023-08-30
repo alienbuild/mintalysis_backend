@@ -112,7 +112,6 @@ export const VEVE_GET_LATEST_COMICS = async () => {
         .then(latest_comics => latest_comics.json())
         .then(async latest_comics => {
 
-            console.log('got data..')
             const marketListingByComicCover = latest_comics.data.marketListingByComicCover.edges
 
             marketListingByComicCover.map(async (comic) => {
@@ -184,7 +183,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                     console.log(`[SUCCESS][VEVE][COMIC]: ${comic.node.comicType.name} added to prisma db.`)
                 } catch (e) {
-                    console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`, e)
+                    // console.log(`[FAIL][VEVE][COMIC]: ${comic.node.comicType.name} was not added to prisma db.`, e)
                 }
 
             })

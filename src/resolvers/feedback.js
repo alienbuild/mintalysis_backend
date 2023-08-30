@@ -7,7 +7,7 @@ const resolvers = {
             try {
                 await slack.client.chat.postMessage({
                     token: process.env.SLACK_BOT_TOKEN,
-                    channel: "mintalysis_feedback",
+                    channel: "feedback",
                     text: payload.message,
                     blocks: [
                         {

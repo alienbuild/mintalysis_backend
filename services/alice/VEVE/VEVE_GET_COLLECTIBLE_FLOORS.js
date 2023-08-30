@@ -145,6 +145,9 @@ const updateMintalysis = async (collectible) => {
                             },
                             'max': {
                                 '$max': '$high'
+                            },
+                            'volume': {
+                                '$avg': '$volume'
                             }
                         }
                     },
@@ -158,7 +161,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -217,7 +220,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -275,7 +278,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -333,7 +336,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -391,7 +394,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -449,7 +452,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -491,7 +494,7 @@ const updateMintalysis = async (collectible) => {
                                                 '$subtract': [
                                                     '$current', '$previous'
                                                 ]
-                                            }, '$current'
+                                            }, '$previous'
                                         ]
                                     }, 100
                                 ]
@@ -511,6 +514,7 @@ const updateMintalysis = async (collectible) => {
     let total_issued = await prisma.veve_collectibles.findUnique({where: {collectible_id: collectible.id}})
     total_issued = total_issued?.total_issued ? total_issued.total_issued : 0
 
+    let volume = 0
     const market_cap = Number(collectible.floorMarketPrice) * Number(total_issued)
     const one_day_change = collectibleMetrics.one_day[0]?.percentage_change
     const one_wk_change = collectibleMetrics.one_week[0]?.percentage_change
@@ -519,6 +523,7 @@ const updateMintalysis = async (collectible) => {
     const six_mo_change = collectibleMetrics?.six_months[0]?.percentage_change
     const one_year_change = collectibleMetrics?.one_year[0]?.percentage_change
     const all_time_change = collectibleMetrics?.all_time[0]?.percentage_change
+    volume = collectibleMetrics?.one_day[0]?.volume
 
     let all_time_high = await CollectiblePrice.find({collectibleId: collectible.id }).sort({value: -1}).select('value').limit(1)
     all_time_high = all_time_high[0]?.value
@@ -526,12 +531,20 @@ const updateMintalysis = async (collectible) => {
     let all_time_low = await CollectiblePrice.find({collectibleId: collectible.id }).sort({value: 1}).select('value').limit(1)
     all_time_low = all_time_low[0]?.value
 
+    // let volume = await CollectiblePrice.find({ collectibleId: collectible.id }).sort({ date: -1 }).select('volume').limit(1)
+    // volume = volume[0].volume
+
+    const circulating_supply = ((( Number(collectible.totalMarketListings) || 0) / ( total_issued || 1)) * 100)
+
     return new Promise(async (resolve, reject) => {
         try {
-            await prisma.veve_collectibles.update({
-                data: {
+            await prisma.veve_collectibles_metrics.upsert({
+                create: {
+                    collectible_id: collectible.id,
                     floor_price: Number(collectible.floorMarketPrice),
                     total_listings: Number(collectible.totalMarketListings),
+                    circulating_supply,
+                    volume,
                     one_day_change,
                     one_wk_change,
                     one_mo_change,
@@ -539,12 +552,31 @@ const updateMintalysis = async (collectible) => {
                     six_mo_change,
                     three_mo_change,
                     all_time_change,
+                    all_time_high,
+                    all_time_low,
+                    market_cap,
+                },
+                update: {
+                    floor_price: Number(collectible.floorMarketPrice),
+                    total_listings: Number(collectible.totalMarketListings),
+                    circulating_supply,
+                    volume,
+                    one_day_change,
+                    one_wk_change,
+                    one_mo_change,
+                    one_year_change,
+                    six_mo_change,
+                    three_mo_change,
+                    all_time_change,
+                    all_time_high,
+                    all_time_low,
                     market_cap,
                 },
                 where: {
-                    collectible_id: collectible.id
-                }
+                    collectible_id: collectible.id,
+                },
             })
+            console.log('[MINTALYSIS] Updated')
         } catch (e) {
             console.log(`[ERROR] Unable to update mintalysis - Name: ${collectible.name}. Id: ${collectible.id}`)
         }
@@ -1067,10 +1099,10 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         .then(async collectible_floors => {
             const edges = collectible_floors.data.collectibleTypeList.edges
             await edges.map(async (collectible, index) => {
-                // if (index > 0) return
-                await updateTimeSeries(collectible.node)
+                // if (index > 4) return
+                // await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
-                await updateLegacyShit(collectible.node)
+                // await updateLegacyShit(collectible.node)
             })
 
             await pubsub.publish(`VEVE_PRICES_UPDATED`, {
@@ -1080,3 +1112,93 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
 }
+
+// VEVE_GET_COLLECTIBLE_FLOORS()
+
+const TestFn = async () => {
+    const collectible = {
+        id: "0764efd5-2967-4f8e-89c5-e5839123f198"
+    }
+    // let all_time_high = await CollectiblePrice.find({collectibleId: collectible.id}).sort({value: -1}).select('value').limit(1)
+
+    let collectibleMetrics = await CollectiblePrice.aggregate([
+        {
+            '$match': {
+                'collectibleId': collectible.id
+            }
+        }, {
+            '$set': {
+                'target-date': '$$NOW'
+            }
+        }, {
+            '$facet': {
+                'one_day': [
+                    {
+                        '$match': {
+                            '$expr': {
+                                '$lte': [
+                                    {
+                                        '$subtract': [
+                                            '$target-date', '$date'
+                                        ]
+                                    }, {
+                                        '$multiply': [
+                                            24, 60, 60, 1000
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }, {
+                        '$group': {
+                            '_id': null,
+                            'avg': {
+                                '$avg': '$value'
+                            },
+                            'previous': {
+                                '$first': '$value'
+                            },
+                            'current': {
+                                '$last': '$value'
+                            },
+                            'min': {
+                                '$min': '$low'
+                            },
+                            'max': {
+                                '$max': '$high'
+                            },
+                            'volume': {
+                                '$avg': '$volume'
+                            }
+                        }
+                    },
+                    {
+                        '$addFields': {
+                            'percentage_change': {
+                                '$multiply': [
+                                    {
+                                        '$divide': [
+                                            {
+                                                '$subtract': [
+                                                    '$current', '$previous'
+                                                ]
+                                            }, '$current'
+                                        ]
+                                    }, 100
+                                ]
+                            }
+                        }
+                    }, {
+                        '$unset': [
+                            '_id'
+                        ]
+                    }
+                ],
+            }
+        }
+    ])
+
+    console.log('collectibleMetrics is: ', collectibleMetrics[0].one_day)
+}
+
+// TestFn()
