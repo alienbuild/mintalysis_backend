@@ -7,7 +7,7 @@ const resolvers = {
             try {
                 await slack.client.chat.postMessage({
                     token: process.env.SLACK_BOT_TOKEN,
-                    channel: "mintalysis_feedback",
+                    channel: "feedback",
                     text: payload.message,
                     blocks: [
                         {
@@ -22,7 +22,11 @@ const resolvers = {
                             "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": `*Type:*\n${payload.type}`
+                                    "text": `*Type:*\n${payload.type} ${payload.type === 'Translation issue' && payload?.locale}`
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": `*Opinion:*\n${payload.opinion}`
                                 },
                                 {
                                     "type": "mrkdwn",

@@ -845,7 +845,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]
@@ -904,7 +904,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]
@@ -962,7 +962,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]
@@ -1020,7 +1020,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]
@@ -1078,7 +1078,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]
@@ -1136,7 +1136,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]
@@ -1178,7 +1178,7 @@ const migrateCollectibleStats = async () => {
                                                     '$subtract': [
                                                         '$current', '$previous'
                                                     ]
-                                                }, '$current'
+                                                }, '$previous'
                                             ]
                                         }, 100
                                     ]

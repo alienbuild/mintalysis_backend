@@ -214,7 +214,7 @@ const resolvers = {
 
             let queryParams = { take: limit }
             let whereParams = {}
-            let selectParams = { translations: { where: { language: lang } } }
+            let selectParams = { metrics: true, translations: { where: { language: lang } } }
 
             if (collectibleId) {
                 whereParams = {...whereParams, collectible_id: collectibleId }
@@ -256,7 +256,7 @@ const resolvers = {
             if (filterOptions && filterOptions.underRRP) whereParams = { ...whereParams, floor_price: { lt: await prisma.veve_collectibles.fields.store_price }}
             if (search) whereParams = { ...whereParams, name: { contains: search } }
 
-            queryParams = { ...queryParams, where: { ...whereParams }, include: { ...selectParams } }
+            queryParams = { ...queryParams, where: { ...whereParams }, include: { ...selectParams, metrics: true } }
 
             const collectibles = await prisma.veve_collectibles.findMany(queryParams)
 
@@ -830,6 +830,7 @@ const resolvers = {
                     return true
                 }
             } catch (e) {
+                console.log('addtowatchlistfailed: ', e)
                 return false
             }
 

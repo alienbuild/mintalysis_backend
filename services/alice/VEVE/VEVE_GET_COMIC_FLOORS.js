@@ -586,4 +586,3 @@ export const VEVE_GET_COMIC_FLOORS = async () => {
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get comic floors. `, err))
 }
-

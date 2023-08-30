@@ -148,7 +148,7 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
                     console.log(`[SUCCESS][VEVE][LICENSORS]: ${licensor.node.name} was added to prisma db.`)
 
                 } catch (e) {
-                    console.log(`[FAIL][VEVE][LICENSORS]: ${licensor.node.name} was not added to prisma db.`)
+                    // console.log(`[FAIL][VEVE][LICENSORS]: ${licensor.node.name} was not added to prisma db.`)
                 }
 
             })

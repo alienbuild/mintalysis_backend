@@ -305,19 +305,21 @@ const translateArticles = async () => {
 
     articles.map(async (article, index) => {
 
-        const translateTo = "Chinese"
-        const translationKey = "CN" // ES, DE, FR, CN, IN, IT
+        const translateTo = "German"
+        const translationKey = "DE"
+        // TODO : ES, DE, FR, IN, IT, JP
+        // COMPLETE : EN, CN
 
         try {
             await setTimeout(120000 * index)
             console.log('[WAITING 120 SECONDS]')
 
-            const title = await chatgpt.sendMessage(`rewrite the below title in ${translateTo}\n ${article.translations[0].title}`)
+            const title = await chatgpt.sendMessage(`rewrite the below title in ${translateTo}. Only show the results.\n ${article.translations[0].title}`)
             await setTimeout(3000 * index)
-            const subtitle = await chatgpt.sendMessage(`rewrite the below subtitle in ${translateTo}\n ${article.translations[0].subtitle}`)
+            const subtitle = await chatgpt.sendMessage(`rewrite the below subtitle in ${translateTo}. Only show the results.\n ${article.translations[0].subtitle}`)
             await setTimeout(3000 * index)
 
-            const message = `rewrite the below article in ${translateTo} .\n ${article.translations[0].content}`
+            const message = `rewrite the below article in ${translateTo}. Only show the results.\n ${article.translations[0].content}`
             console.log('[TRANSLATING ARTICLE]' , translateTo)
 
             const translation = await chatgpt.sendMessage(message)
