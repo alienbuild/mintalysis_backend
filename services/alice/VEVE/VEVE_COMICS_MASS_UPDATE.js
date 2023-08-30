@@ -140,11 +140,15 @@ export const VEVE_COMICS_MASS_UPDATE = async () => {
                     })
                 })
 
+                const reComic = /comic_cover\.([a-f\d-]+)\./;
+                const comicMatch = comic.node.image.fullResolutionUrl.match(reComic);
+                unique_cover_id = comicMatch[1];
+
                 try {
 
                     await prisma.veve_comics.upsert({
                         where: {
-                            unique_cover_id: comic.node.image.id,
+                            veve_api_unique_cover_id: comic.node.image.id,
                         },
                         update: {
                             comic_id: comic.node.comicType.id,
@@ -152,7 +156,8 @@ export const VEVE_COMICS_MASS_UPDATE = async () => {
                         },
                         create: {
                             comic_id: comic.node.comicType.id,
-                            unique_cover_id: comic.node.image.id,
+                            unique_cover_id: unique_cover_id,
+                            veve_api_unique_cover_id: comic.node.image.id,
                             name: comic.node.comicType.name,
                             rarity: comic.node.rarity,
                             description: comic.node.comicType.description,
