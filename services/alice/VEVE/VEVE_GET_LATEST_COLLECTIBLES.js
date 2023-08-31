@@ -91,6 +91,10 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
         .then(async latest_collectibles => {
 
             const collectibleTypeList = latest_collectibles.data.collectibleTypeList.edges
+            const nanoid = customAlphabet('1234567890abcdef', 5)
+            const slug = slugify(`${collectible.node.name} ${collectible.node.rarity} ${collectible.node.editionType} ${nanoid()}`,{ lower: true, strict: true })
+            const mcp_base_value = 1
+            const mcp_rarity_value = comic.node.rarity === 'COMMON' ? 0 : comic.node.rarity === 'UNCOMMON' ? 0 : comic.node.rarity === 'RARE' ? .25 : comic.node.rarity === 'ULTRA_RARE' ? .5 : comic.node.rarity === 'SECRET_RARE' ? 5.0 : NULL
 
 
             collectibleTypeList.map(async (collectible) => {
@@ -100,6 +104,11 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
                         data: {
                             collectible_id: collectible.node.id,
                             name: collectible.node.name,
+                            slug: slug,
+                            mcp_base_value: mcp_base_value,
+                            mcp_rarity_value: mcp_rarity_value,
+                            mcp_total_value: mcp_base_value + mcp_rarity_value,
+                            updatedAt: new Date(),
                             total_likes: collectible.node.totalLikes,
                             is_free: collectible.node.isFree,
                             store_price: collectible.node.storePrice,

@@ -145,7 +145,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
                 const comicMatch = comic.node.image.fullResolutionUrl.match(reComic);
                 const comic_image_url_id = comicMatch[1];
                 const nanoid = customAlphabet('1234567890abcdef', 5)
-                const slug = slugify(`${comic.name} ${comic.comic_number} ${comic.rarity} ${comic.start_year} ${nanoid()}`,{ lower: true, strict: true })
+                const slug = slugify(`${comic.node.comicType.name} ${comic.node.comicType.comicNumber} ${comic.node.rarity} ${comic.node.comicType.startYear} ${nanoid()}`,{ lower: true, strict: true })
                 const mcp_rarity_value = comic.node.rarity === 'COMMON' ? .25 : comic.node.rarity === 'UNCOMMON' ? .5 : comic.node.rarity === 'RARE' ? 2.0 : comic.node.rarity === 'ULTRA_RARE' ? 3.0 : comic.node.rarity === 'SECRET_RARE' ? 6.0 : NULL
 
                 try {
