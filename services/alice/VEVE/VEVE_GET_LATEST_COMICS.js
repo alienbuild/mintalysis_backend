@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import slugify from 'slugify'
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
@@ -142,15 +143,20 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                 const reComic = /comic_cover\.([a-f\d-]+)\./;
                 const comicMatch = comic.node.image.fullResolutionUrl.match(reComic);
-                unique_cover_id = comicMatch[1];
+                const comic_image_url_id = comicMatch[1];
+                const nanoid = customAlphabet('1234567890abcdef', 5)
+                const slug = slugify(`${comic.name} ${comic.comic_number} ${comic.rarity} ${comic.start_year} ${nanoid()}`,{ lower: true, strict: true })
+                const mcp_rarity_value = comic.node.rarity === 'COMMON' ? .25 : comic.node.rarity === 'UNCOMMON' ? .5 : comic.node.rarity === 'RARE' ? 2.0 : comic.node.rarity === 'ULTRA_RARE' ? 3.0 : comic.node.rarity === 'SECRET_RARE' ? 6.0 : NULL
 
                 try {
 
                     await prisma.veve_comics.create({
                         data: {
                             comic_id: comic.node.comicType.id,
-                            unique_cover_id: unique_cover_id,
-                            veve_api_unique_cover_id: comic.node.image.id,
+                            slug: slug,
+                            mcp_rarity_value: mcp_rarity_value,
+                            unique_cover_id: comic.node.image.id,
+                            comic_image_url_id: comic_image_url_id,
                             name: comic.node.comicType.name,
                             rarity: comic.node.rarity,
                             description: comic.node.comicType.description,
