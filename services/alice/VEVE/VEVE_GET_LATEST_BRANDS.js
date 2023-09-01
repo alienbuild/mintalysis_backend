@@ -232,6 +232,8 @@ const VEVE_GET_BRAND = async () => {
         .then(async latest_brands => {
 
             const brand = latest_brands.data.brand
+            const slug = slugify(`${brand.name}` ,{ lower: true, strict: true })
+
             try {
                 await prisma.veve_brands.create({
                     data: {
@@ -273,7 +275,8 @@ const VEVE_GET_BRAND = async () => {
                         square_image_full_resolution_url: brand.squareImage?.fullResolutionUrl,
                         square_image_high_resolution_url: brand.squareImage?.highResolutionUrl,
                         square_image_direction: brand.squareImage?.direction,
-                        licensor_id: brand.licensor?.id
+                        licensor_id: brand.licensor?.id,
+                        slug: slug
                     }
                 })
                 console.log(`[SUCCESS][VEVE][BRAND]: ${brand.name} was added to prisma db. cursor: `,)

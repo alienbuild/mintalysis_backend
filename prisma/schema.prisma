@@ -311,6 +311,8 @@ model odb_tokens {
   last_updated       DateTime? @db.DateTime(0)
   created_at         DateTime? @db.DateTime(0)
   to_process         Int?      @db.TinyInt
+  is_visible         Int?      @db.TinyInt
+  is_invalid         Int?      @db.TinyInt
   licensor_id        String?   @db.VarChar(255)
   brand_id           String?   @db.VarChar(255)
   series_id          String?   @db.VarChar(255)
@@ -1070,7 +1072,9 @@ model veve_tokens {
   licensor_id        String?            
   series_id          String?             
   wallet_id          String?            
-  to_process         Boolean?            
+  to_process         Boolean?
+  is_visible         Int?                @db.TinyInt
+  is_invalid         Int?                @db.TinyInt
   element_id         String?
   veve_brands        veve_brands?        @relation(fields: [brand_id], references: [brand_id])
   veve_wallets       veve_wallets?       @relation(fields: [wallet_id], references: [id], map: "veve_tokens_ibfk_1")
