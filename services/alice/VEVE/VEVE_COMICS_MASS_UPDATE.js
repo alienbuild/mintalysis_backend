@@ -1,4 +1,6 @@
 import fetch from 'node-fetch'
+import customAlphabet from 'nanoid/non-secure'
+import slugify from 'slugify'
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
@@ -139,27 +141,59 @@ export const VEVE_COMICS_MASS_UPDATE = async () => {
                         create: { character_id: character.node.id, name: character.node.name },
                     })
                 })
-
-                const reComic = /comic_cover\.([a-f\d-]+)\./;
-                const comicMatch = comic.node.image.fullResolutionUrl.match(reComic);
-                const comic_image_url_id = comicMatch[1];
-                const nanoid = customAlphabet('1234567890abcdef', 5)
-                const slug = slugify(`${comic.node.comicType.name} ${comic.node.comicType.comicNumber} ${comic.node.rarity} ${comic.node.comicType.startYear} ${nanoid()}`,{ lower: true, strict: true })
-                const mcp_rarity_value = comic.node.rarity === 'COMMON' ? .25 : comic.node.rarity === 'UNCOMMON' ? .5 : comic.node.rarity === 'RARE' ? 2.0 : comic.node.rarity === 'ULTRA_RARE' ? 3.0 : comic.node.rarity === 'SECRET_RARE' ? 6.0 : NULL
-
+                
                 try {
-
+                    const reComic = /comic_cover\.([a-f\d-]+)\./;
+                    const comicMatch = comic.node.image.fullResolutionUrl.match(reComic);
+                    const comic_image_url_id = comicMatch[1];
+                    const nanoid = customAlphabet('1234567890abcdef', 5)
+                    const slug = slugify(`${comic.node.comicType.name} ${comic.node.comicType.comicNumber} ${comic.node.rarity} ${comic.node.comicType.startYear} ${nanoid()}`,{ lower: true, strict: true })
+                    const mcp_rarity_value = comic.node.rarity === 'COMMON' ? .25 : comic.node.rarity === 'UNCOMMON' ? .5 : comic.node.rarity === 'RARE' ? 2.0 : comic.node.rarity === 'ULTRA_RARE' ? 3.0 : comic.node.rarity === 'SECRET_RARE' ? 6.0 : NULL
+    
                     await prisma.veve_comics.upsert({
                         where: {
-                            veve_api_unique_cover_id: comic.node.image.id,
+                            unique_cover_id: comic.node.id,
                         },
                         update: {
                             comic_id: comic.node.comicType.id,
-                            market_fee: comic.node.comicType.comicSeries.publisher.marketFee
+                            mcp_rarity_value: mcp_rarity_value,
+                            comic_image_url_id: comic_image_url_id,
+                            name: comic.node.comicType.name,
+                            rarity: comic.node.rarity,
+                            description: comic.node.comicType.description,
+                            comic_number: Number(comic.node.comicType.comicNumber),
+                            comic_series_id: comic.node.comicType.comicSeries.id,
+                            image_thumbnail: comic.node.image.thumbnailUrl,
+                            image_low_resolution_url: comic.node.image.lowResolutionUrl,
+                            image_med_resolution_url: comic.node.image.medResolutionUrl,
+                            image_full_resolution_url: comic.node.image.fullResolutionUrl,
+                            image_high_resolution_url: comic.node.image.highResolutionUrl,
+                            image_direction: comic.node.image.direction,
+                            drop_date: comic.node.comicType.dropDate,
+                            drop_method: comic.node.comicType.dropMethod,
+                            start_year: comic.node.comicType.startYear,
+                            page_count: comic.node.comicType.pageCount,
+                            store_price: comic.node.comicType.storePrice,
+                            publisher_id: comic.node.comicType.comicSeries.publisher.id,
+                            market_fee: comic.node.comicType.comicSeries.publisher.marketFee,
+                            total_issued: comic.node.totalIssued,
+                            total_available: comic.node.comicType.totalAvailable,
+                            is_free: comic.node.comicType.isFree,
+                            is_unlimited: comic.node.comicType.isUnlimited,
+                            writers: {
+                                connectOrCreate: writersArr,
+                            },
+                            artists: {
+                                connectOrCreate: artistsArr,
+                            },
+                            characters: {
+                                connectOrCreate: charactersArr,
+                            },
+                            updatedAt: new Date(),
+                            slug: slug,
                         },
                         create: {
                             comic_id: comic.node.comicType.id,
-                            slug: slug,
                             mcp_rarity_value: mcp_rarity_value,
                             unique_cover_id: comic.node.image.id,
                             comic_image_url_id: comic_image_url_id,
@@ -194,7 +228,8 @@ export const VEVE_COMICS_MASS_UPDATE = async () => {
                             characters: {
                                 connectOrCreate: charactersArr,
                             },
-                            updatedAt: new Date()
+                            updatedAt: new Date(),
+                            slug: slug,
                         }
                     })
 

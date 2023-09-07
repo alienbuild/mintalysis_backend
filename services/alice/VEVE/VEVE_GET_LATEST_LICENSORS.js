@@ -1,4 +1,5 @@
 import fetch from 'node-fetch'
+import slugify from 'slugify'
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
@@ -103,8 +104,52 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
             licensorList.map(async (licensor) => {
 
                 try {
-                    await prisma.veve_licensors.create({
-                        data: {
+                    await prisma.veve_licensors.upsert({
+                        where: {
+                            licensor_id: licensor.node.id
+                        },
+                        update: {
+                            name: licensor.node.name,
+                            description: licensor.node.description,
+                            market_fee: licensor.node.marketFee,
+                            theme_logo_image_url: licensor.node.themeLogoImage?.url,
+                            theme_logo_image_thumbnail_url: licensor.node.themeLogoImage?.thumbnailUrl,
+                            theme_logo_image_low_resolution_url: licensor.node.themeLogoImage?.lowResolutionUrl,
+                            theme_logo_image_med_resolution_url: licensor.node.themeLogoImage?.medResolutionUrl,
+                            theme_logo_image_full_resolution_url: licensor.node.themeLogoImage?.fullResolutionUrl,
+                            theme_logo_image_high_resolution_url: licensor.node.themeLogoImage?.highResolutionUrl,
+                            theme_logo_image_direction: licensor.node.themeLogoImage?.direction,
+                            theme_background_image_url: licensor.node.themeBackgroundImage?.url,
+                            theme_background_image_thumbnail_url: licensor.node.themeBackgroundImage?.thumbnailUrl,
+                            theme_background_image_low_resolution_url: licensor.node.themeBackgroundImage?.lowResolutionUrl,
+                            theme_background_image_med_resolution_url: licensor.node.themeBackgroundImage?.medResolutionUrl,
+                            theme_background_image_full_resolution_url: licensor.node.themeBackgroundImage?.fullResolutionUrl,
+                            theme_background_image_high_resolution_url: licensor.node.themeBackgroundImage?.highResolutionUrl,
+                            theme_background_image_direction: licensor.node.themeBackgroundImage?.direction,
+                            theme_footer_image_url: licensor.node.themeFooterImage?.url,
+                            theme_footer_image_thumbnail_url: licensor.node.themeFooterImage?.thumbnailUrl,
+                            theme_footer_image_low_resolution_url: licensor.node.themeFooterImage?.lowResolutionUrl,
+                            theme_footer_image_med_resolution_url: licensor.node.themeFooterImage?.medResolutionUrl,
+                            theme_footer_image_full_resolution_url: licensor.node.themeFooterImage?.fullResolutionUrl,
+                            theme_footer_image_high_resolution_url: licensor.node.themeFooterImage?.highResolutionUrl,
+                            theme_footer_image_direction: licensor.node.themeFooterImage?.direction,
+                            landscape_image_url: licensor.node.landscapeImage?.url,
+                            landscape_image_thumbnail_url: licensor.node.landscapeImage?.thumbnailUrl,
+                            landscape_image_low_resolution_url: licensor.node.landscapeImage?.lowResolutionUrl,
+                            landscape_image_med_resolution_url: licensor.node.landscapeImage?.medResolutionUrl,
+                            landscape_image_full_resolution_url: licensor.node.landscapeImage?.fullResolutionUrl,
+                            landscape_image_high_resolution_url: licensor.node.landscapeImage?.highResolutionUrl,
+                            landscape_image_direction: licensor.node.landscapeImage?.direction,
+                            square_image_url: licensor.node.squareImage?.url,
+                            square_image_thumbnail_url: licensor.node.squareImage?.thumbnailUrl,
+                            square_image_low_resolution_url: licensor.node.squareImage?.lowResolutionUrl,
+                            square_image_med_resolution_url: licensor.node.squareImage?.medResolutionUrl,
+                            square_image_full_resolution_url: licensor.node.squareImage?.fullResolutionUrl,
+                            square_image_high_resolution_url: licensor.node.squareImage?.highResolutionUrl,
+                            square_image_direction: licensor.node.squareImage?.direction,
+                            slug: slug
+                        },
+                        create: {
                             licensor_id: licensor.node.id,
                             name: licensor.node.name,
                             description: licensor.node.description,
