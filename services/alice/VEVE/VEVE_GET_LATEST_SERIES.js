@@ -103,7 +103,6 @@ export const VEVE_GET_LATEST_SERIES = async () => {
         .then(latest_series => latest_series.json())
         .then(async latest_series => {
 
-            const slug = slugify(`${series.node.name}` ,{ lower: true, strict: true })
             const seriesList = latest_series.data.seriesList.edges
             seriesList.map(async (series) => {
 
@@ -154,7 +153,7 @@ export const VEVE_GET_LATEST_SERIES = async () => {
                             square_image_direction: series.node.squareImage?.direction,
                             licensor_id: series.node.licensor?.id,
                             brand_id: series.node.brand?.id,
-                            slug: slug
+                            slug: slugify(`${series.node.name}` ,{ lower: true, strict: true })
                         },
                         create: {
                             series_id: series.node.id,
@@ -199,7 +198,7 @@ export const VEVE_GET_LATEST_SERIES = async () => {
                             square_image_direction: series.node.squareImage?.direction,
                             licensor_id: series.node.licensor?.id,
                             brand_id: series.node.brand?.id,
-                            slug: slug
+                            slug: slugify(`${series.node.name}` ,{ lower: true, strict: true })
                         }
                     })
                     console.log(`[SUCCESS][VEVE][SERIES]: ${series.node.name} was added to prisma db.`)
@@ -213,4 +212,3 @@ export const VEVE_GET_LATEST_SERIES = async () => {
         .catch(err => console.log('[ERROR][VEVE][SERIES] Unable to get latest series. ', err))
 }
 
-// VEVE_GET_LATEST_SERIES()

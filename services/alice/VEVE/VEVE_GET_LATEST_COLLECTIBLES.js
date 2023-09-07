@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'
-import customAlphabet from 'nanoid/non-secure'
+import { customAlphabet } from 'nanoid/non-secure'
 import slugify from 'slugify'
 import { PrismaClient } from "@prisma/client"
 
@@ -15,7 +15,7 @@ const password = proxy_parts[3]
 
 const getVevelatestCollectiblesQuery = () => {
     return `query collectibleTypeList {
-        collectibleTypeList(first: 150, after:"YXJyYXljb25uZWN0aW9uOjg5OQ==", sortOptions: {sortBy: DROP_DATE, sortDirection: DESCENDING} ){
+        collectibleTypeList(first: 150, sortOptions: {sortBy: DROP_DATE, sortDirection: DESCENDING} ){
             pageInfo {
                 hasNextPage
                 hasPreviousPage
@@ -94,15 +94,13 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
 
             const collectibleTypeList = latest_collectibles.data.collectibleTypeList.edges
             const nanoid = customAlphabet('1234567890abcdef', 5)
-            const slug = slugify(`${collectible.node.name} ${collectible.node.rarity} ${collectible.node.editionType} ${nanoid()}`,{ lower: true, strict: true })
-            const mcp_base_value = 1
-            const mcp_rarity_value = comic.node.rarity === 'COMMON' ? 0 : comic.node.rarity === 'UNCOMMON' ? 0 : comic.node.rarity === 'RARE' ? .25 : comic.node.rarity === 'ULTRA_RARE' ? .5 : comic.node.rarity === 'SECRET_RARE' ? 5.0 : NULL
-
 
             collectibleTypeList.map(async (collectible) => {
-
+                const slug = slugify(`${collectible.node.name} ${collectible.node.rarity} ${collectible.node.editionType} ${nanoid()}`,{ lower: true, strict: true })
+                const mcp_base_value = 1
+                const mcp_rarity_value = collectible.node.rarity === 'COMMON' ? 0 : collectible.node.rarity === 'UNCOMMON' ? 0 : collectible.node.rarity === 'RARE' ? .25 : collectible.node.rarity === 'ULTRA_RARE' ? .5 : collectible.node.rarity === 'SECRET_RARE' ? 5.0 : NULL
                 try {
-                    await prisma.veve_collectibles_tmp.upsert({
+                    await prisma.veve_collectibles.upsert({
                         where: {
                             collectible_id: collectible.node.id,
                         },
@@ -189,7 +187,7 @@ export const VEVE_GET_LATEST_COLLECTIBLES = async () => {
                     console.log(`[SUCCESS][VEVE]: ${collectible.node.name} added to prisma db.`)
                 } catch (e) {
                     // console.log('NOPE: ', e)
-                    // console.log(`[FAIL][VEVE]: ${collectible.node.name} was not added to prisma db.`, e)
+                    console.log(`[FAIL][VEVE]: ${collectible.node.name} was not added to prisma db.`, e)
                 }
 
             })

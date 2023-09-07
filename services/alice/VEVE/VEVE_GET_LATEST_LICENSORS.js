@@ -99,10 +99,7 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
         .then(async latest_licensors => {
 
             const licensorList = latest_licensors.data.licensorList.edges
-            const slug = slugify(`${licensor.node.name}` ,{ lower: true, strict: true })
-            
             licensorList.map(async (licensor) => {
-
                 try {
                     await prisma.veve_licensors.upsert({
                         where: {
@@ -147,7 +144,7 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
                             square_image_full_resolution_url: licensor.node.squareImage?.fullResolutionUrl,
                             square_image_high_resolution_url: licensor.node.squareImage?.highResolutionUrl,
                             square_image_direction: licensor.node.squareImage?.direction,
-                            slug: slug
+                            slug: slugify(`${licensor.node.name}` ,{ lower: true, strict: true })
                         },
                         create: {
                             licensor_id: licensor.node.id,
@@ -189,7 +186,7 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
                             square_image_full_resolution_url: licensor.node.squareImage?.fullResolutionUrl,
                             square_image_high_resolution_url: licensor.node.squareImage?.highResolutionUrl,
                             square_image_direction: licensor.node.squareImage?.direction,
-                            slug: slug
+                            slug: slugify(`${licensor.node.name}` ,{ lower: true, strict: true })
                         }
                     })
                     console.log(`[SUCCESS][VEVE][LICENSORS]: ${licensor.node.name} was added to prisma db.`)
@@ -204,3 +201,4 @@ export const VEVE_GET_LATEST_LICENSORS = async () => {
         .catch(err => console.log('[ERROR][VEVE][LICENSORS] Unable to get latest licensors. ', err))
 
 }
+

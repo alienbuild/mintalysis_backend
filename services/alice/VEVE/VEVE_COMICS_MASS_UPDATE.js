@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'
-import customAlphabet from 'nanoid/non-secure'
+import { customAlphabet } from 'nanoid/non-secure'
 import slugify from 'slugify'
 import { PrismaClient } from "@prisma/client"
 
