@@ -66,232 +66,154 @@ const resolvers = {
             return returnArr
         },
         veveCollectiblePriceData: async (_, { collectibleId, type, period }, { userInfo, prisma }) => {
-            switch (type){
-                case 'collectible':
-                    return await CollectiblePrice.aggregate([
-                        {
-                            "$match": {
-                                collectibleId: collectibleId,
-                                // "date": {
-                                //     $gte: new Date(new Date().getTime() - (6 * 30 * 24 * 60 * 60 * 1000))
-                                // }
-                            }
-                        },
-                        {
-                            "$group": {
-                                _id: {
-                                    symbol: "$collectibleId",
-                                    date: {
-                                        $dateTrunc: {
-                                            date: "$date",
-                                            unit: "day",
-                                            binSize: 1
-                                        },
-                                    },
-                                },
-                                value: { $avg: "$value" },
-                                high: { $max: "$value" },
-                                low: { $min: "$value" },
-                                open: { $first: "$value" },
-                                close: { $last: "$value" },
-                                volume: { $avg: "$volume" },
-                            }
-                        },
-                        {
-                            "$set": {
-                                date: "$_id.date",
-                            }
-                        },
-                        {
-                            $sort : { "date": 1 }
-                        }
-                    ])
-                        .then(data => {
-                            return data
-                        })
-                        .catch(err => {
-                            throw new GraphQLError('Unable to get collectible data.')
-                        })
-                case 'comic':
-                    return await ComicPrice.aggregate([
-                        {
-                            "$match": {
-                                uniqueCoverId: collectibleId,
-                                // "date": {
-                                //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
-                                // }
-                            }
-                        },
-                        {
-                            "$group": {
-                                _id: {
-                                    symbol: "$uniqueCoverId",
-                                    date: {
-                                        $dateTrunc: {
-                                            date: "$date",
-                                            unit: "day",
-                                            binSize: 1
-                                        },
-                                    },
-                                },
-                                value: { $avg: "$value" },
-                                high: { $max: "$value" },
-                                low: { $min: "$value" },
-                                open: { $first: "$value" },
-                                close: { $last: "$value" },
-                                volume: { $avg: "$volume" },
-                            }
-                        },
-                        {
-                            "$set": {
-                                date: "$_id.date",
-                            }
-                        },
-                        {
-                            $sort : { "date": 1 }
-                        }
-                    ])
-                        .then(data => {
-                            return data
-                        })
-                        .catch(err => {
-                            throw new GraphQLError('Unable to get collectible data.')
-                        })
-                default:
-                    return await CollectiblePrice.aggregate([
-                        {
-                            "$match": {
-                                collectibleId: collectibleId,
-                                // "date": {
-                                //     $gte: new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000))
-                                // }
-                            }
-                        },
-                        {
-                            "$group": {
-                                _id: {
-                                    symbol: "$collectibleId",
-                                    date: {
-                                        $dateTrunc: {
-                                            date: "$date",
-                                            unit: "day",
-                                            binSize: 1
-                                        },
-                                    },
-                                },
-                                value: { $avg: "$value" },
-                                high: { $max: "$value" },
-                                low: { $min: "$value" },
-                                open: { $first: "$value" },
-                                close: { $last: "$value" },
-                                volume: { $avg: "$volume" },
-                            }
-                        },
-                        {
-                            "$set": {
-                                date: "$_id.date",
-                            }
-                        },
-                        {
-                            $sort : { "date": 1 }
-                        }
-                    ])
-                        .then(data => {
-                            return data
-                        })
-                        .catch(err => {
-                            throw new GraphQLError('Unable to get collectible data.')
-                        })
-            }
 
+            const aggregatePriceData = async (model, idField, idValue) => {
+                try {
+                    return await model.aggregate([
+                        {
+                            "$match": {
+                                [idField]: idValue,
+                            }
+                        },
+                        {
+                            "$group": {
+                                _id: {
+                                    symbol: `$${idField}`,
+                                    date: {
+                                        $dateTrunc: {
+                                            date: "$date",
+                                            unit: "day",
+                                            binSize: 1
+                                        },
+                                    },
+                                },
+                                value: { $avg: "$value" },
+                                high: { $max: "$value" },
+                                low: { $min: "$value" },
+                                open: { $first: "$value" },
+                                close: { $last: "$value" },
+                                volume: { $avg: "$volume" },
+                            }
+                        },
+                        {
+                            "$set": {
+                                date: "$_id.date",
+                            }
+                        },
+                        {
+                            $sort: { "date": 1 }
+                        }
+                    ]);
+                } catch (err) {
+                    throw new GraphQLError('Unable to get collectible data.');
+                }
+            };
+
+            switch (type) {
+                case 'collectible':
+                    return await aggregatePriceData(CollectiblePrice, 'collectibleId', collectibleId);
+                case 'comic':
+                    return await aggregatePriceData(ComicPrice, 'uniqueCoverId', collectibleId);
+                default:
+                    return await aggregatePriceData(CollectiblePrice, 'collectibleId', collectibleId);
+            }
         },
         veveCollectibles: async (_, { collectibleId, search, pagingOptions, sortOptions, filterOptions, lang = "EN" }, { prisma }) => {
 
-            let limit = 25
-            if (pagingOptions?.limit) limit = pagingOptions.limit
+            const DEFAULT_LIMIT = 25;
+            const MAX_LIMIT = 100;
 
-            if (limit > 100) return null
+            const { limit = DEFAULT_LIMIT, after } = pagingOptions || {};
+            if (limit > MAX_LIMIT) return null;
 
-            let queryParams = { take: limit }
-            let whereParams = {}
-            let selectParams = { metrics: true, translations: { where: { language: lang } } }
+            const where = { drop_date: { lte: new Date() } };
+            const include = { metrics: true, translations: { where: { language: lang } } };
+            const orderBy = [{ drop_date: 'desc' }];
 
             if (collectibleId) {
-                whereParams = {...whereParams, collectible_id: collectibleId }
-
                 const collectibles = await prisma.veve_collectibles.findUnique({
-                    where: whereParams,
-                    include: selectParams
-                })
+                    where: { collectible_id: collectibleId },
+                    include
+                });
+                return { edges: [collectibles] };
+            }
 
-                return {
-                    edges: [collectibles],
+            if (sortOptions?.sortBy) {
+                const { sortBy, sortDirection = 'desc' } = sortOptions;
+                orderBy.length = 0;
+                switch (sortBy) {
+                    case 'coming_soon':
+                        where.drop_date = { gte: new Date() };
+                        break;
+                    case 'hottest':
+                        orderBy.push({ one_day_change: 'desc' });
+                        break;
+                    case 'coldest':
+                        orderBy.push({ one_day_change: 'asc' });
+                        where.floor_price = { gt: 0 };
+                        break;
+                    case 'drop_date':
+                        orderBy.push({ drop_date: 'desc' });
+                        break;
+                    default:
+                        orderBy.push({ [sortBy]: sortDirection });
                 }
             }
-            if (sortOptions && sortOptions.sortBy) {
-                let sortOptionsModified
-                if (sortOptions.sortDirection === null) sortOptions.sortDirection = 'desc'
-                switch (sortOptions.sortBy){
-                    case 'coming_soon':
-                        whereParams = { ...whereParams, drop_date: { gte: new Date() } }
-                    case 'hottest':
-                        sortOptionsModified = { one_day_change : 'desc' }
-                        break
-                    case 'coldest':
-                        sortOptionsModified = { one_day_change : 'asc' }
-                        whereParams = { ...whereParams, floor_price: { gt: 0 }}
-                        break
-                    case 'drop_date':
-                        sortOptionsModified = { drop_date: 'desc' }
-                    default:
-                        sortOptionsModified = {[sortOptions.sortBy]: sortOptions.sortDirection}
-                }
 
-                queryParams = {
-                    ...queryParams,
-                    orderBy: sortOptionsModified
-                }
-            } else { queryParams = {...queryParams, orderBy: [{ createdAt: 'desc' }]} }
-            if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { collectible_id: decodeCursor(pagingOptions.after) } }
-            if (filterOptions && filterOptions.underRRP) whereParams = { ...whereParams, floor_price: { lt: await prisma.veve_collectibles.fields.store_price }}
-            if (search) whereParams = { ...whereParams, name: { contains: search } }
+            if (after) where.collectible_id = { gt: decodeCursor(after) }
+            if (filterOptions?.underRRP) where.floor_price = { lt: await prisma.veve_collectibles.fields.store_price }
 
-            queryParams = { ...queryParams, where: { ...whereParams }, include: { ...selectParams, metrics: true } }
+            if (search) where.name = { contains: search }
 
-            const collectibles = await prisma.veve_collectibles.findMany(queryParams)
+            const collectibles = await prisma.veve_collectibles.findMany({
+                take: limit,
+                skip: after ? 1 : 0,
+                where,
+                orderBy,
+                include
+            });
 
             return {
                 edges: collectibles,
                 pageInfo: {
-                    endCursor: collectibles.length > 1 ? encodeCursor(collectibles[collectibles.length - 1].collectible_id) : null,
+                    endCursor: collectibles.length > 1 ? encodeCursor(collectibles.slice(-1)[0].collectible_id) : null,
                 }
-            }
-
+            };
         },
         veveComics: async (_, { uniqueCoverId, search, pagingOptions, after }, { prisma }) => {
 
-            let limit = 25
-            if (pagingOptions?.limit) limit = pagingOptions.limit
+            const DEFAULT_LIMIT = 25;
+            const MAX_LIMIT = 100;
 
-            if (limit > 100) return null
+            const { limit = DEFAULT_LIMIT } = pagingOptions || {};
 
-            let queryParams = { take: limit, orderBy: [{ createdAt: 'desc' }] }
-            let whereParams = {}
+            if (limit > MAX_LIMIT) return null;
 
-            if (uniqueCoverId) whereParams = {...whereParams, unique_cover_id: uniqueCoverId }
-            if (after) queryParams = { ...queryParams, skip: 1, cursor: { unique_cover_id: decodeCursor(after) } }
-            if (search) whereParams = {...whereParams, name: { contains: search } }
+            const where = {};
+            const queryParams = {
+                take: limit,
+                orderBy: [{ createdAt: 'desc' }],
+            };
 
-            queryParams = { ...queryParams, where: { ...whereParams } }
+            if (uniqueCoverId) where.unique_cover_id = uniqueCoverId;
 
-            const comics = await prisma.veve_comics.findMany(queryParams)
+            if (after) {
+                queryParams.skip = 1;
+                queryParams.cursor = { unique_cover_id: decodeCursor(after) };
+            }
+
+            if (search) where.name = { contains: search };
+
+            queryParams.where = where;
+
+            const comics = await prisma.veve_comics.findMany(queryParams);
 
             return {
                 edges: comics,
                 pageInfo: {
-                    endCursor: comics.length > 1 ? encodeCursor(comics[comics.length - 1].unique_cover_id) : null,
-                }
-            }
+                    endCursor: comics.length > 1 ? encodeCursor(comics.slice(-1)[0].unique_cover_id) : null,
+                },
+            };
 
         },
         veveBrands: async (_, { pagingOptions, sortOptions, search }, { prisma }) => {

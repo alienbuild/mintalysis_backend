@@ -142,7 +142,7 @@ export const VEVE_GET_LATEST_COMICS = async () => {
 
                 const reComic = /comic_cover\.([a-f\d-]+)\./;
                 const comicMatch = comic.node.image.fullResolutionUrl.match(reComic);
-                unique_cover_id = comicMatch[1];
+                const unique_cover_id = comicMatch[1];
 
                 try {
 
@@ -150,7 +150,6 @@ export const VEVE_GET_LATEST_COMICS = async () => {
                         data: {
                             comic_id: comic.node.comicType.id,
                             unique_cover_id: unique_cover_id,
-                            veve_api_unique_cover_id: comic.node.image.id,
                             name: comic.node.comicType.name,
                             rarity: comic.node.rarity,
                             description: comic.node.comicType.description,

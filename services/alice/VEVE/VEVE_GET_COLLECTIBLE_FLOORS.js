@@ -154,17 +154,23 @@ const updateMintalysis = async (collectible) => {
                     {
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -213,17 +219,23 @@ const updateMintalysis = async (collectible) => {
                     {
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -271,17 +283,23 @@ const updateMintalysis = async (collectible) => {
                     },{
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -329,17 +347,23 @@ const updateMintalysis = async (collectible) => {
                     },{
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -387,17 +411,23 @@ const updateMintalysis = async (collectible) => {
                     },{
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -445,17 +475,23 @@ const updateMintalysis = async (collectible) => {
                     },{
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -487,17 +523,23 @@ const updateMintalysis = async (collectible) => {
                     }, {
                         '$addFields': {
                             'percentage_change': {
-                                '$multiply': [
-                                    {
-                                        '$divide': [
+                                '$cond': {
+                                    'if': { '$eq': ['$previous', 0] },
+                                    'then': 'Divisor is zero', // or null, or whatever you want
+                                    'else': {
+                                        '$multiply': [
                                             {
-                                                '$subtract': [
-                                                    '$current', '$previous'
+                                                '$divide': [
+                                                    {
+                                                        '$subtract': [
+                                                            '$current', '$previous'
+                                                        ]
+                                                    }, '$previous'
                                                 ]
-                                            }, '$previous'
+                                            }, 100
                                         ]
-                                    }, 100
-                                ]
+                                    }
+                                }
                             }
                         }
                     }, {
@@ -1100,9 +1142,9 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
             const edges = collectible_floors.data.collectibleTypeList.edges
             await edges.map(async (collectible, index) => {
                 // if (index > 4) return
-                // await updateTimeSeries(collectible.node)
+                await updateTimeSeries(collectible.node)
                 await updateMintalysis(collectible.node)
-                // await updateLegacyShit(collectible.node)
+                await updateLegacyShit(collectible.node)
             })
 
             await pubsub.publish(`VEVE_PRICES_UPDATED`, {
