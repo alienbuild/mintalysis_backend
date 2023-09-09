@@ -28,11 +28,10 @@ const scheduledDailyJobs = () => {
     schedule.scheduleJob("0 0 * * *", () => {
         VEVE_GET_LATEST_LICENSORS()
         VEVE_GET_LATEST_BRANDS()
-        VEVE_GET_LATEST_SERIES
+        VEVE_GET_LATEST_SERIES()
         VEVE_GET_LATEST_COLLECTIBLES()
         VEVE_GET_LATEST_COMICS()
     })
-
 }
 
 export { scheduledHourlyJobs, scheduledDailyJobs }
