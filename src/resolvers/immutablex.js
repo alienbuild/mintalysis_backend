@@ -13,10 +13,10 @@ const resolvers = {
         },
         getImxVeveTransfers: async (_, { token_id, pagingOptions }, { prisma }) => {
 
-            let limit = 10
+            let limit = 5
             if (pagingOptions && pagingOptions.limit) limit = pagingOptions.limit
 
-            let queryParams = { take: limit, orderBy: { timestamp: 'desc' } }
+            let queryParams = { take: limit, orderBy: { timestamp: 'asc' } } //TODO: Set it 'desc'
             let transfers
             if (token_id){
                 transfers = await prisma.veve_transfers.findMany({

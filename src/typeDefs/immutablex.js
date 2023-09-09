@@ -42,7 +42,7 @@ const typeDefs = gql`
     }
     
     type WalletTags {
-        from_wallet: Tag!
+        from_wallet: Tag! 
         to_wallet: Tag!
     }
     
