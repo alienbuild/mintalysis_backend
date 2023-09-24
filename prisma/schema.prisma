@@ -1314,7 +1314,7 @@ model projects {
   price_alerts      price_alerts[]
   metrics           projects_metrics[]
   x_account         x_account[]
-  youtube_account   youtube_account[]
+  youtube_account   youtube_account?
   instagram_account instagram_account[]
 }
 
@@ -1441,7 +1441,7 @@ model youtube_account {
   videos      Int                        @default(0)
   views       Int                        @default(0)
   createdAt   DateTime                   @default(now())
-  project_id  String?
+  project_id  String?                    @unique
   project     projects?                  @relation(fields: [project_id], references: [id])
   snapshots   youtube_account_snapshot[]
 }
