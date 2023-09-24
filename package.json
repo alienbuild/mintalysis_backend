@@ -9,12 +9,16 @@
   "type": "module",
   "scripts": {
     "start": "babel-node --trace-warnings src/index.js",
-    "dev": "nodemon --signal SIGINT --trace-warnings src/index.js"
+    "dev": "nodemon --signal SIGINT --trace-warnings src/index.js",
+    "merge-schemas": "node ./prisma/mergeSchemas.js",
+    "generate": "node ./prisma/mergeSchemas.js && prisma generate",
+    "migrate": "node ./prisma/mergeSchemas.js && prisma migrate dev"
   },
   "dependencies": {
     "@apollo/server": "^4.3.0",
     "@graphql-tools/schema": "^9.0.5",
     "@prisma/client": "^5.2.0",
+    "@prisma/extension-accelerate": "^0.6.2",
     "@slack/bolt": "^3.13.2",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",

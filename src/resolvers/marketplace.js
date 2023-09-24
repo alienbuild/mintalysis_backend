@@ -45,7 +45,7 @@ const resolvers = {
             let queryParams = { take: limit }
             if (pagingOptions && pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: decodeCursor(pagingOptions.after) } }
 
-            queryParams = { ...queryParams, include: { seller: true, images: true, offers: true } }
+            queryParams = { ...queryParams, include: { seller: true, images: true } }
 
             try {
 
@@ -60,6 +60,7 @@ const resolvers = {
                 }
 
             } catch (e) {
+                console.log('e is: ', e)
                 throw new GraphQLError('Unable to fetch marketplace products')
             }
 
@@ -182,13 +183,14 @@ const resolvers = {
         placeMarketOffer: async (_, { id, offer, seller_id, message }, { userInfo, prisma, pubsub }) => {
             if (!userInfo) throw new GraphQLError('Not authorised')
 
-            const { userId } = userInfo
+            console.log('user info is: ', userInfo)
+            const { sub } = userInfo
 
             try {
                 const createOffer = await prisma.marketplace_product_offers.create({
                     data: {
                         product_id: id,
-                        buyer_id: userId,
+                        buyer_id: sub,
                         seller_id: seller_id,
                         offer,
                         message
@@ -197,10 +199,10 @@ const resolvers = {
 
                 const existingConversation = await prisma.conversation.findMany({
                     where: {
-                        owner_id: userId,
+                        owner_id: sub,
                         participants: {
                             every: {
-                                user_id: { in: [seller_id, userId] }
+                                user_id: { in: [seller_id, sub] }
                             }
                         }
                     }
@@ -209,7 +211,7 @@ const resolvers = {
                 if (existingConversation.length > 0){
                     const newMessage = await prisma.message.create({
                         data: {
-                            senderId: userId,
+                            senderId: sub,
                             conversationId: existingConversation[0].id,
                             type: "MARKETPLACE_OFFER",
                             body: `${userInfo.username} has sent you an offer`,
@@ -217,9 +219,10 @@ const resolvers = {
                         },
                         include: messagePopulated
                     })
+                    console.log('message is: ', newMessage)
                     const participant = await prisma.conversation_participant.findFirst({
                         where: {
-                            user_id: userId,
+                            user_id: sub,
                             conversation_id: existingConversation[0].id,
                         }
                     })
@@ -258,7 +261,7 @@ const resolvers = {
                 } else {
                     const conversation = await prisma.conversation.create({
                         data: {
-                            owner_id: userId,
+                            owner_id: sub,
                             participants: {
                                 createMany: {
                                     data: [
@@ -267,7 +270,7 @@ const resolvers = {
                                             has_seen_latest_message: false
                                         },
                                         {
-                                            user_id: userId,
+                                            user_id: sub,
                                             has_seen_latest_message: true
                                         }
                                     ]
@@ -286,12 +289,13 @@ const resolvers = {
                         type: "MARKETPLACE_OFFER",
                         content: `has placed an offer`,
                         reference: id,
-                        from_user_id: userId,
+                        from_user_id: sub,
                         to_user_id: seller_id
                     }
                 })
 
             } catch (e) {
+                console.log('offer error: ', e)
                 throw new GraphQLError('Unable to create product offering')
             }
 

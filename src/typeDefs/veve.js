@@ -274,7 +274,7 @@ const typeDefs = gql`
         valuations(period: Int) : [[VEVEValuationObj]]
         watching: Boolean
         translations: [VeveCollectibleTranslations]
-        metrics: [VeveCollectibleMetrics]
+        metrics: VeveCollectibleMetrics
     }
 
     type VeveCollectibleMetrics {

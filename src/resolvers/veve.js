@@ -173,6 +173,15 @@ const resolvers = {
                 include
             });
 
+            const valuations = await prisma.veve_wallets_valuations.findMany({
+                where: {
+                    wallet_id: "123123swer"
+                },
+                include: {
+                    wallet: true
+                }
+            })
+
             return {
                 edges: collectibles,
                 pageInfo: {
