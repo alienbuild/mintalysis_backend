@@ -4,9 +4,11 @@ import MarketPrice from "../../../models/MarketPrice.js"
 import slugify from 'slugify'
 import HttpsProxyAgent from "https-proxy-agent"
 import {cookieRotator} from "../cookieRotator.js"
-
 import { prisma } from "../../../src/index.js"
 import { pubsub } from "../../../src/index.js"
+import {CALCULATE_VEVE_BRANDS_METRICS} from "./CALCULATE_VEVE_BRANDS_METRICS.js";
+import {CALCULATE_VEVE_LICENSORS_METRICS} from "./CALCULATE_VEVE_LICENSORS_METRICS.js";
+import {CALCULATE_VEVE_SERIES_METRICS} from "./CALCULATE_VEVE_SERIES_METRICS.js";
 
 // Setup proxy
 const proxy_string = process.env.PROXY
@@ -1139,23 +1141,34 @@ export const VEVE_GET_COLLECTIBLE_FLOORS = async () => {
     })
         .then(collectible_floors => collectible_floors.json())
         .then(async collectible_floors => {
-            const edges = collectible_floors.data.collectibleTypeList.edges
-            await edges.map(async (collectible, index) => {
-                // if (index > 4) return
-                await updateTimeSeries(collectible.node)
-                await updateMintalysis(collectible.node)
-                await updateLegacyShit(collectible.node)
-            })
 
-            await pubsub.publish(`VEVE_PRICES_UPDATED`, {
-                veveCollectiblePrice: new Date()
-            })
+            try {
+                const edges = collectible_floors.data.collectibleTypeList.edges
+                await edges.map(async (collectible, index) => {
+                    // if (index > 4) return
+                    try {
+                        await updateTimeSeries(collectible.node)
+                        await updateMintalysis(collectible.node)
+                        await updateLegacyShit(collectible.node)
+                    } catch (e) {
+                        console.log('[FAILED] : ', e)
+                    }
+                })
+
+                await pubsub.publish(`VEVE_PRICES_UPDATED`, {
+                    veveCollectiblePrice: new Date()
+                })
+            } catch (e) {
+                console.log('[ERROR] Failed updating floors ' ,e)
+            } finally {
+                await CALCULATE_VEVE_BRANDS_METRICS()
+                await CALCULATE_VEVE_LICENSORS_METRICS()
+                await CALCULATE_VEVE_SERIES_METRICS()
+            }
 
         })
         .catch(err => console.log(`[ERROR][VEVE] Unable to get collectible floors using ${cookieToUse} `, err))
 }
-
-// VEVE_GET_COLLECTIBLE_FLOORS()
 
 const TestFn = async () => {
     const collectible = {
@@ -1242,5 +1255,3 @@ const TestFn = async () => {
 
     console.log('collectibleMetrics is: ', collectibleMetrics[0].one_day)
 }
-
-// TestFn()

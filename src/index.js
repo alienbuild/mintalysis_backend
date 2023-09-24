@@ -1,5 +1,6 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { PrismaClient } from "@prisma/client";
+import { withAccelerate } from '@prisma/extension-accelerate';
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -21,7 +22,8 @@ import {scheduledRapidJobs, scheduledLiveJobs} from "../services/cronJobs.js";
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
 import Slack from '@slack/bolt'
 
-export const prisma = new PrismaClient();
+// export const prisma = new PrismaClient().$extends(withAccelerate())
+export const prisma = new PrismaClient()
 export const pubsub = new PubSub();
 export const slack = new Slack.App({
     signingSecret: process.env.SLACK_SIGNING_SECRET,
