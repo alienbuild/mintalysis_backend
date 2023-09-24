@@ -41,7 +41,6 @@ model article_translations {
   @@index([language])
   @@index([article_id], map: "article_translations_article_id_fkey")
 }
-
 // schemas/artists.prisma
 // Artists
 
@@ -51,7 +50,6 @@ model artists {
   slug        String?       @unique
   veve_comics veve_comics[] @relation("artistsToveve_comics")
 }
-
 // schemas/blockchains/immutable.prisma
 // Immutable
 
@@ -163,7 +161,6 @@ model imx_stats {
   transfer_count               Int
   updatedAt                    DateTime @updatedAt
 }
-
 // schemas/characters.prisma
 // Characters
 
@@ -173,7 +170,6 @@ model characters {
   slug         String?       @unique
   veve_comics  veve_comics[] @relation("charactersToveve_comics")
 }
-
 // schemas/community.prisma
 // Community
 
@@ -457,7 +453,6 @@ model veve_metadata_missing {
   token_id  Int     @id
   wallet_id String?
 }
-
 // schemas/marketplace.prisma
 // Marketplace
 
@@ -517,7 +512,6 @@ model marketplace_product_offers {
 
   @@index([product_id])
 }
-
 // schemas/messaging.prisma
 // Messaging and Conversations
 
@@ -569,6 +563,7 @@ model conversation_participant {
   @@index([conversation_id], map: "conversation_participant_conversation_id_fkey")
   @@index([user_id], map: "conversation_participant_user_id_fkey")
 }
+
 
 // schemas/misc.prisma
 // Misc TODO: Sort this out?
@@ -673,7 +668,6 @@ model offers {
 
   @@index([messageId], map: "offers_messageId_fkey")
 }
-
 // schemas/notifications.prisma
 // Notifications and Alerts
 
@@ -710,7 +704,6 @@ model price_alerts {
   @@index([project_id], map: "price_alerts_project_id_fkey")
   @@index([user_id], map: "price_alerts_user_id_fkey")
 }
-
 // schemas/projects/mcfarlane/blockchain.prisma
 // Blockchain (Tokens, Transfers and Mints)
 
@@ -741,7 +734,6 @@ model mcfarlane_transfers {
 
   @@index([token_id, from_wallet, to_wallet])
 }
-
 // schemas/projects/mcfarlane/brands.prisma
 // Brands
 
@@ -751,7 +743,6 @@ model mcfarlane_brands {
   description String? @db.Text
   slug        String? @unique
 }
-
 // schemas/projects/veve/blockchain.prisma
 // Blockchain (Tokens, Transfers and Mints)
 
@@ -869,7 +860,6 @@ model veve_mints {
   @@index([token_id])
   @@index([wallet_id])
 }
-
 // schemas/projects/veve/brands.prisma
 // Veve Brands
 
@@ -942,7 +932,6 @@ model veve_brands_metrics {
   circulating_supply Decimal?    @db.Decimal(10, 2)
   brand              veve_brands @relation(fields: [brand_id], references: [brand_id])
 }
-
 // schemas/projects/veve/collectibles.prisma
 // Veve Collectibles
 
@@ -1039,7 +1028,6 @@ model veve_collectibles_metrics {
   circulating_supply Decimal?          @db.Decimal(10, 2)
   collectible        veve_collectibles @relation(fields: [collectible_id], references: [collectible_id])
 }
-
 // schemas/projects/veve/comics.prisma
 // Veve Comics
 
@@ -1112,7 +1100,6 @@ model veve_comics_translations {
   @@index([language])
   @@index([unique_cover_id], map: "veve_comics_translations_unique_cover_id_fkey")
 }
-
 // schemas/projects/veve/leaderboards.prisma
 // Veve Leaderboards
 
@@ -1129,7 +1116,6 @@ model veve_leaderboard {
 
   @@index([wallet_id], map: "veve_leaderboard_wallet_id_fkey")
 }
-
 // schemas/projects/veve/licensors.prisma
 // Veve Licensors
 
@@ -1199,7 +1185,6 @@ model veve_licensors_metrics {
   circulating_supply Decimal?       @db.Decimal(10, 2)
   licensor           veve_licensors @relation(fields: [licensor_id], references: [licensor_id])
 }
-
 // schemas/projects/veve/series.prisma
 // Veve Series
 
@@ -1277,7 +1262,6 @@ model veve_series_metrics {
   circulating_supply Decimal?    @db.Decimal(10, 2)
   series             veve_series @relation(fields: [series_id], references: [series_id])
 }
-
 // schemas/projects/veve/watchlist.prisma
 // Watchlist
 
@@ -1294,7 +1278,6 @@ model veve_watchlist {
   @@index([unique_cover_id], map: "veve_watchlist_unique_cover_id_fkey")
   @@index([user_id], map: "veve_watchlist_user_id_fkey")
 }
-
 // schemas/projects.prisma
 // Projects
 
@@ -1343,7 +1326,6 @@ model UserToprojects {
   @@index([B], map: "_UserToprojects_B_index")
   @@map("_UserToprojects")
 }
-
 // schemas/session.prisma
 // Session and Authentication Management
 
@@ -1392,6 +1374,7 @@ model Account {
   @@index([userId], map: "accounts_user_id_fkey")
   @@map("accounts")
 }
+
 
 // schemas/tags.prisma
 // Tags
@@ -1539,7 +1522,6 @@ model tmp_veve_mints {
 
   @@ignore
 }
-
 // schemas/user.prisma
 // User and Role Management
 
@@ -1645,7 +1627,6 @@ model profile {
   mcfarlane_wallets    mcfarlane_wallets?
   users                User               @relation(fields: [user_id], references: [id])
 }
-
 // schemas/writers.prisma
 // Writers
 
@@ -1655,7 +1636,6 @@ model writers {
   slug        String?       @unique
   veve_comics veve_comics[] @relation("veve_comicsTowriters")
 }
-
 // schemas/_enums.prisma
 // Enum and Setting Tables
 
@@ -1775,5 +1755,4 @@ enum CursorOption {
   BLACK
   WHITE
 }
-
 // END_MODELS
