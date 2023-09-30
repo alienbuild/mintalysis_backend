@@ -788,7 +788,6 @@ export const tinifyImages = async () => {
 
 }
 
-
 const delay = (ms) => new Promise((resolve) => setTimeout(() => resolve(), ms));
 
 const retryFetch = (
@@ -1280,7 +1279,7 @@ const getComicSalesDataQuery = (endCursor, comic_id) => {
 
 const comic_id = "c3287f46-6bfc-4b92-b256-8009ed308d96"
 
-export const getComicSalesData = async (fullCapture = false, endCursor = "YXJyYXljb25uZWN0aW9uOjE3NDk5") => {
+export const getComicSalesData = async (fullCapture = false, endCursor) => {
 
     console.log('[STARTED]: Scraping COMIC sales data and users')
 
@@ -1291,11 +1290,17 @@ export const getComicSalesData = async (fullCapture = false, endCursor = "YXJyYX
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'cookie': "veve=s%3AAUbLV_hdwqgSds39ba-LlSIWPctzMBvz.jqXB%2BtkpAX7pk3gAPUIXNfWJbJuasxn0HNolxuGRsKI",
-            'client-name': 'veve-web-app',
+            // 'cookie': "veve=s%3AAUbLV_hdwqgSds39ba-LlSIWPctzMBvz.jqXB%2BtkpAX7pk3gAPUIXNfWJbJuasxn0HNolxuGRsKI",
+            // 'client-name': 'veve-web-app',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0',
             'client-operation': 'AuthUserDetails',
-            'Connection': 'keep-alive'
+            // 'Connection': 'keep-alive'
+
+            'client-name': 'alice-backend',
+            'client-version': '...',
+            'user-agent': 'alice-requests',
+            'cookie': "veve=s%3ABBzqVcXCx-u7b2OnNrI2hQEwq14FXASo.C%2F5sObS5AunP8qIBZeqDEC3WnCnVsEdY9qMNQ%2FPGQK4"
+
         },
         body: JSON.stringify({
             query: getComicSalesDataQuery(endCursor, comic_id)
@@ -1308,55 +1313,55 @@ export const getComicSalesData = async (fullCapture = false, endCursor = "YXJyYX
 
              console.log('****[VEVE DATA RECEIVED]****')
 
-            await prisma.tmp_cursors.create({
-                data:{
-                    comic_id: comic_id,
-                    rarity: veveSales[0].node.element?.rarity,
-                    element_id: veveSales[0].node?.elementId,
-                    cursor: pageInfo.endCursor,
-                }
-            })
+            // await prisma.tmp_cursors.create({
+            //     data:{
+            //         comic_id: comic_id,
+            //         rarity: veveSales[0].node.element?.rarity,
+            //         element_id: veveSales[0].node?.elementId,
+            //         cursor: pageInfo.endCursor,
+            //     }
+            // })
 
              veveSales.map(async (sale, index) => {
-
                  try {
-                     // if (index > 0) return
+                     if (index > 0) return
                      const newId = crypto.randomUUID()
-                     await prisma.tmp_veve_tokens_comics.create({
-                         data:{
-                             connector_id: newId,
-                             blockchain_id: sale.node?.element?.blockchainId,
-                             owner_id: sale.node?.element?.owner.id,
-                             owner_username: sale.node?.element?.owner.username,
-                             comic_id,
-                             txn_cursor: sale.node.element.transactions?.pageInfo.hasNextPage ? sale.node.element.transactions?.pageInfo.endCursor : null
-                         }
-                     })
+                     // await prisma.tmp_veve_tokens_comics.create({
+                     //     data:{
+                     //         connector_id: newId,
+                     //         blockchain_id: sale.node?.element?.blockchainId,
+                     //         owner_id: sale.node?.element?.owner.id,
+                     //         owner_username: sale.node?.element?.owner.username,
+                     //         comic_id,
+                     //         txn_cursor: sale.node.element.transactions?.pageInfo.hasNextPage ? sale.node.element.transactions?.pageInfo.endCursor : null
+                     //     }
+                     // })
 
                      if (sale.node.element.transactions?.edges) {
+                         console.log('sale is: ', sale.node.element.transactions)
+                         console.log('sale ext is: ', sale.node.element.transactions.edges)
 
-                         await prisma.tmp_veve_comic_transactions.createMany({
-                             data: sale.node.element.transactions?.edges.map((txn) => {
-                                 return {
-                                     connector_id: newId,
-                                     transaction_id: txn.node.id,
-                                     // transfer_id: txn.node.transferId,
-                                     createdAt: txn.node.createdAt,
-                                     status: txn.node.status,
-                                     type: txn.node.type,
-                                     fee_rate: Number(txn.node.feeRate),
-                                     fee_gem: Number(txn.node.feeGem),
-                                     amount_usd: Number(txn.node.amountUsd),
-                                     buyer_id: txn.node.buyer?.id,
-                                     buyer_username: txn.node.buyer?.username,
-                                     seller_id: txn.node.seller?.id,
-                                     seller_username: txn.node.seller?.username
-                                 }
-                             })
-                         })
+                         // await prisma.tmp_veve_comic_transactions.createMany({
+                         //     data: sale.node.element.transactions?.edges.map((txn) => {
+                         //         return {
+                         //             connector_id: newId,
+                         //             transaction_id: txn.node.id,
+                         //             // transfer_id: txn.node.transferId,
+                         //             createdAt: txn.node.createdAt,
+                         //             status: txn.node.status,
+                         //             type: txn.node.type,
+                         //             fee_rate: Number(txn.node.feeRate),
+                         //             fee_gem: Number(txn.node.feeGem),
+                         //             amount_usd: Number(txn.node.amountUsd),
+                         //             buyer_id: txn.node.buyer?.id,
+                         //             buyer_username: txn.node.buyer?.username,
+                         //             seller_id: txn.node.seller?.id,
+                         //             seller_username: txn.node.seller?.username
+                         //         }
+                         //     })
+                         // })
 
                      }
-
 
                  } catch (e) {
                      console.log('[FAILED]', e)
@@ -1507,15 +1512,15 @@ export const getComicSalesData = async (fullCapture = false, endCursor = "YXJyYX
                 // }
             })
 
-            if (!pageInfo.hasNextPage) fullCapture = true
+            // if (!pageInfo.hasNextPage) fullCapture = true
 
-            if (!fullCapture) {
-                console.log('[AWAITING] Found more sales data to scrape.', pageInfo.endCursor)
-                await setTimeout(15000)
-                await getComicSalesData(fullCapture, pageInfo.endCursor)
-            } else {
-                console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
-            }
+            // if (!fullCapture) {
+            //     console.log('[AWAITING] Found more sales data to scrape.', pageInfo.endCursor)
+            //     await setTimeout(15000)
+            //     await getComicSalesData(fullCapture, pageInfo.endCursor)
+            // } else {
+            //     console.log('[FINISHED] Task finally completed.', pageInfo.endCursor)
+            // }
 
         })
         .catch(e => console.log('[ERROR] Unable to get sales data from veve.', e))

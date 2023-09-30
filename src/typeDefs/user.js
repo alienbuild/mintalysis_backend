@@ -75,6 +75,9 @@ const typeDefs = gql`
         posts: [Post]
         veve_collectibles(pagingOptions: pagingOptions, sortOptions: sortOptions): CollectiblesConnection
         veve_wallet: VeveWallet
+        servers: [Server!]
+        direct_messages_sent: [DirectMessage!]
+        direct_messages_received: [DirectMessage!]
         _count: UserCommunityStats
     }
     
