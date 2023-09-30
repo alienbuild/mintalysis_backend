@@ -570,6 +570,63 @@ model conversation_participant {
   @@index([user_id], map: "conversation_participant_user_id_fkey")
 }
 
+model direct_message {
+  id          Int      @id @default(autoincrement())
+  content     String
+  sender_id   String
+  receiver_id String
+  sender      User     @relation("sender", fields: [sender_id], references: [id])
+  receiver    User     @relation("receiver", fields: [receiver_id], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model channel_message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  channel_id Int
+  channel    channel  @relation(fields: [channel_id], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model server {
+  id            Int             @id @default(autoincrement())
+  name          String
+  ownerId       String
+  owner         User            @relation(fields: [ownerId], references: [id])
+  members       User[]          @relation("server_members")
+  channels      channel[]
+  server_member server_member[]
+}
+
+model channel {
+  id            Int               @id @default(autoincrement())
+  name          String
+  server_id     Int
+  server        server            @relation(fields: [server_id], references: [id])
+  messages      channel_message[]
+  ChannelMember ChannelMember[]
+}
+
+model server_member {
+  userId   String
+  serverId Int
+  user     User   @relation(fields: [userId], references: [id])
+  server   server @relation(fields: [serverId], references: [id])
+
+  @@id([userId, serverId])
+}
+
+model ChannelMember {
+  userId    String
+  channelId Int
+  user      User    @relation(fields: [userId], references: [id])
+  channel   channel @relation(fields: [channelId], references: [id])
+
+  @@id([userId, channelId])
+}
+
 // schemas/misc.prisma
 // Misc TODO: Sort this out?
 
@@ -1299,20 +1356,23 @@ model veve_watchlist {
 // Projects
 
 model projects {
-  id            String             @id @default(uuid())
-  name          String?            @unique
-  abbr          String?            @unique
-  active        Boolean            @default(false)
-  icon          String?
-  slug          String?            @unique
-  sort          Int                @default(10)
-  tile          String?
-  motiff_url    String?
-  article       article[]
-  communities   communities[]
-  notifications notifications[]
-  price_alerts  price_alerts[]
-  metrics       projects_metrics[]
+  id                String              @id @default(uuid())
+  name              String?             @unique
+  abbr              String?             @unique
+  active            Boolean             @default(false)
+  icon              String?
+  slug              String?             @unique
+  sort              Int                 @default(10)
+  tile              String?
+  motiff_url        String?
+  article           article[]
+  communities       communities[]
+  notifications     notifications[]
+  price_alerts      price_alerts[]
+  metrics           projects_metrics[]
+  x_account         x_account[]
+  youtube_account   youtube_account?
+  instagram_account instagram_account[]
 }
 
 model projects_metrics {
@@ -1391,6 +1451,87 @@ model Account {
   @@unique([provider, providerAccountId])
   @@index([userId], map: "accounts_user_id_fkey")
   @@map("accounts")
+}
+
+// schemas/socialmedia.prisma
+// Social Media Stats (X - Formely Twitter, YouTube, Instagram)
+
+model x_account {
+  id           Int                  @id @default(autoincrement())
+  handle       String               @unique
+  avatar       String?
+  followers    Int                  @default(0)
+  following    Int                  @default(0)
+  cover_photo  String?
+  display_name String?
+  join_date    DateTime?
+  project_id   String?
+  project      projects?            @relation(fields: [project_id], references: [id])
+  x_posts      x_posts[]
+  createdAt    DateTime?            @default(now())
+  snapshots    x_account_snapshot[]
+}
+
+model x_account_snapshot {
+  id        Int       @id @default(autoincrement())
+  handle    String
+  followers Int
+  following Int
+  createdAt DateTime  @default(now())
+  x_account x_account @relation(fields: [handle], references: [handle])
+}
+
+model x_posts {
+  id            Int       @id @default(autoincrement())
+  createdAt     DateTime? @default(now())
+  link          String?
+  text          String?   @db.Text
+  image         String?
+  like_count    Int?
+  comment_count Int?
+  repost_count  Int?
+  handle        String
+  account       x_account @relation(fields: [handle], references: [handle])
+}
+
+model youtube_account {
+  id          Int                        @id @default(autoincrement())
+  channel_id  String                     @unique
+  subscribers Int                        @default(0)
+  videos      Int                        @default(0)
+  views       Int                        @default(0)
+  createdAt   DateTime                   @default(now())
+  project_id  String?                    @unique
+  project     projects?                  @relation(fields: [project_id], references: [id])
+  snapshots   youtube_account_snapshot[]
+}
+
+model youtube_account_snapshot {
+  id          Int             @id @default(autoincrement())
+  channel_id  String
+  subscribers Int             @default(0)
+  videos      Int             @default(0)
+  views       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  youtube     youtube_account @relation(fields: [channel_id], references: [channel_id])
+}
+
+model instagram_account {
+  id           Int                          @id @default(autoincrement())
+  instagram_id String                       @unique
+  followers    Int                          @default(0)
+  createdAt    DateTime                     @default(now())
+  project_id   String?
+  project      projects?                    @relation(fields: [project_id], references: [id])
+  snapshots    instagram_account_snapshot[]
+}
+
+model instagram_account_snapshot {
+  id           Int               @id @default(autoincrement())
+  instagram_id String
+  followers    Int
+  createdAt    DateTime          @default(now())
+  instagram    instagram_account @relation(fields: [instagram_id], references: [instagram_id])
 }
 
 // schemas/tags.prisma
@@ -1540,6 +1681,27 @@ model tmp_veve_mints {
   @@ignore
 }
 
+model transfers {
+  id        BigInt?
+  from_user String? @db.Text
+  to_user   String? @db.Text
+  timestamp String? @db.Text
+  token_id  BigInt?
+
+  @@index([token_id], map: "token_id")
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model mints {
+  id        BigInt?
+  user      String? @db.Text
+  timestamp String? @db.Text
+  token_id  BigInt?
+
+  @@ignore
+}
+
 // schemas/user.prisma
 // User and Role Management
 
@@ -1595,6 +1757,13 @@ model User {
   poker_table_pots                poker_table_pots?                @relation(fields: [poker_table_potsId], references: [id])
   users_preferences_accessibility users_preferences_accessibility?
   veve_watchlist                  veve_watchlist[]
+  servers                         server[]                         @relation("server_members")
+  sent_messages                   direct_message[]                 @relation("sender")
+  received_messages               direct_message[]                 @relation("receiver")
+  channel_message                 channel_message[]
+  server                          server[]
+  server_member                   server_member[]
+  ChannelMember                   ChannelMember[]
 
   @@index([email], map: "email")
   @@index([username], map: "username")
