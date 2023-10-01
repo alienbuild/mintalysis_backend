@@ -6,13 +6,14 @@ const typeDefs = gql`
         getServers: [Server!]!
         getServerChannels(serverId: ID!): [Channel!]
         getChannelMessages(channelId: ID!, limit: Int, cursor: ID): [ChannelMessage!]
+        getChannel(channelId: ID!): Channel 
     }
 
     type Mutation {
         createServer(name: String!, ownerId: ID!): Server!
         createChannel(name: String!, serverId: ID!): Channel!
         sendDirectMessage(content: String!, senderId: ID!, receiverId: ID!): DirectMessage!
-        sendChannelMessage(content: String!, userId: ID!, channelId: ID!): ChannelMessage!
+        sendChannelMessage(content: String!, type: MessageType! userId: ID!, channelId: ID!): ChannelMessage!
         updateLastRead(userId: ID!, channelId: ID!): LastReadUpdateResponse!
     }
 
@@ -61,10 +62,18 @@ const typeDefs = gql`
     type ChannelMessage {
         id: ID!
         content: String!
+        type: MessageType!
         user: User!
         channel: Channel!
         createdAt: String!
     }
+
+    enum MessageType {
+        TEXT
+        EMOJI
+        GIF
+    }
+
 `
 
 export default typeDefs

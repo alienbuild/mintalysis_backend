@@ -61,6 +61,16 @@ const resolvers = {
                 throw new Error('Unable to fetch channel messages');
             }
         },
+        getChannel: async (_, { channelId }, { prisma }) => {
+            try {
+                const channel = await prisma.channel.findUnique({ where: { id: Number(channelId) } });
+                if (!channel) throw new Error('Channel not found');
+                return channel;
+            } catch (error) {
+                console.error('Error fetching channel:', error);
+                throw new Error('Unable to fetch channel');
+            }
+        }
     },
     Mutation: {
         createServer: async (_, {name, ownerId}, {prisma}) => {
@@ -96,11 +106,12 @@ const resolvers = {
                 throw new Error('Unable to create channel');
             }
         },
-        sendChannelMessage: async (_, { content, userId, channelId }, { prisma, pubsub }) => {
+        sendChannelMessage: async (_, { content, type, userId, channelId }, { prisma, pubsub }) => {
             try {
                 const message = await prisma.channel_message.create({
                     data: {
                         content,
+                        type,
                         user: {
                             connect: {
                                 id: userId,
@@ -135,16 +146,16 @@ const resolvers = {
         },
         updateLastRead: async (_, { userId, channelId }, { prisma, pubsub }) => {
             const receipt = await prisma.channel_read_receipt.upsert({
-                where: { userId_channelId: { userId, channelId } },
+                where: { userId_channelId: { userId, channelId: Number(channelId) } },
                 update: { lastRead: new Date() },
-                create: { userId, channelId, lastRead: new Date() }
+                create: { userId, channelId: Number(channelId), lastRead: new Date() }
             });
 
             pubsub.publish('LAST_READ_UPDATED', {
                 lastReadUpdated: { userId, channelId, lastRead: new Date() }
             });
 
-            return receipt.lastRead;
+            return receipt;
         },
     },
     Subscription: {
