@@ -3,7 +3,9 @@ import gql from 'graphql-tag'
 const typeDefs = gql`
     type Query {
         getUserServers(userId: ID!): [Server!]
+        getServers: [Server!]!
         getServerChannels(serverId: ID!): [Channel!]
+        getChannelMessages(channelId: ID!, limit: Int, cursor: ID): [ChannelMessage!]
     }
 
     type Mutation {
@@ -11,6 +13,11 @@ const typeDefs = gql`
         createChannel(name: String!, serverId: ID!): Channel!
         sendDirectMessage(content: String!, senderId: ID!, receiverId: ID!): DirectMessage!
         sendChannelMessage(content: String!, userId: ID!, channelId: ID!): ChannelMessage!
+    }
+ 
+    type Subscription {
+        mintSyncMessageSent(channelId: ID!): ChannelMessage!
+        directMessageSent(receiverId: ID!): DirectMessage!
     }
     
     type DirectMessage {
@@ -34,6 +41,7 @@ const typeDefs = gql`
         name: String!
         server: Server!
         messages: [ChannelMessage!]
+        latestMessageTimestamp: DateTime
     }
 
     type ChannelMessage {

@@ -1,6 +1,5 @@
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import { PrismaClient } from "@prisma/client";
-import { withAccelerate } from '@prisma/extension-accelerate';
 import { ApolloServer } from "@apollo/server";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -18,11 +17,9 @@ const { json } = pkg;
 import { getUserFromToken } from "./utils/getUserFromToken.js"
 import mongoose from "mongoose"
 import {scheduledDailyJobs, scheduledHourlyJobs} from "../services/alice/index.js";
-import {scheduledRapidJobs, scheduledLiveJobs} from "../services/cronJobs.js";
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
 import Slack from '@slack/bolt'
 
-// export const prisma = new PrismaClient().$extends(withAccelerate())
 export const prisma = new PrismaClient()
 export const pubsub = new PubSub();
 export const slack = new Slack.App({
@@ -33,19 +30,14 @@ export const slack = new Slack.App({
 const main = async () => {
     dotenv.config();
 
-    // Create the schema, which will be used separately by ApolloServer and
-    // the WebSocket server.
     const schema = makeExecutableSchema({
         typeDefs,
         resolvers,
     });
 
-    // Create an Express app and HTTP server; we will attach both the WebSocket
-    // server and the ApolloServer to this HTTP server.
     const app = express();
     const httpServer = createServer(app);
 
-    // Create our WebSocket server using the HTTP server we just set up.
     const wsServer = new WebSocketServer({
         server: httpServer,
         path: "/graphql/subscriptions",
@@ -54,27 +46,20 @@ const main = async () => {
     const identifyFn = context => {
         return context.request.ip
     }
-    // Context parameters
 
     const getSubscriptionContext = async ( ctx ) => {
-        // ctx is the graphql-ws Context where connectionParams live
         if (ctx.connectionParams && ctx.connectionParams.authorization) {
             const { authorization } = ctx.connectionParams;
             const userInfo = await getUserFromToken(authorization)
             return { userInfo, prisma, pubsub, slack };
         }
-        // Otherwise let our resolvers know we don't have a current user
         return { userInfo: null, prisma, pubsub, slack };
     };
 
-    // Save the returned server's info so we can shutdown this server later
     const serverCleanup = useServer(
         {
             schema,
             context: (ctx) => {
-                // This will be run every time the client sends a subscription request
-                // Returning an object will add that information to our
-                // GraphQL context, which all of our resolvers have access to.
                 return getSubscriptionContext(ctx);
             },
         },
@@ -85,10 +70,7 @@ const main = async () => {
         schema,
         csrfPrevention: true,
         plugins: [
-            // Proper shutdown for the HTTP server.
             ApolloServerPluginDrainHttpServer({ httpServer }),
-
-            // Proper shutdown for the WebSocket server.
             {
                 async serverWillStart() {
                     return {
@@ -125,27 +107,21 @@ const main = async () => {
             },
         })
     );
-    // server.applyMiddleware({ app, path: "/graphql", cors: corsOptions });
 
-    // MongoDB Database
     mongoose.connect(process.env.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true })
         .then(() => console.log('Connected to MongoDB'))
         .catch((e) => console.log('Error connecting to MongoDB', e))
 
     const PORT = process.env.PORT || 8001
 
-    // Now that our HTTP server is fully set up, we can listen to it.
     await new Promise((resolve) =>
             httpServer.listen(PORT, () => {
-                // scheduledRapidJobs()
                 scheduledHourlyJobs()
                 scheduledDailyJobs()
-                // scheduledLiveJobs()
                 resolve()
             })
     );
     console.log(`Server is now running on http://localhost:${PORT}/graphql`);
-
 };
 
 main()
