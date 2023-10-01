@@ -634,6 +634,9 @@ model channel_read_receipt {
   lastRead  DateTime @default(now())
   channel   channel  @relation(fields: [channelId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+
+    @@id([userId, channelId])
+
 }
 
 // schemas/misc.prisma

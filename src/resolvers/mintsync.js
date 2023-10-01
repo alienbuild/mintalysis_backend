@@ -133,15 +133,19 @@ const resolvers = {
                 throw new Error('Unable to send direct message');
             }
         },
-        updateLastRead: async (_, { userId, channelId }, { prisma }) => {
-            const receipt = await prisma.channelReadReceipt.upsert({
+        updateLastRead: async (_, { userId, channelId }, { prisma, pubsub }) => {
+            const receipt = await prisma.channel_read_receipt.upsert({
                 where: { userId_channelId: { userId, channelId } },
                 update: { lastRead: new Date() },
                 create: { userId, channelId, lastRead: new Date() }
             });
+
+            pubsub.publish('LAST_READ_UPDATED', {
+                lastReadUpdated: { userId, channelId, lastRead: new Date() }
+            });
+
             return receipt.lastRead;
         },
-
     },
     Subscription: {
         mintSyncMessageSent: {
@@ -152,6 +156,9 @@ const resolvers = {
             subscribe: (_, { receiverId }, { pubsub }) =>
                 pubsub.asyncIterator([`DIRECT_MESSAGE_SENT_${receiverId}`]),
         },
+        lastReadUpdated: {
+            subscribe: (_, { LAST_READ_UPDATED }, { pubsub }) => pubsub.asyncIterator([LAST_READ_UPDATED])
+        }
     },
 }
 

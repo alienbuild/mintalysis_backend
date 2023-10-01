@@ -13,11 +13,25 @@ const typeDefs = gql`
         createChannel(name: String!, serverId: ID!): Channel!
         sendDirectMessage(content: String!, senderId: ID!, receiverId: ID!): DirectMessage!
         sendChannelMessage(content: String!, userId: ID!, channelId: ID!): ChannelMessage!
+        updateLastRead(userId: ID!, channelId: ID!): LastReadUpdateResponse!
+    }
+
+    type LastReadUpdateResponse {
+        success: Boolean!
+        message: String
+        lastRead: DateTime
     }
  
     type Subscription {
         mintSyncMessageSent(channelId: ID!): ChannelMessage!
         directMessageSent(receiverId: ID!): DirectMessage!
+        lastReadUpdated(userId: ID!): LastReadUpdate!
+    }
+
+    type LastReadUpdate {
+        userId: ID!
+        channelId: ID!
+        lastRead: DateTime!
     }
     
     type DirectMessage {
