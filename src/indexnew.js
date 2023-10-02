@@ -6,18 +6,18 @@ import { useServer } from "graphql-ws/lib/use/ws";
 import { makeExecutableSchema } from "@graphql-tools/schema";
 import mongoose from "mongoose";
 import cors from "cors";
-import pkg from 'body-parser';
-const { json } = pkg;
+import { json } from 'body-parser';
 import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
+
+import { CONFIG } from "./config";
+import { lastSeenMiddleware } from "./middlewares";
+import { prisma, pubsub, slack } from "./services";
 import userRoutes from './routes/userRoutes.js';
-import typeDefs from './typeDefs/index.js'
-import resolvers from "./resolvers/index.js"
-import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import typeDefs from './typeDefs';
+import resolvers from "./resolvers";
+import {ApolloServerPluginDrainHttpServer} from "@apollo/server/dist/esm/plugin/drainHttpServer/index.js";
 import {expressMiddleware} from "@apollo/server/express4";
 import {getUserFromToken} from "./utils/getUserFromToken.js";
-import {CONFIG} from "./config.js";
-import {lastSeenMiddleware} from "./middlewares.js";
-import {prisma, pubsub, slack} from "./services.js";
 
 const initializeMongoose = async () => {
     try {
@@ -43,15 +43,6 @@ const main = async () => {
         server: httpServer,
         path: "/graphql/subscriptions",
     });
-
-    const getSubscriptionContext = async ( ctx ) => {
-        if (ctx.connectionParams && ctx.connectionParams.authorization) {
-            const { authorization } = ctx.connectionParams;
-            const userInfo = await getUserFromToken(authorization)
-            return { userInfo, prisma, pubsub, slack };
-        }
-        return { userInfo: null, prisma, pubsub, slack };
-    };
 
     const serverCleanup = useServer(
         {

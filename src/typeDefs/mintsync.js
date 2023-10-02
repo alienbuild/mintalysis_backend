@@ -7,7 +7,8 @@ const typeDefs = gql`
         getServerChannels(serverId: ID!): [Channel!]
         getServerMembers(serverId: ID!): Server
         getChannelMessages(channelId: ID!, limit: Int, cursor: ID): [ChannelMessage!]
-        getChannel(channelId: ID!): Channel 
+        getChannel(channelId: ID!): Channel
+        getThreads(messageId: ID!): [Thread!]!
     }
 
     type Mutation {
@@ -16,18 +17,22 @@ const typeDefs = gql`
         sendDirectMessage(content: String!, senderId: ID!, receiverId: ID!): DirectMessage!
         sendChannelMessage(content: String!, type: MessageType! userId: ID!, channelId: ID!): ChannelMessage!
         updateLastRead(userId: ID!, channelId: ID!): LastReadUpdateResponse!
+        createThread(messageId: ID!, content: String!): Thread!
+        postToThread(threadId: ID!, content: String!): MessageThread!
+        createReply(threadId: Int!, content: String!): ChannelMessage!
     }
 
-    type LastReadUpdateResponse {
-        success: Boolean!
-        message: String
-        lastRead: DateTime
-    }
- 
     type Subscription {
         mintSyncMessageSent(channelId: ID!): ChannelMessage!
         directMessageSent(receiverId: ID!): DirectMessage!
         lastReadUpdated(userId: ID!): LastReadUpdate!
+        newReplyInThread(threadId: Int!): ChannelMessage!
+    }
+    
+    type LastReadUpdateResponse {
+        success: Boolean!
+        message: String
+        lastRead: DateTime
     }
 
     type LastReadUpdate {
@@ -67,6 +72,27 @@ const typeDefs = gql`
         user: User!
         channel: Channel!
         createdAt: String!
+    }
+
+    type Thread {
+        id: ID!
+        startingMessage: Message!
+        messages: [Message!]!
+        createdAt: String!
+        updatedAt: String!
+    }
+
+    type MessageThread {
+        id: ID!
+        content: String!
+        user: User!
+        createdAt: String!
+        updatedAt: String!
+    }
+
+    extend type Message {
+        createdThread: Thread
+        partOfThread: Thread
     }
 
     enum MessageType {

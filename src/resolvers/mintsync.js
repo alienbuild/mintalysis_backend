@@ -81,7 +81,10 @@ const resolvers = {
                 console.error('Error fetching channel:', error);
                 throw new Error('Unable to fetch channel');
             }
-        }
+        },
+        getThread: async (_, { id }, { prisma }) => {
+            return prisma.thread.findUnique({ where: { id: +id } });
+        },
     },
     Mutation: {
         createServer: async (_, {name, ownerId}, {prisma}) => {
@@ -168,6 +171,27 @@ const resolvers = {
 
             return receipt;
         },
+        createThread: async (_, { startingMessageId }, { prisma }) => {
+            return prisma.thread.create({
+                data: {
+                    startingMessage: {
+                        connect: { id: startingMessageId },
+                    },
+                },
+            });
+        },
+        createReply: async (_, { threadId, content }, { prisma, pubsub }) => {
+            const newReply = await prisma.channel_message.create({
+                data: {
+                    content,
+                    partOfThreadId: threadId,
+                },
+            });
+
+            pubsub.publish(NEW_REPLY_IN_THREAD, { newReplyInThread: newReply, threadId });
+
+            return newReply;
+        },
     },
     Subscription: {
         mintSyncMessageSent: {
@@ -180,11 +204,35 @@ const resolvers = {
         },
         lastReadUpdated: {
             subscribe: (_, { LAST_READ_UPDATED }, { pubsub }) => pubsub.asyncIterator([LAST_READ_UPDATED])
-        }
+        },
+        newReplyInThread: {
+            subscribe: (_, { threadId }, { pubsub }) => {
+                return pubsub.asyncIterator([NEW_REPLY_IN_THREAD + threadId]);
+            },
+            resolve: (payload) => {
+                return payload.newReplyInThread;
+            },
+        },
     },
     Server: {
         members: async (server, _, ___) => {
             return server.members || [];
+        },
+    },
+    Thread: {
+        startingMessage: async ({ id }, _, { prisma }) => {
+            return prisma.channel_message.findUnique({ where: { id } });
+        },
+        messages: async ({ id }, _, { prisma }) => {
+            return prisma.channel_message.findMany({ where: { partOfThreadId: id } });
+        },
+    },
+    Message: {
+        createdThread: async ({ id }, _, { prisma }) => {
+            return prisma.thread.findUnique({ where: { startingMessageId: id } });
+        },
+        partOfThread: async ({ partOfThreadId }, _, { prisma }) => {
+            return prisma.thread.findUnique({ where: { id: partOfThreadId } });
         },
     },
 }
