@@ -14,7 +14,7 @@ const typeDefs = gql`
     }
     
     type Mutation {
-        avatarUpload(file: Upload) : AvatarUploadResponse #Auth only
+        avatarUpload(file: Upload) : AvatarUploadResponse
         updateLastSeen(now: String) : Boolean
         followUser(userId: ID!) : Boolean
         unfollowUser(userId: ID!): Boolean
@@ -22,7 +22,7 @@ const typeDefs = gql`
     }
     
     type Subscription {
-        getOnlineUsers: [User]
+        userStatusChanged: User!
     }
     
     type UserAccessibilityPreferences {
@@ -59,7 +59,8 @@ const typeDefs = gql`
         username: String
         avatar: String
         email: String!
-        last_seen: DateTime 
+        last_seen: DateTime
+        status: String!
         createdAt: DateTime
         updatedAt: DateTime
         cover_image: String

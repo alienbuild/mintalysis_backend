@@ -42,6 +42,17 @@ const resolvers = {
                 throw new Error('Unable to fetch server channels');
             }
         },
+        getServerMembers: async (_, { serverId }, { prisma }) => {
+            try {
+                return prisma.server.findUnique({
+                    where: { id: Number(serverId) },
+                    include: { members: true },
+                });
+            } catch (error) {
+                console.error('Error fetching channel members:', error);
+                throw new Error('Unable to fetch channel members');
+            }
+        },
         getChannelMessages: async (_, { channelId, limit = 10, cursor }, { prisma }) => {
             console.log('channelId is: ', channelId)
             try {
@@ -170,6 +181,11 @@ const resolvers = {
         lastReadUpdated: {
             subscribe: (_, { LAST_READ_UPDATED }, { pubsub }) => pubsub.asyncIterator([LAST_READ_UPDATED])
         }
+    },
+    Server: {
+        members: async (server, _, ___) => {
+            return server.members || [];
+        },
     },
 }
 

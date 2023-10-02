@@ -5,6 +5,7 @@ const typeDefs = gql`
         getUserServers(userId: ID!): [Server!]
         getServers: [Server!]!
         getServerChannels(serverId: ID!): [Channel!]
+        getServerMembers(serverId: ID!): Server
         getChannelMessages(channelId: ID!, limit: Int, cursor: ID): [ChannelMessage!]
         getChannel(channelId: ID!): Channel 
     }

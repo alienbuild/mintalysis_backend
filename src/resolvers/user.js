@@ -386,9 +386,8 @@ const resolvers = {
         }
     },
     Subscription: {
-        getOnlineUsers: async (_, __, { userInfo, prisma }) => {
-
-            return []
+        userStatusChanged: {
+            subscribe: (_, __, { pubsub }) => pubsub.asyncIterator(['USER_STATUS_CHANGED'])
         }
     },
     User : {

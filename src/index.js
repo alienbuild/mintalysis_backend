@@ -35,7 +35,27 @@ const main = async () => {
         resolvers,
     });
 
+    const lastSeenMiddleware = async (req, res, next) => {
+        const token = req.headers.authorization;
+        if(token) {
+            try {
+                const userInfo = await getUserFromToken(token);
+                if(userInfo && userInfo.id) {
+                    await prisma.User.update({
+                        where: { id: userInfo.id },
+                        data: { last_seen: new Date() }
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating last_seen:', error);
+            }
+        }
+        next();
+    };
+
     const app = express();
+    app.use(lastSeenMiddleware);
+
     const httpServer = createServer(app);
 
     const wsServer = new WebSocketServer({
