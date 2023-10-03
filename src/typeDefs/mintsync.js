@@ -72,6 +72,8 @@ const typeDefs = gql`
         user: User!
         channel: Channel!
         createdAt: String!
+        partOfThread: Thread
+        createdThread: Thread
     }
 
     type Thread {

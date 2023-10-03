@@ -54,7 +54,6 @@ const resolvers = {
             }
         },
         getChannelMessages: async (_, { channelId, limit = 10, cursor }, { prisma }) => {
-            console.log('channelId is: ', channelId)
             try {
                 const where = {
                     channel_id: Number(channelId),
@@ -65,7 +64,11 @@ const resolvers = {
                     where,
                     take: limit,
                     orderBy: { id: 'desc' },
-                    include: { user: true }
+                    include: {
+                        user: true,
+                        partOfThread: true,
+                        createdThread: true
+                    }
                 });
             } catch (error) {
                 console.error('Error fetching channel messages:', error);
