@@ -83,7 +83,11 @@ const resolvers = {
             }
         },
         getThread: async (_, { id }, { prisma }) => {
-            return prisma.thread.findUnique({ where: { id: +id } });
+            try {
+                return prisma.thread.findUnique({ where: { id: +id } });
+            } catch (error) {
+                console.log('Unable to get thread: ', error)
+            }
         },
     },
     Mutation: {
@@ -171,14 +175,38 @@ const resolvers = {
 
             return receipt;
         },
-        createThread: async (_, { startingMessageId }, { prisma }) => {
-            return prisma.thread.create({
-                data: {
-                    startingMessage: {
-                        connect: { id: startingMessageId },
-                    },
-                },
-            });
+        createThread: async (_, { startingMessageId, channelId, content }, { prisma, userInfo }) => {
+            try {
+                const createdMessage = await prisma.$transaction([
+                    prisma.channel_message.create({
+                        data: {
+                            content,
+                            partOfThread: {
+                                create: {
+                                    startingMessageId: Number(startingMessageId),
+                                }
+                            },
+                            user: {
+                                connect: {
+                                    id: userInfo.sub,
+                                },
+                            },
+                            channel: {
+                                connect: {
+                                    id: Number(channelId),
+                                },
+                            },
+                        },
+                        include: {
+                            partOfThread: true
+                        }
+                    })
+                ]);
+                return createdMessage[0];
+            } catch (error) {
+                console.log('ERROR CREATING THREAD: ', error);
+                throw new Error('Error creating thread');
+            }
         },
         createReply: async (_, { threadId, content }, { prisma, pubsub }) => {
             const newReply = await prisma.channel_message.create({
@@ -188,7 +216,7 @@ const resolvers = {
                 },
             });
 
-            pubsub.publish(NEW_REPLY_IN_THREAD, { newReplyInThread: newReply, threadId });
+            pubsub.publish('NEW_REPLY_IN_THREAD', { newReplyInThread: newReply, threadId });
 
             return newReply;
         },
@@ -207,7 +235,7 @@ const resolvers = {
         },
         newReplyInThread: {
             subscribe: (_, { threadId }, { pubsub }) => {
-                return pubsub.asyncIterator([NEW_REPLY_IN_THREAD + threadId]);
+                return pubsub.asyncIterator(['NEW_REPLY_IN_THREAD' + threadId]);
             },
             resolve: (payload) => {
                 return payload.newReplyInThread;

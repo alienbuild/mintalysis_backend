@@ -8,7 +8,7 @@ const typeDefs = gql`
         getServerMembers(serverId: ID!): Server
         getChannelMessages(channelId: ID!, limit: Int, cursor: ID): [ChannelMessage!]
         getChannel(channelId: ID!): Channel
-        getThreads(messageId: ID!): [Thread!]!
+        getThread(id: ID!): [Thread!]!
     }
 
     type Mutation {
@@ -17,7 +17,7 @@ const typeDefs = gql`
         sendDirectMessage(content: String!, senderId: ID!, receiverId: ID!): DirectMessage!
         sendChannelMessage(content: String!, type: MessageType! userId: ID!, channelId: ID!): ChannelMessage!
         updateLastRead(userId: ID!, channelId: ID!): LastReadUpdateResponse!
-        createThread(messageId: ID!, content: String!): Thread!
+        createThread(startingMessageId: ID!, channelId: ID!, content: String!): Thread!
         postToThread(threadId: ID!, content: String!): MessageThread!
         createReply(threadId: Int!, content: String!): ChannelMessage!
     }
@@ -76,8 +76,8 @@ const typeDefs = gql`
 
     type Thread {
         id: ID!
-        startingMessage: Message!
-        messages: [Message!]!
+        startingMessage: ChannelMessage!
+        messages: [ChannelMessage!]!
         createdAt: String!
         updatedAt: String!
     }

@@ -64,7 +64,6 @@ const typeDefs = gql`
         createdAt: DateTime
         updatedAt: DateTime
         cover_image: String
-        ecomiwiki_user: Boolean
         activated: Boolean
         stripe_customer_id: String
         profile: Profile
