@@ -6,13 +6,15 @@ const typeDefs = gql`
         getServers: [Server!]!
         getServerChannels(serverId: ID!): [Channel!]
         getServerMembers(serverId: ID!): Server
+        getAllServerMembers(serverId: ID!, limit: Int, offset: Int): ServerMembersConnection!
+        getOnlineServerMembers(serverId: ID!): [User!]!
         getChannelMessages(channelId: ID!, limit: Int, cursor: ID): [ChannelMessage!]
         getChannel(channelId: ID!): Channel
         getThread(id: ID!): [Thread!]!
     }
 
     type Mutation {
-        createServer(name: String!, ownerId: ID!): Server!
+        createServer(name: String!, ownerId: ID!, description: String, icon: Upload): Server!
         createChannel(name: String!, serverId: ID!): Channel!
         sendDirectMessage(content: String!, senderId: ID!, receiverId: ID!): DirectMessage!
         sendChannelMessage(content: String!, type: MessageType! userId: ID!, channelId: ID!): ChannelMessage!
@@ -27,6 +29,11 @@ const typeDefs = gql`
         directMessageSent(receiverId: ID!): DirectMessage!
         lastReadUpdated(userId: ID!): LastReadUpdate!
         newReplyInThread(threadId: Int!): ChannelMessage!
+    }
+    
+    type ServerMembersConnection {
+        members: [User]!
+        totalCount: Int!
     }
     
     type LastReadUpdateResponse {
@@ -52,6 +59,9 @@ const typeDefs = gql`
     type Server {
         id: ID!
         name: String!
+        slug: String
+        icon: String
+        description: String
         owner: User!
         members: [User!]
         channels: [Channel!]

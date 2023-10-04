@@ -1,3 +1,6 @@
+import {slugify} from "../utils/index.js";
+import * as cloudinary from "cloudinary";
+
 const resolvers = {
     Query: {
         getUserServers: async (_, { userId }, { prisma }) => {
@@ -42,15 +45,113 @@ const resolvers = {
                 throw new Error('Unable to fetch server channels');
             }
         },
-        getServerMembers: async (_, { serverId }, { prisma }) => {
+        getServerMembers: async (_, { serverId, limit = 50}, { prisma }) => {
             try {
                 return prisma.server.findUnique({
-                    where: { id: Number(serverId) },
-                    include: { members: true },
+                    where: {
+                        id: Number(serverId)
+                    },
+                    select: {
+                        id: true,
+                        ownerId: true,
+                        owner: {
+                            select:{
+                                id: true
+                            }
+                        },
+                        members: {
+                            take: limit,
+                            select: {
+                                id: true,
+                                username: true,
+                                avatar: true,
+                                status: true
+                            },
+                        },
+                    },
                 });
             } catch (error) {
                 console.error('Error fetching channel members:', error);
                 throw new Error('Unable to fetch channel members');
+            }
+        },
+        getAllServerMembers: async (_, { serverId, limit = 50, offset = 0 }, { prisma }) => {
+            try {
+                const serverExists = await prisma.server.findUnique({
+                    where: { id: Number(serverId) },
+                    select: { id: true }
+                });
+
+                if (!serverExists) throw new Error('Server not found');
+
+                const [usersInServer, totalCount] = await prisma.$transaction([
+                    prisma.user.findMany({
+                        where: {
+                            servers: {
+                                some: {
+                                    id: Number(serverId)
+                                }
+                            }
+                        },
+                        take: limit,
+                        skip: offset,
+                    }),
+                    prisma.user.count({
+                        where: {
+                            servers: {
+                                some: {
+                                    id: Number(serverId)
+                                }
+                            }
+                        }
+                    })
+                ]);
+
+                // const usersInServer = await prisma.user.findMany({
+                //     where: {
+                //         servers: {
+                //             some: {
+                //                 id: Number(serverId)
+                //             }
+                //         }
+                //     },
+                //     take: limit,
+                //     skip: offset,
+                // });
+
+                if (!usersInServer.length) throw new Error('No members found for this server');
+
+                return {
+                    members: usersInServer,
+                    totalCount
+                };
+
+            } catch (error) {
+                console.error('Error fetching server members:', error);
+                throw new Error('Unable to fetch server members');
+            }
+        },
+        getOnlineServerMembers: async (_, { serverId }, { prisma }) => {
+            try {
+                return await prisma.User.findMany({
+                    where: {
+                        servers: {
+                            some: {
+                                id: Number(serverId),
+                            },
+                        },
+                        status: 'ONLINE',
+                    },
+                    select: {
+                        id: true,
+                        username: true,
+                        avatar: true,
+                        status: true,
+                    },
+                });
+            } catch (error) {
+                console.error('Error fetching online server members:', error);
+                throw new Error('Unable to fetch online server members');
             }
         },
         getChannelMessages: async (_, { channelId, limit = 10, cursor }, { prisma }) => {
@@ -94,17 +195,48 @@ const resolvers = {
         },
     },
     Mutation: {
-        createServer: async (_, {name, ownerId}, {prisma}) => {
+        createServer: async (_, { name, ownerId, description, icon }, { prisma }) => {
             try {
+                let imageUrl = null;
+
+                const imageExists = await icon.file;
+                if (imageExists) {
+                    try {
+                        const result = await new Promise((resolve, reject) => {
+                            imageExists.createReadStream().pipe(
+                                cloudinary.v2.uploader.upload_stream(
+                                    {
+                                        transformation: [
+                                            { width: 250, height: 250, crop: "fill", gravity: "face" }
+                                        ]
+                                    },
+                                    (error, result) => {
+                                        if (error) reject(error);
+                                        resolve(result);
+                                    }
+                                )
+                            );
+                        });
+                        imageUrl = result.secure_url;
+                    } catch (error) {
+                        console.error('Error uploading image to Cloudinary:', error);
+                        throw new Error('Unable to upload image');
+                    }
+                }
+
                 return await prisma.server.create({
                     data: {
                         name,
                         ownerId,
+                        description,
+                        slug: slugify(name),
+                        icon: imageUrl,
                         members: {
                             connect: { id: ownerId }
                         }
                     }
                 });
+
             } catch (error) {
                 console.error('Error creating server:', error);
                 throw new Error('Unable to create server');

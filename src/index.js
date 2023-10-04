@@ -18,6 +18,7 @@ import {getUserFromToken} from "./utils/getUserFromToken.js";
 import {CONFIG} from "./config.js";
 import {lastSeenMiddleware} from "./middlewares.js";
 import {prisma, pubsub, slack} from "./services.js";
+import {userLoader} from "./dataLoaders.js";
 
 const initializeMongoose = async () => {
     try {
@@ -71,7 +72,8 @@ const main = async () => {
                     ...ctx.connectionParams,
                     prisma,
                     pubsub,
-                    slack
+                    slack,
+                    userLoader: userLoader()
                 };
             },
             onDisconnect: async (ctx) => {
@@ -111,7 +113,15 @@ const main = async () => {
                 const ipAddress = req.header('x-forwarded-for') || req.socket.remoteAddress
                 const userAgent = req.headers["user-agent"]
                 const userInfo = await getUserFromToken(req.headers.authorization)
-                return { ipAddress, userAgent, userInfo, prisma, pubsub, slack };
+                return {
+                    ipAddress,
+                    userAgent,
+                    userInfo,
+                    prisma,
+                    pubsub,
+                    slack,
+                    userLoader: userLoader()
+                };
             },
         })
     );
