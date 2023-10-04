@@ -1,14 +1,6 @@
 import gql from 'graphql-tag'
 
 const typeDefs = gql`
-    type Message {
-        id: String
-        sender: User
-        body: String
-        createdAt: DateTime
-        type: String
-        marketplace_offer_id: String
-    }
 
     type Query {
         messages(conversationId: String) : [Message] 
@@ -20,6 +12,15 @@ const typeDefs = gql`
     
     type Subscription {
         messageSent(conversationId: String): Message
+    }
+
+    type Message {
+        id: String
+        sender: User
+        body: String
+        createdAt: DateTime
+        type: String
+        marketplace_offer_id: String
     }
     
 `

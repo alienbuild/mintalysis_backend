@@ -19,6 +19,7 @@ import marketTypeDefs from './marketplace.js'
 import notificationsTypeDefs from './notifications.js'
 import articlesTypeDefs from './articles.js'
 import feedbackTypeDefs from './feedback.js'
+import mintsyncTypeDefs from './mintsync.js'
 
 const typeDefs = [
     scalarDefs,
@@ -41,7 +42,8 @@ const typeDefs = [
     marketTypeDefs,
     notificationsTypeDefs,
     articlesTypeDefs,
-    feedbackTypeDefs
+    feedbackTypeDefs,
+    mintsyncTypeDefs
 ]
 
 export default typeDefs
