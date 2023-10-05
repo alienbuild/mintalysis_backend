@@ -28,7 +28,7 @@ const typeDefs = gql`
         mintSyncMessageSent(channelId: ID!): ChannelMessage!
         directMessageSent(receiverId: ID!): DirectMessage!
         lastReadUpdated(userId: ID!): LastReadUpdate!
-        newReplyInThread(threadId: Int!): ChannelMessage!
+        newReplyInThread(threadId: Int!): ChannelMessage! 
     }
     
     type ServerMembersConnection {
