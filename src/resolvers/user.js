@@ -251,6 +251,16 @@ const resolvers = {
             }
 
         },
+        checkUsername: async (_, { username }, { userInfo, prisma }) => {
+            console.log(`Checking if username: ${username} is available.`)
+            const user = await prisma.user.findUnique({
+                where: {
+                    username
+                }
+            });
+
+            return user === null
+        }
     },
     Mutation: {
         avatarUpload: async (_, { file }, { userInfo, prisma }) => {
@@ -383,6 +393,11 @@ const resolvers = {
                 throw new GraphQLError('Unable to save user accessibility preferences.')
             }
 
+        },
+        updateUsername: async (_, { username }, { userInfo, prisma }) => {
+
+            console.log('update is: ', username)
+            return true
         }
     },
     Subscription: {

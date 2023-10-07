@@ -10,11 +10,9 @@ const typeDefs = gql`
     }
 
     input VaultImportInput {
-        username: String
         edition: Int
         collectible_id: String
         project_id: String
-        kraken: Boolean
     }
 
     input MessageInput {
@@ -74,7 +72,7 @@ const typeDefs = gql`
         cursor_option: String
         font_size: Float
     }
-    
+
     input MarketProductInput {
         id: String
         title: String!
