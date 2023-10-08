@@ -252,7 +252,6 @@ const resolvers = {
 
         },
         checkUsername: async (_, { username }, { userInfo, prisma }) => {
-            console.log(`Checking if username: ${username} is available.`)
             const user = await prisma.user.findUnique({
                 where: {
                     username
@@ -260,6 +259,27 @@ const resolvers = {
             });
 
             return user === null
+        },
+        getVerificationCode: async (_, { collectibleId, edition }, { userInfo, prisma }) => {
+
+            try {
+                const verificationCode = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
+
+                await prisma.user.update({
+                    where: {
+                        id: userInfo.sub
+                    },
+                    data: {
+                        verification_code: verificationCode
+                    }
+                })
+
+                return verificationCode
+
+            } catch (e) {
+                throw new GraphQLError('Unable to get or save verification code')
+            }
+
         }
     },
     Mutation: {
