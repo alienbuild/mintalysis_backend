@@ -124,6 +124,7 @@ const typeDefs = gql`
     type VeveVaultImportPayload {
         wallet_address: String!
         token_count: Int!
+        claimed: Boolean
     }
     
     type VeveVaultImportSubcriptionPayload {

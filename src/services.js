@@ -6,9 +6,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 // Initialize Prisma
-export const prisma = new PrismaClient({
-    log: ['query', 'error', 'info', 'warn'],
-});
+export const prisma = new PrismaClient();
 
 // Initialize PubSub
 export const pubsub = new PubSub();

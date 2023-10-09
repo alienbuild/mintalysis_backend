@@ -260,25 +260,55 @@ const resolvers = {
 
             return user === null
         },
-        getVerificationCode: async (_, { collectibleId, edition }, { userInfo, prisma }) => {
+        getVeveVerificationCode: async (_, { collectibleId, edition }, { userInfo, prisma }) => {
 
             try {
+                if (!userInfo.sub) throw new GraphQLError('Unauthorised');
+
+                // Check if a veve_profile already exists for the user
+                let userVeveProfile = await prisma.veve_profile.findUnique({
+                    where: {
+                        userId: userInfo.sub
+                    }
+                });
+
+                // If veve_profile exists and has a verification code, return it
+                if (userVeveProfile && userVeveProfile.verification_code) {
+                    console.log('Existing veve_profile: ', userVeveProfile);
+                    return userVeveProfile.verification_code;
+                }
+
                 const verificationCode = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
 
-                await prisma.user.update({
-                    where: {
-                        id: userInfo.sub
-                    },
-                    data: {
-                        verification_code: verificationCode
-                    }
-                })
+                // If no veve_profile exists, create one
+                if (!userVeveProfile) {
+                    userVeveProfile = await prisma.veve_profile.create({
+                        data: {
+                            userId: userInfo.sub,
+                            verification_code: verificationCode
+                        }
+                    });
+                }
+                // If veve_profile exists but has no verification code, update it
+                else {
+                    userVeveProfile = await prisma.veve_profile.update({
+                        where: {
+                            userId: userInfo.sub
+                        },
+                        data: {
+                            verification_code: verificationCode
+                        }
+                    });
+                }
 
-                return verificationCode
+                console.log('userVeveProfile is: ', userVeveProfile);
+
+                return verificationCode;
 
             } catch (e) {
-                throw new GraphQLError('Unable to get or save verification code')
+                throw new GraphQLError('Unable to get or save verification code');
             }
+
 
         }
     },

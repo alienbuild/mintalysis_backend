@@ -671,22 +671,28 @@ const resolvers = {
                     }
                 })
 
-                const userHasExisitingWallet = await prisma.veve_wallets.count({
+                // const userHasExisitingWallet = await prisma.veve_wallets.count({
+                //     where: {
+                //         user_id: userInfo.sub
+                //     }
+                // })
+                //
+                // if (userHasExisitingWallet > 0){
+                //     await prisma.veve_wallets.updateMany({
+                //         where: {
+                //             user_id: userInfo.sub
+                //         },
+                //         data: {
+                //             user_id: null
+                //         }
+                //     })
+                // }
+
+                const tokens = await prisma.veve_tokens.count({
                     where: {
-                        user_id: userInfo.sub
+                        wallet_id: wallet_address
                     }
                 })
-
-                if (userHasExisitingWallet > 0){
-                    await prisma.veve_wallets.updateMany({
-                        where: {
-                            user_id: userInfo.sub
-                        },
-                        data: {
-                            user_id: null
-                        }
-                    })
-                }
 
                 if (!walletClaimed.user_id){
                     await prisma.veve_wallets.update({
@@ -698,24 +704,6 @@ const resolvers = {
                         }
                     })
 
-                    const tokens = await prisma.veve_tokens.count({
-                        where: {
-                            wallet_id: wallet_address
-                        }
-                    })
-
-                    // await prisma.profile.update({
-                    //     data: {
-                    //         onboarded: true,
-                    //         veve_username: username,
-                    //         veve_wallet_imported: true,
-                    //         veve_wallet_address: wallet_address
-                    //     },
-                    //     where: {
-                    //         user_id: userId
-                    //     }
-                    // })
-
                     await pubsub.publish('VEVE_VAULT_IMPORT', {
                         veveVaultImport: {
                             user_id: userInfo.sub,
@@ -726,11 +714,16 @@ const resolvers = {
 
                     return {
                         "wallet_address": wallet_address,
-                        "token_count": tokens
+                        "token_count": tokens,
+                        "claimed": false
                     }
 
                 } else {
-                    throw new GraphQLError('Wallet is already claimed.')
+                    return {
+                        "wallet_address": wallet_address,
+                        "token_count": tokens,
+                        "claimed": true
+                    }
                 }
             } catch (e) {
                 console.log('Failed to get token: ', e)

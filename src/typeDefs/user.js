@@ -12,7 +12,7 @@ const typeDefs = gql`
         getUserProjects(userId: ID!): Boolean
         getUserAccessibilityPreferences: UserAccessibilityPreferences
         checkUsername(username: String!): Boolean
-        getVerificationCode: Int!
+        getVeveVerificationCode: Int!
     }
     
     type Mutation {
