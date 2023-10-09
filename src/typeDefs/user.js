@@ -11,10 +11,13 @@ const typeDefs = gql`
         getUserCommunities(userId: String!): [Community]
         getUserProjects(userId: ID!): Boolean
         getUserAccessibilityPreferences: UserAccessibilityPreferences
+        checkUsername(username: String!): Boolean
+        getVeveVerificationCode: Int!
     }
     
     type Mutation {
         avatarUpload(file: Upload) : AvatarUploadResponse
+        updateUsername(username: String!): Boolean
         updateLastSeen(now: String) : Boolean
         followUser(userId: ID!) : Boolean
         unfollowUser(userId: ID!): Boolean

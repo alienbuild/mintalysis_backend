@@ -636,69 +636,57 @@ const resolvers = {
     Mutation: {
         veveVaultImport: async (_, { payload }, { userInfo, prisma, pubsub }) => {
 
-            const { userId } = userInfo
+            try {
 
-            const { username, edition, collectible_id } = payload
-
-            const token = await prisma.veve_tokens.findFirst({
-                where: {
-                    collectible_id: collectible_id,
-                    edition: edition
-                },
-                select: {
-                    token_id: true,
-                },
-            })
-
-            const { token_id } = token
-
-            const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
-            const imxOwner = await getImxOwner.json()
-            const wallet_address = await imxOwner.user
-
-            await pubsub.publish('VEVE_VAULT_IMPORT', {
-                veveVaultImport: {
-                    user_id: userInfo.sub,
-                    message: `Wallet found: ${truncate(wallet_address, 20)}`,
-                    complete: false
-                }
-            })
-
-            const walletClaimed = await prisma.veve_wallets.findUnique({
-                where: {
-                    id: wallet_address,
-                },
-                select: {
-                    user_id: true
-                }
-            })
-
-            const userHasExisitingWallet = await prisma.veve_wallets.count({
-                where: {
-                    user_id: userId
-                }
-            })
-
-            if (userHasExisitingWallet > 0){
-                await prisma.veve_wallets.updateMany({
+                const token = await prisma.veve_tokens.findFirst({
                     where: {
-                        user_id: userId
+                        collectible_id: payload.collectible_id,
+                        edition: payload.edition
                     },
-                    data: {
-                        user_id: null
+                    select: {
+                        token_id: true,
+                    },
+                })
+
+                const { token_id } = token
+
+                const getImxOwner = await fetch(`https://api.x.immutable.com/v1/assets/0xa7aefead2f25972d80516628417ac46b3f2604af/${token_id}`)
+                const imxOwner = await getImxOwner.json()
+                const wallet_address = await imxOwner.user
+
+                await pubsub.publish('VEVE_VAULT_IMPORT', {
+                    veveVaultImport: {
+                        user_id: userInfo.sub,
+                        message: `Wallet found: ${truncate(wallet_address, 20)}`,
+                        complete: false
                     }
                 })
-            }
 
-            if (!walletClaimed.user_id){
-                await prisma.veve_wallets.update({
+                const walletClaimed = await prisma.veve_wallets.findUnique({
                     where: {
-                        id: wallet_address
+                        id: wallet_address,
                     },
-                    data: {
-                        user_id: userId
+                    select: {
+                        user_id: true
                     }
                 })
+
+                // const userHasExisitingWallet = await prisma.veve_wallets.count({
+                //     where: {
+                //         user_id: userInfo.sub
+                //     }
+                // })
+                //
+                // if (userHasExisitingWallet > 0){
+                //     await prisma.veve_wallets.updateMany({
+                //         where: {
+                //             user_id: userInfo.sub
+                //         },
+                //         data: {
+                //             user_id: null
+                //         }
+                //     })
+                // }
 
                 const tokens = await prisma.veve_tokens.count({
                     where: {
@@ -706,33 +694,39 @@ const resolvers = {
                     }
                 })
 
-                // await prisma.profile.update({
-                //     data: {
-                //         onboarded: true,
-                //         veve_username: username,
-                //         veve_wallet_imported: true,
-                //         veve_wallet_address: wallet_address
-                //     },
-                //     where: {
-                //         user_id: userId
-                //     }
-                // })
+                if (!walletClaimed.user_id){
+                    await prisma.veve_wallets.update({
+                        where: {
+                            id: wallet_address
+                        },
+                        data: {
+                            user_id: userInfo.sub
+                        }
+                    })
 
-                await pubsub.publish('VEVE_VAULT_IMPORT', {
-                    veveVaultImport: {
-                        user_id: userInfo.sub,
-                        message: `Your vault has been successfully imported, thank you.`,
-                        complete: true
+                    await pubsub.publish('VEVE_VAULT_IMPORT', {
+                        veveVaultImport: {
+                            user_id: userInfo.sub,
+                            message: `Your vault has been successfully imported, thank you.`,
+                            complete: true
+                        }
+                    })
+
+                    return {
+                        "wallet_address": wallet_address,
+                        "token_count": tokens,
+                        "claimed": false
                     }
-                })
 
-                return {
-                    "wallet_address": wallet_address,
-                    "token_count": tokens
+                } else {
+                    return {
+                        "wallet_address": wallet_address,
+                        "token_count": tokens,
+                        "claimed": true
+                    }
                 }
-
-            } else {
-                throw new GraphQLError('Wallet is already claimed.')
+            } catch (e) {
+                console.log('Failed to get token: ', e)
             }
 
         },
