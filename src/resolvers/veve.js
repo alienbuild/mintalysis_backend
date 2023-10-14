@@ -632,6 +632,66 @@ const resolvers = {
             }
 
         },
+        getVeveVerificationCode: async (_, { collectibleId, edition }, { userInfo, prisma }) => {
+
+            console.log('collectible is: ', collectibleId)
+            console.log('edition is: ', edition)
+
+            try {
+                if (!userInfo.sub) throw new GraphQLError('Unauthorised');
+
+                // Check if a veve_profile already exists for the user
+                let userVeveProfile = await prisma.veve_profile.findUnique({
+                    where: {
+                        userId: userInfo.sub
+                    }
+                });
+
+                // If veve_profile exists and has a verification code, return it
+                if (userVeveProfile && userVeveProfile.verification_code) {
+                    console.log('Existing veve_profile: ', userVeveProfile);
+                    return userVeveProfile.verification_code;
+                }
+
+                const verificationCode = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
+
+                // If no veve_profile exists, create one
+                if (!userVeveProfile) {
+                    userVeveProfile = await prisma.veve_profile.create({
+                        data: {
+                            userId: userInfo.sub,
+                            verification_code: verificationCode,
+                            collectible_id: collectibleId,
+                            edition: Number(edition)
+                        }
+                    });
+                }
+                // If veve_profile exists but has no verification code, update it
+                else {
+                    userVeveProfile = await prisma.veve_profile.update({
+                        where: {
+                            userId: userInfo.sub
+                        },
+                        data: {
+                            verification_code: verificationCode,
+                            collectible_id: collectibleId,
+                            edition: Number(edition)
+                        }
+                    });
+                }
+
+                return verificationCode;
+
+            } catch (e) {
+                throw new GraphQLError('Unable to get or save verification code');
+            }
+
+        },
+        veveRequestVerify: async (_, __, { userInfo, prisma }) => {
+            console.log('Verifying the user...', userInfo.sub)
+
+            return true
+        }
     },
     Mutation: {
         veveVaultImport: async (_, { payload }, { userInfo, prisma, pubsub }) => {
@@ -759,7 +819,7 @@ const resolvers = {
                 return false
             }
 
-        }
+        },
     },
     Subscription: {
         veveVaultImport: {
