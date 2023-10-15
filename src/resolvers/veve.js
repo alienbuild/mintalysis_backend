@@ -5,6 +5,7 @@ import {GraphQLError} from "graphql"
 import fetch from "node-fetch"
 import {setTimeout} from "node:timers/promises"
 import {decodeCursor, encodeCursor, truncate} from "../utils/index.js"
+import {VEVE_VERIFY_USER} from "../../services/projects/veve/VEVE_VERIFY_USER.js";
 
 let tokenItems = []
 let fullCapture = false
@@ -701,9 +702,7 @@ const resolvers = {
                     }
                 })
 
-                console.log('verify meta is: ', verifyMeta)
-
-                return true
+                return await VEVE_VERIFY_USER(prisma, verifyMeta)
             } catch (e) {
                 throw new GraphQLError('Unable to verify veve profile')
             }
