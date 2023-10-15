@@ -17,19 +17,25 @@ const typeDefs = gql`
         getUserMagicSet(seriesId: String) : [MagicMintSet]
         getUsersVeveTokens(grouped: Boolean, token_id: ID, editionNumber: Int, type: String, userId: String, search: String, pagingOptions: pagingOptions, collectible_id: String, unique_cover_id: String) : TokensConnection
         tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
-        getVeveVerificationCode(collectibleId: String!, edition: Int!): Int!
-        veveRequestVerify: Boolean!
+        getVeveVerificationCode(collectibleId: String!, edition: Int!): VerificationCode!
     }
     
     type Mutation {
         veveVaultImport(payload: VaultImportInput) : VeveVaultImportPayload! #Auth only
         updateLastSeen(last_seen: String) : Boolean
         addToWatchlist(collectibleId: String, uniqueCoverId: String, type: String!) : Boolean
+        veveRequestVerify: Boolean!
     }
     
     type Subscription {
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
+    }
+    
+    type VerificationCode {
+        code: Int!
+        collectible_id: String!
+        edition: Int!
     }
     
     type ComicWatchlistConnection {
