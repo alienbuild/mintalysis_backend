@@ -1,4 +1,4 @@
-// Test verifiction code = 5646546
+import {GraphQLError} from "graphql";
 
 const verifyMarketListingQuery = (prisma, collectible_id, edition) => {
     return `query marketListingFromCollectibleType {
@@ -22,7 +22,7 @@ const verifyMarketListingQuery = (prisma, collectible_id, edition) => {
 }`
 }
 
-export const VEVE_VERIFY_USER = async (meta) => {
+export const VEVE_VERIFY_USER = async (prisma, meta) => {
     try {
         const { userId, verification_code, collectible_id, edition } = meta;
 
@@ -44,23 +44,26 @@ export const VEVE_VERIFY_USER = async (meta) => {
         const listing_data = await response.json();
 
         const listingEdges = listing_data?.data?.marketListingFromCollectibleType?.edges[0];
-        if (!listingEdges) {
-            return false;
-        }
+        if (!listingEdges) return false;
 
         const listing = listingEdges.node;
         if (listing.issueNumber === Number(edition) && listing.price === verification_code.toString()) {
 
-            await prisma.veve_profile.update({
-                where: {
-                    userId
-                },
-                data: {
-                    verified: true
-                }
-            })
+            try {
+                await prisma.veve_profile.update({
+                    where: {
+                        userId
+                    },
+                    data: {
+                        verified: true
+                    }
+                })
 
-            return true;
+                return true;
+            } catch (e) {
+                throw new GraphQLError('Unable to save the user verification')
+            }
+
         } else {
             return false;
         }
