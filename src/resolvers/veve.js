@@ -744,23 +744,6 @@ const resolvers = {
                     }
                 })
 
-                // const userHasExisitingWallet = await prisma.veve_wallets.count({
-                //     where: {
-                //         user_id: userInfo.sub
-                //     }
-                // })
-                //
-                // if (userHasExisitingWallet > 0){
-                //     await prisma.veve_wallets.updateMany({
-                //         where: {
-                //             user_id: userInfo.sub
-                //         },
-                //         data: {
-                //             user_id: null
-                //         }
-                //     })
-                // }
-
                 const tokens = await prisma.veve_tokens.count({
                     where: {
                         wallet_id: wallet_address
@@ -774,6 +757,15 @@ const resolvers = {
                         },
                         data: {
                             user_id: userInfo.sub
+                        }
+                    })
+
+                    await prisma.veve_profile.update({
+                        where: {
+                            userId: userInfo.sub
+                        },
+                        data: {
+                            onboarded: true
                         }
                     })
 
@@ -800,6 +792,7 @@ const resolvers = {
                 }
             } catch (e) {
                 console.log('Failed to get token: ', e)
+                throw new GraphQLError('That token has not yet been minted.')
             }
 
         },

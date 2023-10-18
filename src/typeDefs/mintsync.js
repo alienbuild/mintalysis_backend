@@ -4,7 +4,7 @@ const typeDefs = gql`
     type Query {
         getUserServers(userId: ID!): [Server!]
         getServers: [Server!]!
-        getServerChannels(serverId: ID!): [Channel!]
+        getServerChannels(type: String, serverId: ID!): [Channel!]
         getServerMembers(serverId: ID!): Server
         getAllServerMembers(serverId: ID!, limit: Int, offset: Int): ServerMembersConnection!
         getOnlineServerMembers(serverId: ID!): [User!]!

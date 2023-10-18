@@ -19,10 +19,12 @@ const resolvers = {
                 throw new Error('Unable to fetch servers');
             }
         },
-        getServerChannels: async (_, { serverId }, { prisma }) => {
+        getServerChannels: async (_, { type, serverId }, { prisma }) => {
             try {
-                const channels = await prisma.channel.findMany({
-                    where: { server_id: Number(serverId) },
+                const channels = await prisma.server.findUnique({
+                    where: { slug: serverId },
+                }).channels({
+                    where: { type },
                     include: {
                         messages: {
                             take: 1,
@@ -38,7 +40,7 @@ const resolvers = {
 
                 return channels.map(channel => ({
                     ...channel,
-                    latestMessageTimestamp: channel.messages[0]?.createdAt
+                    latestMessageTimestamp: channel.messages[0]?.createdAt || null
                 }));
             } catch (error) {
                 console.error('Error fetching server channels:', error);
