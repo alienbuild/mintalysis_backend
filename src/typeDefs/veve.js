@@ -16,6 +16,7 @@ const typeDefs = gql`
         getComicWatchlist(pagingOptions: pagingOptions): ComicWatchlistConnection
         getUserMagicSet(seriesId: String) : [MagicMintSet]
         getUsersVeveTokens(grouped: Boolean, token_id: ID, editionNumber: Int, type: String, userId: String, search: String, pagingOptions: pagingOptions, collectible_id: String, unique_cover_id: String) : TokensConnection
+        getUserTokens: Boolean
         tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
         getVeveVerificationCode(collectibleId: String!, edition: Int!): VerificationCode!
     }

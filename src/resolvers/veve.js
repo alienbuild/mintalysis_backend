@@ -426,54 +426,98 @@ const resolvers = {
 
         },
         getUsersVeveTokens: async (_, { token_id, grouped, type, search, pagingOptions, editionNumber, collectible_id, unique_cover_id }, { userInfo, prisma }) => {
-            if (!userInfo) throw new GraphQLError('Not authorised')
+            if (!userInfo) throw new GraphQLError('Not authorized');
 
-            let limit = 25
-            if (pagingOptions?.limit) limit = pagingOptions.limit
+            try {
+                const limit = pagingOptions?.limit || 25;
 
-            const user_wallet = await prisma.veve_wallets.findFirst({
-                where: {
-                    user_id: userInfo.sub
-                },
-                select: {
-                    id: true
+                const user_wallet = await prisma.veve_wallets.findFirst({
+                    where: {
+                        user_id: userInfo.sub
+                    },
+                    select: {
+                        id: true
+                    }
+                });
+
+                const whereParams = {
+                    wallet_id: user_wallet.id
+                };
+
+                if (search) {
+                    whereParams.name = { contains: search };
                 }
-            })
-            let queryParams = { take: limit }
-            let whereParams = { wallet_id: user_wallet.id }
+                if (editionNumber) {
+                    whereParams.edition = editionNumber;
+                }
+                if (collectible_id) {
+                    whereParams.collectible_id = collectible_id;
+                }
+                if (unique_cover_id) {
+                    whereParams.unique_cover_id = unique_cover_id;
+                }
 
-            if (pagingOptions?.after) queryParams = { ...queryParams, skip: 1, cursor: { token_id: Number(decodeCursor(pagingOptions.after)) } }
-            if (search) whereParams = { ...whereParams, name: { contains: search } }
+                let queryParams = {
+                    take: limit,
+                    where: whereParams
+                };
 
-            if (grouped) queryParams = { ...queryParams, distinct: ['collectible_id', 'unique_cover_id']}
-            if (editionNumber) whereParams = { ...whereParams, edition: editionNumber }
-            if (collectible_id) whereParams = { ...whereParams, collectible_id: collectible_id }
-            if (unique_cover_id) whereParams = { ...whereParams, unique_cover_id: unique_cover_id }
+                if (pagingOptions?.after) {
+                    queryParams.cursor = { token_id: Number(decodeCursor(pagingOptions.after)) };
+                }
 
-            let tokens
+                if (grouped) {
+                    queryParams.distinct = ['collectible_id', 'unique_cover_id'];
+                }
 
-            queryParams = { ...queryParams, where: { ...whereParams } }
+                let tokens;
 
-            if (token_id) {
-                tokens = [await prisma.veve_tokens.findUnique({where: {token_id: Number(token_id)}})]
-            } else {
-                tokens = await prisma.veve_tokens.findMany(queryParams)
-            }
+                if (token_id) {
+                    tokens = [await prisma.veve_tokens.findUnique({ where: { token_id: Number(token_id) } })];
+                } else {
+                    tokens = await prisma.veve_tokens.findMany(queryParams);
+                }
 
-            return {
-                edges: tokens,
-                pageInfo: {
+                const pageInfo = {
                     endCursor: tokens.length > 1 ? encodeCursor(String(tokens[tokens.length - 1].token_id)) : null
-                }
-            }
+                };
 
-            // return await prisma.veve_tokens.findMany({
-            //     where: {
-            //         user_id: userInfo.sub
-            //     },
-            //     distinct: ['collectible_id'],
-            //     take: limit
-            // })
+                return {
+                    edges: tokens,
+                    pageInfo
+                };
+            } catch (e) {
+                console.error('Unable to get veve tokens:', e);
+                throw new Error('Unable to fetch veve tokens');
+            }
+        },
+        getUserTokens: async (_, __, { userInfo, prisma }) => {
+
+            try {
+
+                const userCollectibles = await prisma.veve_wallets.findUnique({
+                    where: { user_id: userInfo.sub },
+                    select: {
+                        veve_tokens: {
+                            take: 50,
+                            select: {
+                                veve_collectibles: {
+                                    select: {
+                                        collectible_id: true,
+                                        name: true
+                                    }
+                                }
+                            },
+                        }
+                    }
+                });
+
+                console.log('userCollectibles is:', userCollectibles)
+
+            } catch (e) {
+                console.log('error: ', e)
+                return true
+            }
 
         },
         getCollectibleWatchlist: async (_,{ after, search, pagingOptions }, { userInfo, prisma }) => {

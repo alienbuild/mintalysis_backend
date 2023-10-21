@@ -80,7 +80,7 @@ const resolvers = {
         getAllServerMembers: async (_, { serverId, limit = 50, offset = 0 }, { prisma }) => {
             try {
                 const serverExists = await prisma.server.findUnique({
-                    where: { id: Number(serverId) },
+                    where: { slug: serverId },
                     select: { id: true }
                 });
 
@@ -91,7 +91,7 @@ const resolvers = {
                         where: {
                             servers: {
                                 some: {
-                                    id: Number(serverId)
+                                    slug: serverId
                                 }
                             }
                         },
@@ -102,7 +102,7 @@ const resolvers = {
                         where: {
                             servers: {
                                 some: {
-                                    id: Number(serverId)
+                                    slug: serverId
                                 }
                             }
                         }
@@ -139,7 +139,7 @@ const resolvers = {
                     where: {
                         servers: {
                             some: {
-                                id: Number(serverId),
+                                slug: serverId,
                             },
                         },
                         status: 'ONLINE',
