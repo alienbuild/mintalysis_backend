@@ -917,24 +917,21 @@ const resolvers = {
                 }
             })
         },
-        quantity: async ({ collectible_id }, __, { prisma, userInfo }) => {
+        quantity: async ({ collectible_id }, __, { prisma, userInfo, loaders }) => {
             try {
-                const user_wallet = await prisma.veve_wallets.findFirst({
-                    where: {
-                        user_id: userInfo.sub
-                    },
-                    select: {
-                        id: true
-                    }
-                })
+                const userWallet = await loaders.wallet.load(userInfo.sub);
+
+                if (!userWallet) throw new Error('User wallet not found');
+
                 return await prisma.veve_tokens.count({
                     where: {
                         collectible_id: collectible_id,
-                        wallet_id: user_wallet.id
+                        wallet_id: userWallet.id,
                     },
-                })
-            } catch(err) {
-                throw new GraphQLError('Could not count collectibles.')
+                });
+            } catch (err) {
+                console.error('Error counting collectibles:', err);
+                throw new GraphQLError('Could not count collectibles.');
             }
         },
         valuations: async ({ collectible_id }, { period }, { prisma }) => {
@@ -1151,38 +1148,23 @@ const resolvers = {
         },
     },
     Token: {
-        collectible: async (args, __, { prisma }) => {
-            if (args.type !== 'collectible') return null
-
-            return await prisma.veve_collectibles.findUnique({
-                where: {
-                    collectible_id: args.collectible_id
-                }
-            })
+        collectible: async ({ type, collectible_id, lang }, __, { loaders }) => {
+            if (type !== 'collectible') return null;
+            return await loaders.collectible.load(collectible_id, lang);
         },
-        comic: async ({type, unique_cover_id}, __, { prisma }) => {
-            if (type !== 'comic') return null
-
-            return await prisma.veve_comics.findUnique({
-                where: {
-                    unique_cover_id: unique_cover_id
-                }
-            })
+        comic: async ({ type, unique_cover_id }, __, { loaders }) => {
+            if (type !== 'comic') return null;
+            return await loaders.comic.load(unique_cover_id);
         },
-        transfers: async ({ token_id, wallet_id, type }, __, { prisma }) => {
+        transfers: async ({ token_id, wallet_id, type }, __, { loaders }) => {
             try {
-                return await prisma.veve_transfers.findMany({
-                    where: {
-                        token_id,
-                        to_wallet: wallet_id
-                    },
-                })
-
+                const compoundKey = { tokenId: token_id, walletId: wallet_id };
+                return await loaders.transfer.load(compoundKey);
             } catch (e) {
-                console.log('transfers err: ', e)
-                throw new GraphQLError('Could not get user transfers for this token.', e)
+                console.log('transfers err: ', e);
+                throw new GraphQLError('Could not get user transfers for this token.', e);
             }
-        }
+        },
     },
 }
 
