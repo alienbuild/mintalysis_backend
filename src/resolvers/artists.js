@@ -8,7 +8,7 @@ const resolvers = {
             let whereParams = {}
 
             let artists
-            if (after) queryParams = { ...queryParams, skip: 1, cursor: { characterId: Number(decodeCursor(after)) } }
+            if (after) queryParams = { ...queryParams, skip: 1, cursor: { artist_id: Number(decodeCursor(after)) } }
             if (search) whereParams = { ...whereParams, name: { contains: search }}
 
             queryParams = { ...queryParams, where: { ...whereParams } }

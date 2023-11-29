@@ -3,7 +3,7 @@ import gql from 'graphql-tag'
 const typeDefs = gql`
     type Query {
         getUserServers(userId: ID!): [Server!]
-        getServers: [Server!]!
+        getServers(pagingOptions: pagingOptions, search: String): ServerConnection!
         getServerChannels(type: String, serverId: ID!): [Channel!]
         getServerMembers(serverId: ID!): Server
         getAllServerMembers(serverId: ID!, limit: Int, offset: Int): ServerMembersConnection!
@@ -54,6 +54,11 @@ const typeDefs = gql`
         sender: User!
         receiver: User!
         createdAt: String!
+    }
+
+    type ServerConnection {
+        edges: [Server]
+        pageInfo: PageInfo
     }
 
     type Server {

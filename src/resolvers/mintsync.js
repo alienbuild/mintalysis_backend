@@ -1,4 +1,4 @@
-import {slugify} from "../utils/index.js";
+import {decodeCursor, encodeCursor, slugify} from "../utils/index.js";
 import * as cloudinary from "cloudinary";
 
 const resolvers = {
@@ -11,9 +11,39 @@ const resolvers = {
                 throw new Error('Unable to fetch user servers');
             }
         },
-        getServers: async (_, __, { prisma }) => {
+        getServers: async (_, { search, pagingOptions}, { prisma, userInfo }) => {
             try {
-                return await prisma.server.findMany();
+                let limit = 5
+                if (pagingOptions && pagingOptions.limit) limit = pagingOptions.limit
+
+                const whereClause = userInfo?.sub
+                    ? {
+                        OR: [
+                            { is_public: true },
+                            {
+                                members: {
+                                    some: { id: userInfo.sub },
+                                },
+                            },
+                        ],
+                    }
+                    : { is_public: true };
+
+                let queryParams = { take: limit, orderBy: { id: 'asc' } };
+                let whereParams = { ...whereClause };
+                if (pagingOptions?.after) queryParams = { ...queryParams, skip: 1, cursor: { id: Number(decodeCursor(pagingOptions.after)) }}
+                if (search) whereParams = { ...whereParams, name: { contains: search, mode: 'insensitive' }}
+
+                queryParams.where = whereParams;
+
+                const servers = await prisma.server.findMany(queryParams)
+
+                return {
+                    edges: servers,
+                    pageInfo: {
+                        endCursor: servers.length > 1 ? encodeCursor(String(servers[servers.length - 1].id)) : null
+                    }
+                }
             } catch (error) {
                 console.error('Error fetching servers:', error);
                 throw new Error('Unable to fetch servers');

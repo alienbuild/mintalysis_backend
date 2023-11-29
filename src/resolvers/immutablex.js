@@ -11,34 +11,29 @@ const resolvers = {
             })
 
         },
-        getImxVeveTransfers: async (_, { token_id, pagingOptions }, { prisma }) => {
-
-            let limit = 5
-            if (pagingOptions && pagingOptions.limit) limit = pagingOptions.limit
-
-            let queryParams = { take: limit, orderBy: { timestamp: 'asc' } } //TODO: Set it 'desc'
-            let transfers
-            if (token_id){
-                transfers = await prisma.veve_transfers.findMany({
-                    where: {
-                        token_id: token_id
-                    },
-                })
-            } else {
-                transfers = await prisma.veve_transfers.findMany(queryParams)
+        getImxVeveTransfers: async (_, { pagingOptions }, { prisma }) => {
+            let limit = 10; // Set the limit to 10 or use pagingOptions.limit if provided
+            if (pagingOptions && pagingOptions.limit) {
+                limit = pagingOptions.limit;
             }
+
+            const transfers = await prisma.veve_transfers.findMany({
+                take: limit,
+                orderBy: {
+                    createdAt: 'desc' // or 'timestamp' if you are using that
+                },
+                // If you only need specific fields, uncomment and adjust the following line
+                // select: { id: true, from_wallet: true, to_wallet: true, /* other fields */ }
+            });
 
             return {
                 edges: transfers,
                 pageInfo: {
-                    endCursor: transfers.length > 1 ? encodeCursor(String(transfers[transfers.length - 1].token_id)) : null
+                    endCursor: transfers.length > 0 ? encodeCursor(String(transfers[transfers.length - 1].id)) : null
                 }
             }
         },
         getWalletTransfers: async (_, {walletId, pagingOptions, sortOptions}, { prisma }) => {
-
-            console.log('pagingOptions is: ', pagingOptions)
-            console.log('sortingOptions is: ', sortOptions)
 
             let limit = 5
             if (pagingOptions.limit) limit = pagingOptions.limit
@@ -77,12 +72,24 @@ const resolvers = {
         }
     },
     VeveTransfer: {
-        token: async ({ token_id }, __, { prisma }) => {
-            return await prisma.veve_tokens.findUnique({
+        token: async ({ token_id }, __, { prisma, loaders }) => {
+            const token = await prisma.veve_tokens.findUnique({
                 where: {
                     token_id: token_id
                 }
-            })
+            });
+
+            if (!token) return null;
+
+            if (token.collectible_id) {
+                token.collectible = await loaders.collectible.load(token.collectible_id);
+            }
+
+            if (token.unique_cover_id) {
+                token.comic = await loaders.comic.load(token.unique_cover_id);
+            }
+
+            return token;
         },
         tags: async (args, __, { prisma }) => {
 
