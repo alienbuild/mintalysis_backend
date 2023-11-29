@@ -1,4 +1,5 @@
 import {decodeCursor, encodeCursor} from "../utils/index.js";
+import {GraphQLError} from "graphql";
 
 const resolvers = {
     Query: {
@@ -12,7 +13,7 @@ const resolvers = {
 
         },
         getImxVeveTransfers: async (_, { pagingOptions }, { prisma }) => {
-            let limit = 10; // Set the limit to 10 or use pagingOptions.limit if provided
+            let limit = 10;
             if (pagingOptions && pagingOptions.limit) {
                 limit = pagingOptions.limit;
             }
@@ -20,7 +21,7 @@ const resolvers = {
             const transfers = await prisma.veve_transfers.findMany({
                 take: limit,
                 orderBy: {
-                    createdAt: 'desc' // or 'timestamp' if you are using that
+                    createdAt: 'desc'
                 },
                 // If you only need specific fields, uncomment and adjust the following line
                 // select: { id: true, from_wallet: true, to_wallet: true, /* other fields */ }
@@ -32,6 +33,44 @@ const resolvers = {
                     endCursor: transfers.length > 0 ? encodeCursor(String(transfers[transfers.length - 1].id)) : null
                 }
             }
+        },
+        getCollectibleDetails: async (_, { tokenId }, { prisma }) => {
+            try {
+                const token = await prisma.veve_tokens.findUnique({
+                    where: { token_id: parseInt(tokenId) },
+                    select: {
+                        token_id: true,
+                        edition: true,
+                        type: true,
+                    },
+                    include: {
+                        veveTokenCollectibles: {
+                            include: {
+                                veve_collectibles: true,
+                            }
+                        },
+                        veveTokenComics: {
+                            include: {
+                                veve_comics: true
+                            }
+                        }
+                    }
+                });
+
+                if (!token) throw new Error("Token not found");
+
+                console.log('token is: ', token)
+
+                return {
+                    edition: token.edition,
+                    type: token.type,
+                    collectible: token.veve_collectibles,
+                    comic: token.comic
+                };
+            } catch (e) {
+                throw new GraphQLError('Unable to fetch transfer token details.')
+            }
+
         },
         getWalletTransfers: async (_, {walletId, pagingOptions, sortOptions}, { prisma }) => {
 

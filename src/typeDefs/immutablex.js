@@ -4,12 +4,20 @@ const typeDefs = gql`
     type Query {
         getWalletTransfers(walletId: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : TransfersConnection
         getImxVeveTransfers(id: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : TransfersConnection
+        getCollectibleDetails(tokenId: ID!): TokenDetails
         getImxVeveStats(project_id: String!): ImxStats
         getImxTxns: [VeveTransfer]
     }
     
     type Mutation {
         createVeveTransfer(transferInput: [VeveTransferInput]) : Boolean
+    }
+
+    type TokenDetails {
+        edition: Int
+        type: String
+        collectible: Collectible
+        comic: Comic
     }
     
     type ImxStats {
