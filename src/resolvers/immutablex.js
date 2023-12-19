@@ -21,7 +21,7 @@ const resolvers = {
             const transfers = await prisma.veve_transfers.findMany({
                 take: limit,
                 orderBy: {
-                    createdAt: 'desc'
+                    id: 'desc'
                 },
                 // If you only need specific fields, uncomment and adjust the following line
                 // select: { id: true, from_wallet: true, to_wallet: true, /* other fields */ }
@@ -34,15 +34,32 @@ const resolvers = {
                 }
             }
         },
+        getImxVeveMints: async (_, { pagingOptions }, { prisma }) => {
+            let limit = 10;
+            if (pagingOptions && pagingOptions.limit) {
+                limit = pagingOptions.limit;
+            }
+
+            const mints = await prisma.veve_mints.findMany({
+                take: limit,
+                orderBy: {
+                    id: 'desc'
+                },
+                // If you only need specific fields, uncomment and adjust the following line
+                // select: { id: true, from_wallet: true, to_wallet: true, /* other fields */ }
+            });
+
+            return {
+                edges: mints,
+                pageInfo: {
+                    endCursor: mints.length > 0 ? encodeCursor(String(mints[mints.length - 1].id)) : null
+                }
+            }
+        },
         getCollectibleDetails: async (_, { tokenId }, { prisma }) => {
             try {
                 const token = await prisma.veve_tokens.findUnique({
                     where: { token_id: parseInt(tokenId) },
-                    select: {
-                        token_id: true,
-                        edition: true,
-                        type: true,
-                    },
                     include: {
                         veveTokenCollectibles: {
                             include: {
@@ -59,13 +76,11 @@ const resolvers = {
 
                 if (!token) throw new Error("Token not found");
 
-                console.log('token is: ', token)
-
                 return {
                     edition: token.edition,
                     type: token.type,
-                    collectible: token.veve_collectibles,
-                    comic: token.comic
+                    collectible: token.veveTokenCollectibles[0]?.veve_collectibles,
+                    comic: token.veveTokenComics[0]?.veve_comics
                 };
             } catch (e) {
                 throw new GraphQLError('Unable to fetch transfer token details.')
@@ -73,29 +88,41 @@ const resolvers = {
 
         },
         getWalletTransfers: async (_, {walletId, pagingOptions, sortOptions}, { prisma }) => {
+            let limit = 5;
+            let offset = 0;
+            if (pagingOptions.limit) limit = pagingOptions.limit;
+            if (pagingOptions.offset) offset = pagingOptions.offset;
 
-            let limit = 5
-            if (pagingOptions.limit) limit = pagingOptions.limit
+            let whereParams = {};
+            let sortParams = { timestamp_dt: 'asc' };
 
-            let whereParams = {}
-            let sortParams = { timestamp: 'asc' }
-            let queryParams = { take: limit }
+            if (sortOptions && sortOptions.sortBy) {
+                sortParams = { [sortOptions.sortBy]: sortOptions.sortDirection === 'desc' ? 'desc' : 'asc' };
+            }
 
-            if (pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: Number(decodeCursor(pagingOptions.after)) } }
-            if (sortOptions && sortOptions.sortBy) sortParams = { [sortOptions.sortBy]: sortOptions.sortDirection }
-            if (walletId) whereParams = { ...whereParams, OR: [{ to_wallet: walletId }, { from_wallet: walletId }] }
+            if (walletId) {
+                whereParams = { ...whereParams, OR: [{ to_wallet: walletId }, { from_wallet: walletId }] };
+            }
 
-            queryParams = { ...queryParams, where: { ...whereParams }, orderBy: [sortParams] }
+            const queryParams = {
+                skip: offset,
+                take: limit,
+                where: whereParams,
+                orderBy: sortParams,
+                cacheStrategy: { swr: 60, ttl: 60 },
+            };
 
-            const transfers = await prisma.veve_transfers.findMany(queryParams)
+            const transfers = await prisma.veve_transfers.findMany(queryParams);
+
+            const totalCount = await prisma.veve_transfers.count({ where: whereParams });
 
             return {
                 edges: transfers,
-                totalCount: 0,
+                totalCount: totalCount, // Used count() for totalCount
                 pageInfo: {
-                    endCursor: transfers.length > 1 ? encodeCursor(String(transfers[transfers.length - 1].id)) : null,
-                }
-            }
+                    endCursor: null, // endCursor doesn't make sense in offset pagination
+                },
+            };
         },
     },
     Subscription: {
@@ -107,6 +134,11 @@ const resolvers = {
         imxVeveTxnsUpdated: {
             subscribe: (_, payload, { pubsub }) => {
                 return pubsub.asyncIterator(['IMX_VEVE_TRANSFERS_UPDATED'])
+            }
+        },
+        imxVeveMintsUpdated: {
+            subscribe: (_, payload, { pubsub }) => {
+                return pubsub.asyncIterator(['IMX_VEVE_MINTS_UPDATED'])
             }
         }
     },

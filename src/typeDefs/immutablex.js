@@ -4,6 +4,7 @@ const typeDefs = gql`
     type Query {
         getWalletTransfers(walletId: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : TransfersConnection
         getImxVeveTransfers(id: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : TransfersConnection
+        getImxVeveMints(id: ID, pagingOptions: pagingOptions, sortOptions: sortOptions) : MintsConnection
         getCollectibleDetails(tokenId: ID!): TokenDetails
         getImxVeveStats(project_id: String!): ImxStats
         getImxTxns: [VeveTransfer]
@@ -31,6 +32,22 @@ const typeDefs = gql`
     type Subscription {
         imxVeveStatsUpdated: ImxStats
         imxVeveTxnsUpdated: [VeveTransfer]
+        imxVeveMintsUpdated: [VeveMint]
+    }
+    
+    type MintsConnection {
+        edges: [VeveMint]!
+        totalCount: Int
+        pageInfo: PageInfo
+    }
+    
+    type VeveMint {
+        id: ID!
+        wallet_id: String
+        timestamp: String
+        token_id: String
+        token: Token
+        is_burned: Boolean
     }
     
     type TransfersConnection {
@@ -44,6 +61,7 @@ const typeDefs = gql`
         from_wallet: String
         to_wallet: String
         timestamp: String
+        timestamp_dt: DateTime
         token_id: String
         token: Token
         tags: [WalletTags]

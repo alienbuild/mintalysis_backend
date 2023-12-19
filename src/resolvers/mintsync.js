@@ -29,7 +29,7 @@ const resolvers = {
                     }
                     : { is_public: true };
 
-                let queryParams = { take: limit, orderBy: { id: 'asc' } };
+                let queryParams = { take: limit, orderBy: { id: 'asc' }, cacheStrategy: { swr: 60, ttl: 60 }, };
                 let whereParams = { ...whereClause };
                 if (pagingOptions?.after) queryParams = { ...queryParams, skip: 1, cursor: { id: Number(decodeCursor(pagingOptions.after)) }}
                 if (search) whereParams = { ...whereParams, name: { contains: search, mode: 'insensitive' }}
@@ -292,6 +292,10 @@ const resolvers = {
             }
         },
         sendChannelMessage: async (_, { content, type, userId, channelId }, { prisma, pubsub }) => {
+            console.log('content is: ', content)
+            console.log('type is: ', type)
+            console.log('userId is: ', userId)
+            console.log('channelId is: ', channelId)
             try {
                 const message = await prisma.channel_message.create({
                     data: {

@@ -305,6 +305,7 @@ const typeDefs = gql`
     type VeveCollectibleTranslations {
         name: String
         description: String
+        ai_description: String
         rarity: String
         edition_type: String
     }

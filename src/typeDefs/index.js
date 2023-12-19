@@ -20,6 +20,7 @@ import notificationsTypeDefs from './notifications.js'
 import articlesTypeDefs from './articles.js'
 import feedbackTypeDefs from './feedback.js'
 import mintsyncTypeDefs from './mintsync.js'
+import triggerTypeDefs from './triggers.js'
 
 const typeDefs = [
     scalarDefs,
@@ -43,7 +44,8 @@ const typeDefs = [
     notificationsTypeDefs,
     articlesTypeDefs,
     feedbackTypeDefs,
-    mintsyncTypeDefs
+    mintsyncTypeDefs,
+    triggerTypeDefs
 ]
 
 export default typeDefs

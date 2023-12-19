@@ -67,7 +67,8 @@ const resolvers = {
             return returnArr
         },
         veveCollectiblePriceData: async (_, { collectibleId, type, period }, { userInfo, prisma }) => {
-
+            console.log('get price cid: ', collectibleId)
+            console.log('get price type: ', type)
             const aggregatePriceData = async (model, idField, idValue) => {
                 try {
                     return await model.aggregate([
@@ -475,7 +476,11 @@ const resolvers = {
                 if (token_id) {
                     tokens = [await prisma.veve_tokens.findUnique({ where: { token_id: Number(token_id) } })];
                 } else {
-                    tokens = await prisma.veve_tokens.findMany(queryParams);
+                    try {
+                        tokens = await prisma.veve_tokens.findMany(queryParams);
+                    } catch (e) {
+                        console.log('FML : ', e)
+                    }
                 }
 
                 const pageInfo = {
@@ -492,9 +497,8 @@ const resolvers = {
             }
         },
         getUserTokens: async (_, __, { userInfo, prisma }) => {
-
+            console.log('Fetching user tokens...')
             try {
-
                 const userCollectibles = await prisma.veve_wallets.findUnique({
                     where: { user_id: userInfo.sub },
                     select: {
@@ -511,14 +515,11 @@ const resolvers = {
                         }
                     }
                 });
-
                 console.log('userCollectibles is:', userCollectibles)
-
             } catch (e) {
                 console.log('error: ', e)
                 return true
             }
-
         },
         getCollectibleWatchlist: async (_,{ after, search, pagingOptions }, { userInfo, prisma }) => {
 
@@ -804,9 +805,9 @@ const resolvers = {
                         }
                     })
 
-                    await prisma.veve_profile.update({
+                    await prisma.user.update({
                         where: {
-                            userId: userInfo.sub
+                            id: userInfo.sub
                         },
                         data: {
                             onboarded: true
