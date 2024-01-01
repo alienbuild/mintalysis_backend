@@ -1,4 +1,5 @@
 import {decodeCursor, encodeCursor} from "../utils/index.js";
+import {GraphQLError} from "graphql";
 
 const resolvers = {
     Query: {
@@ -11,57 +12,117 @@ const resolvers = {
             })
 
         },
-        getImxVeveTransfers: async (_, { token_id, pagingOptions }, { prisma }) => {
-
-            let limit = 5
-            if (pagingOptions && pagingOptions.limit) limit = pagingOptions.limit
-
-            let queryParams = { take: limit, orderBy: { timestamp: 'asc' } } //TODO: Set it 'desc'
-            let transfers
-            if (token_id){
-                transfers = await prisma.veve_transfers.findMany({
-                    where: {
-                        token_id: token_id
-                    },
-                })
-            } else {
-                transfers = await prisma.veve_transfers.findMany(queryParams)
+        getImxVeveTransfers: async (_, { pagingOptions }, { prisma }) => {
+            let limit = 10;
+            if (pagingOptions && pagingOptions.limit) {
+                limit = pagingOptions.limit;
             }
+
+            const transfers = await prisma.veve_transfers.findMany({
+                take: limit,
+                orderBy: {
+                    id: 'desc'
+                },
+                // If you only need specific fields, uncomment and adjust the following line
+                // select: { id: true, from_wallet: true, to_wallet: true, /* other fields */ }
+            });
 
             return {
                 edges: transfers,
                 pageInfo: {
-                    endCursor: transfers.length > 1 ? encodeCursor(String(transfers[transfers.length - 1].token_id)) : null
+                    endCursor: transfers.length > 0 ? encodeCursor(String(transfers[transfers.length - 1].id)) : null
                 }
             }
         },
+        getImxVeveMints: async (_, { pagingOptions }, { prisma }) => {
+            let limit = 10;
+            if (pagingOptions && pagingOptions.limit) {
+                limit = pagingOptions.limit;
+            }
+
+            const mints = await prisma.veve_mints.findMany({
+                take: limit,
+                orderBy: {
+                    id: 'desc'
+                },
+                // If you only need specific fields, uncomment and adjust the following line
+                // select: { id: true, from_wallet: true, to_wallet: true, /* other fields */ }
+            });
+
+            return {
+                edges: mints,
+                pageInfo: {
+                    endCursor: mints.length > 0 ? encodeCursor(String(mints[mints.length - 1].id)) : null
+                }
+            }
+        },
+        getCollectibleDetails: async (_, { tokenId }, { prisma }) => {
+            try {
+                const token = await prisma.veve_tokens.findUnique({
+                    where: { token_id: parseInt(tokenId) },
+                    include: {
+                        veveTokenCollectibles: {
+                            include: {
+                                veve_collectibles: true,
+                            }
+                        },
+                        veveTokenComics: {
+                            include: {
+                                veve_comics: true
+                            }
+                        }
+                    }
+                });
+
+                if (!token) throw new Error("Token not found");
+
+                return {
+                    edition: token.edition,
+                    type: token.type,
+                    collectible: token.veveTokenCollectibles[0]?.veve_collectibles,
+                    comic: token.veveTokenComics[0]?.veve_comics
+                };
+            } catch (e) {
+                throw new GraphQLError('Unable to fetch transfer token details.')
+            }
+
+        },
         getWalletTransfers: async (_, {walletId, pagingOptions, sortOptions}, { prisma }) => {
+            let limit = 5;
+            let offset = 0;
+            if (pagingOptions.limit) limit = pagingOptions.limit;
+            if (pagingOptions.offset) offset = pagingOptions.offset;
 
-            console.log('pagingOptions is: ', pagingOptions)
-            console.log('sortingOptions is: ', sortOptions)
+            let whereParams = {};
+            let sortParams = { timestamp_dt: 'asc' };
 
-            let limit = 5
-            if (pagingOptions.limit) limit = pagingOptions.limit
+            if (sortOptions && sortOptions.sortBy) {
+                sortParams = { [sortOptions.sortBy]: sortOptions.sortDirection === 'desc' ? 'desc' : 'asc' };
+            }
 
-            let whereParams = {}
-            let sortParams = { timestamp: 'asc' }
-            let queryParams = { take: limit }
+            if (walletId) {
+                whereParams = { ...whereParams, OR: [{ to_wallet: walletId }, { from_wallet: walletId }] };
+            }
 
-            if (pagingOptions.after) queryParams = { ...queryParams, skip: 1, cursor: { id: Number(decodeCursor(pagingOptions.after)) } }
-            if (sortOptions && sortOptions.sortBy) sortParams = { [sortOptions.sortBy]: sortOptions.sortDirection }
-            if (walletId) whereParams = { ...whereParams, OR: [{ to_wallet: walletId }, { from_wallet: walletId }] }
+            const queryParams = {
+                skip: offset,
+                take: limit,
+                where: whereParams,
+                orderBy: sortParams,
+                cacheStrategy: { swr: 60, ttl: 60 },
+            };
 
-            queryParams = { ...queryParams, where: { ...whereParams }, orderBy: [sortParams] }
+            const transfers = await prisma.veve_transfers.findMany(queryParams);
 
-            const transfers = await prisma.veve_transfers.findMany(queryParams)
+            const totalCount = await prisma.veve_transfers.count({ where: whereParams });
 
             return {
                 edges: transfers,
-                totalCount: 0,
+                totalCount: totalCount, // Used count() for totalCount
                 pageInfo: {
-                    endCursor: transfers.length > 1 ? encodeCursor(String(transfers[transfers.length - 1].id)) : null,
-                }
-            }
+                    endCursor: null, // endCursor doesn't make sense in offset pagination
+                },
+            };
         },
     },
     Subscription: {
@@ -74,15 +135,32 @@ const resolvers = {
             subscribe: (_, payload, { pubsub }) => {
                 return pubsub.asyncIterator(['IMX_VEVE_TRANSFERS_UPDATED'])
             }
+        },
+        imxVeveMintsUpdated: {
+            subscribe: (_, payload, { pubsub }) => {
+                return pubsub.asyncIterator(['IMX_VEVE_MINTS_UPDATED'])
+            }
         }
     },
     VeveTransfer: {
-        token: async ({ token_id }, __, { prisma }) => {
-            return await prisma.veve_tokens.findUnique({
+        token: async ({ token_id }, __, { prisma, loaders }) => {
+            const token = await prisma.veve_tokens.findUnique({
                 where: {
                     token_id: token_id
                 }
-            })
+            });
+
+            if (!token) return null;
+
+            if (token.collectible_id) {
+                token.collectible = await loaders.collectible.load(token.collectible_id);
+            }
+
+            if (token.unique_cover_id) {
+                token.comic = await loaders.comic.load(token.unique_cover_id);
+            }
+
+            return token;
         },
         tags: async (args, __, { prisma }) => {
 

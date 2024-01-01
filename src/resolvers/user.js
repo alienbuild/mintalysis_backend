@@ -12,6 +12,7 @@ const resolvers = {
                 },
                 include: {
                     projects: true,
+                    newsletter_subscriber: true,
                     profile: {
                         include: {
                             veve_wallet: true
@@ -21,19 +22,19 @@ const resolvers = {
                 }
             })
         },
-        getUser: async (_, { username }, {prisma, userInfo}) => {
+        getUser: async (_, { userId }, {prisma, userInfo}) => {
 
-            const isMyProfile = username === userInfo?.userId
+            const isMyProfile = userId === userInfo?.sub
 
             try {
 
                 const user = await prisma.User.findUnique({
                     where: {
-                        username: username
+                        id: userId
                     },
                     include: {
-                        projects: true,
-                        profile: true,
+                        // projects: true,
+                        // profile: true,
                         followers: {
                             select: {
                                 follower: {
@@ -60,9 +61,7 @@ const resolvers = {
                             select: {
                                 followers: true,
                                 following: true,
-                                posts: true,
-                                comments: true,
-                                projects: true
+                                // projects: true
                             }
                         }
                     }
@@ -73,7 +72,7 @@ const resolvers = {
                 const check = await prisma.follows.findFirst({
                     where: {
                         followingId: user.id,
-                        followerId: userInfo.sub
+                        followerId: userInfo?.sub
                     }
                 })
 

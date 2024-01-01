@@ -20,6 +20,13 @@ export const typeDefs = gql`
         tile: String
         motiff_url: String
         users: [User]
+        newsletters: [ProjectNewsletter]
+    }
+
+    type ProjectNewsletter {
+        id: ID!
+        project: Project!
+        subscriber: NewsletterSubscriber!
     }
 
 `

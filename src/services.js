@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { withAccelerate } from '@prisma/extension-accelerate'
 import { PubSub } from "graphql-subscriptions";
 import Slack from '@slack/bolt';
 import * as dotenv from "dotenv";
@@ -6,7 +7,8 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 // Initialize Prisma
-export const prisma = new PrismaClient();
+// export const prisma = new PrismaClient();
+export const prisma = new PrismaClient().$extends(withAccelerate())
 
 // Initialize PubSub
 export const pubsub = new PubSub();

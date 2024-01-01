@@ -38,6 +38,7 @@ const typeDefs = gql`
     input pagingOptions {
         limit: Int
         after: String
+        offset: Int
     }
     
     input sortOptions {
