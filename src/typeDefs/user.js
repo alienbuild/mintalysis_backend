@@ -3,8 +3,8 @@ import gql from 'graphql-tag'
 const typeDefs = gql`
     
     type Query {
-        me: User
-        getUser(username: String!): UserConnection
+        me: User 
+        getUser(userId: String!): UserConnection
         getUsers(pagingOptions: pagingOptions, sortOptions: sortOptions): UsersConnection
         searchUsers(username: String!): [User]
         getUserFollowing(userId: String! type: String) : User
@@ -70,6 +70,7 @@ const typeDefs = gql`
         stripe_customer_id: String
         profile: Profile
         role: String!
+        newsletterSubscriber: NewsletterSubscriber
         following: [FollowerConnection]
         followers: [FollowerConnection]
         tokens: [Token]!

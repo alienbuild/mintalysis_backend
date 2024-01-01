@@ -10,7 +10,6 @@ dotenv.config();
 // export const prisma = new PrismaClient();
 export const prisma = new PrismaClient().$extends(withAccelerate())
 
-
 // Initialize PubSub
 export const pubsub = new PubSub();
 

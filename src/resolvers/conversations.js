@@ -8,8 +8,6 @@ const resolvers = {
         conversations: async ( _, __, { userInfo, prisma }) => {
             if (!userInfo.sub) throw new GraphQLError('Not authorised.')
 
-            const { userId } = userInfo
-
             try {
 
                 return await prisma.conversation.findMany({
@@ -17,7 +15,7 @@ const resolvers = {
                         participants: {
                             some: {
                                 user_id: {
-                                    equals: userId
+                                    equals: userInfo.sub
                                 }
                             }
                         }
@@ -46,11 +44,10 @@ const resolvers = {
         createConversation: async (_, { participantIds }, { userInfo, prisma, pubsub } ) => {
             if (!userInfo) throw new GraphQLError('Not authorised')
 
-            const { userId } = userInfo
             try {
                 const existingConversation = await prisma.conversation.findMany({
                     where: {
-                        owner_id: userId,
+                        owner_id: userInfo.sub,
                         participants: {
                             every: {
                                 user_id: { in: participantIds },
@@ -66,12 +63,12 @@ const resolvers = {
                 } else {
                     const conversation = await prisma.conversation.create({
                         data: {
-                            owner_id: userId,
+                            owner_id: userInfo.sub,
                             participants: {
                                 createMany: {
                                     data: participantIds.map(id => ({
                                         user_id: id,
-                                        has_seen_latest_message: id === userId
+                                        has_seen_latest_message: id === userInfo.sub
                                     }))
                                 }
                             }
@@ -134,7 +131,7 @@ const resolvers = {
                 (payload, _, { userInfo }) => {
                     const { conversationCreated: { participants } } = payload
 
-                    return userIsConversationParticipant(participants, userInfo?.userId)
+                    return userIsConversationParticipant(participants, userInfo?.sub)
                 },
             )
         },
@@ -144,7 +141,7 @@ const resolvers = {
                 (payload, _, { userInfo }) => {
                     if (!userInfo) throw new GraphQLError('Not authorised.')
 
-                    return userIsConversationParticipant(payload.conversationUpdated.conversation.participants, userInfo?.userId)
+                    return userIsConversationParticipant(payload.conversationUpdated.conversation.participants, userInfo?.sub)
             })
         },
         conversationDeleted: {
@@ -153,7 +150,7 @@ const resolvers = {
                 (payload, _, { userInfo }) => {
                     if (!userInfo) throw new GraphQLError('Not authorised.')
 
-                    return userIsConversationParticipant(payload.conversationDeleted.conversation.participants, userInfo?.userId)
+                    return userIsConversationParticipant(payload.conversationDeleted.conversation.participants, userInfo?.sub)
 
                 }
             )

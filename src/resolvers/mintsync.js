@@ -1,5 +1,6 @@
 import {decodeCursor, encodeCursor, slugify} from "../utils/index.js";
 import * as cloudinary from "cloudinary";
+import {moderateMessage, createRtcToken, createUniqueChannelName} from "../utils/mintsyncUtils.js";
 
 const resolvers = {
     Query: {
@@ -97,7 +98,17 @@ const resolvers = {
                                 id: true,
                                 username: true,
                                 avatar: true,
-                                status: true
+                                status: true,
+                                UserToRoles: {
+                                    select: {
+                                        role: {
+                                            select: {
+                                                id: true,
+                                                name: true
+                                            }
+                                        }
+                                    }
+                                }
                             },
                         },
                     },
@@ -117,11 +128,27 @@ const resolvers = {
                 if (!serverExists) throw new Error('Server not found');
 
                 const [usersInServer, totalCount] = await prisma.$transaction([
-                    prisma.user.findMany({
+                    prisma.User.findMany({
                         where: {
                             servers: {
                                 some: {
                                     slug: serverId
+                                }
+                            }
+                        },
+                        select: {
+                            id: true,
+                            username: true,
+                            avatar: true,
+                            status: true,
+                            UserToRoles: {
+                                select: {
+                                    role: {
+                                        select: {
+                                            id: true,
+                                            name: true
+                                        }
+                                    }
                                 }
                             }
                         },
@@ -139,18 +166,6 @@ const resolvers = {
                     })
                 ]);
 
-                // const usersInServer = await prisma.user.findMany({
-                //     where: {
-                //         servers: {
-                //             some: {
-                //                 id: Number(serverId)
-                //             }
-                //         }
-                //     },
-                //     take: limit,
-                //     skip: offset,
-                // });
-
                 if (!usersInServer.length) throw new Error('No members found for this server');
 
                 return {
@@ -164,27 +179,41 @@ const resolvers = {
             }
         },
         getOnlineServerMembers: async (_, { serverId }, { prisma }) => {
-            try {
-                return await prisma.User.findMany({
-                    where: {
-                        servers: {
-                            some: {
-                                slug: serverId,
-                            },
+            const server = await prisma.server.findUnique({where: {slug: serverId}});
+            const realServerId = server.id;
+
+            const members = await prisma.User.findMany({
+                where: {
+                    servers: {
+                        some: {id: realServerId},
+                    },
+                    status: 'ONLINE',
+                },
+                select: {
+                    id: true,
+                    username: true,
+                    avatar: true,
+                    status: true,
+                    UserToRoles: {
+                        where: {
+                            role: {
+                                serverId: realServerId,
+                            }
                         },
-                        status: 'ONLINE',
-                    },
-                    select: {
-                        id: true,
-                        username: true,
-                        avatar: true,
-                        status: true,
-                    },
-                });
-            } catch (error) {
-                console.error('Error fetching online server members:', error);
-                throw new Error('Unable to fetch online server members');
-            }
+                        select: {
+                            role: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    serverId: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            console.log('members is: ', members[0].UserToRoles)
+            return members;
         },
         getChannelMessages: async (_, { channelId, limit = 10, cursor }, { prisma }) => {
             try {
@@ -225,6 +254,22 @@ const resolvers = {
                 console.log('Unable to get thread: ', error)
             }
         },
+        userRoles: async (_, { userId }, context) => {
+            const rolesData = await context.prisma.userToRoles.findMany({
+                where: { userId },
+                include: { role: true }
+            });
+
+            return rolesData.map(item => item.role);
+        },
+        userBadges: async (_, { userId }, context) => {
+            const badgeData = await context.prisma.user_badges.findMany({
+                where: { userId },
+                include: { badge: true }
+            });
+
+            return badgeData.map(item => item.badge);
+        }
     },
     Mutation: {
         createServer: async (_, { name, ownerId, description, icon }, { prisma }) => {
@@ -256,7 +301,7 @@ const resolvers = {
                     }
                 }
 
-                return await prisma.server.create({
+                const createdServer = await prisma.server.create({
                     data: {
                         name,
                         ownerId,
@@ -268,6 +313,34 @@ const resolvers = {
                         }
                     }
                 });
+
+                // Create an 'Admin' role for this server
+                const adminRole = await prisma.role.create({
+                    data: {
+                        name: 'Admin',
+                        description: 'Administrator role with full permissions',
+                        serverId: createdServer.id,
+                    },
+                });
+
+                // Assign the 'Admin' role to the user (owner)
+                await prisma.userToRoles.create({
+                    data: {
+                        userId: ownerId,
+                        roleId: adminRole.id,
+                    },
+                });
+
+                // Create a 'Moderator' role for this server
+                const moderatorRole = await prisma.role.create({
+                    data: {
+                        name: 'Moderator',
+                        description: 'Moderator role with moderate permissions',
+                        serverId: createdServer.id,
+                    },
+                });
+
+                return createdServer;
 
             } catch (error) {
                 console.error('Error creating server:', error);
@@ -291,19 +364,119 @@ const resolvers = {
                 throw new Error('Unable to create channel');
             }
         },
-        sendChannelMessage: async (_, { content, type, userId, channelId }, { prisma, pubsub }) => {
-            console.log('content is: ', content)
-            console.log('type is: ', type)
-            console.log('userId is: ', userId)
-            console.log('channelId is: ', channelId)
+        deleteChannel: async (_, { channelId }, { prisma, userInfo }) => {
+            // Check role of user before action
+            // If not admin/mod throw error
+
+            return await prisma.channel.delete({
+                where: {id: channelId},
+            });
+        },
+        renameChannel: async (_, { channelId, newName }, { prisma, userInfo }) => {
+            // Check role of user before action
+            // if not admin/mod throw error
+
+            return await prisma.channel.update({
+                where: {id: channelId},
+                data: {
+                    name: newName
+                },
+            });
+        },
+        updateChannelTopic: async (_, { channelId, newTopic }, { prisma, userInfo }) => {
+            // Check role of user before action
+            // If not admin/mod throw error
+
+            return await prisma.channel.update({
+                where: {id: channelId},
+                data: {topic: newTopic},
+            });
+        },
+        setSlowMode: async (_, { channelId, newSlowModeDelay }, { prisma, userInfo }) => {
+            // Check role of user before action
+            // If not admin/mod throw error
+
+            return await prisma.channel.update({
+                where: {id: channelId},
+                data: {slowModeDelay: newSlowModeDelay},
+            });
+        },
+        sendChannelMessage: async (_, { content, type, userId, channelId, serverId }, { prisma, pubsub, userInfo }) => {
             try {
+
+                const toxicity = await moderateMessage(content);
+
+                if (toxicity > 0.8) {
+                    throw new Error('This message contains harmful language.');
+                }
+
+                const channel = await prisma.channel.findUnique({
+                    where: { id: channelId },
+                });
+
+                const slowModeDelay = channel.slowModeDelay;
+
+                // Fetch user's roles on the server
+                const requesterRoles = await prisma.userToRoles.findMany({
+                    where: {
+                        userId: userInfo.sub,
+                        role: {
+                            serverId: parseInt(serverId),
+                        }
+                    },
+                    include: {
+                        role: true
+                    }
+                });
+
+                // Check if user is a moderator or admin
+                const isModOrAdmin = requesterRoles.some(userToRole => ["Admin", "Moderator"].includes(userToRole.role.name));
+
+                if (slowModeDelay && !isModOrAdmin) {
+                    const lastMessage = await prisma.channel_message.findFirst({
+                        where: {
+                            userId: userInfo.sub,
+                            channelId,
+                        },
+                        orderBy: {
+                            createdAt: 'desc',
+                        },
+                    });
+
+                    if (lastMessage) {
+                        const timeElapsed = new Date() - new Date(lastMessage.createdAt);
+
+                        if (timeElapsed < slowModeDelay * 1000) {
+                            throw new Error('Slow mode is enabled. Please wait before sending another message.');
+                        }
+                    }
+                }
+
+                const mute = await prisma.mute.findFirst({
+                    where: {
+                        userId: userInfo.sub,
+                        AND: [
+                            { channel: { id: channelId } },
+                            { server: { slug: serverId } },
+                        ]
+                    }
+                });
+
+                if (mute) {
+                    const muteEnd = mute.muteEnd;
+
+                    if (!muteEnd || new Date() < new Date(muteEnd)) {
+                        throw new Error('Sorry, you are muted and cannot perform this action.');
+                    }
+                }
+
                 const message = await prisma.channel_message.create({
                     data: {
                         content,
                         type,
                         user: {
                             connect: {
-                                id: userId,
+                                id: userInfo.sub,
                             },
                         },
                         channel: {
@@ -321,16 +494,6 @@ const resolvers = {
             } catch (error) {
                 console.error('Error sending channel message:', error);
                 throw new Error('Unable to send channel message');
-            }
-        },
-        sendDirectMessage: async (_, { content, senderId, receiverId }, { prisma, pubsub }) => {
-            try {
-                const message = await prisma.direct_message.create({ data: { content, senderId, receiverId } });
-                pubsub.publish(`DIRECT_MESSAGE_SENT_${receiverId}`, { directMessageSent: message });
-                return message;
-            } catch (error) {
-                console.error('Error sending direct message:', error);
-                throw new Error('Unable to send direct message');
             }
         },
         updateLastRead: async (_, { userId, channelId }, { prisma, pubsub }) => {
@@ -379,17 +542,254 @@ const resolvers = {
                 throw new Error('Error creating thread');
             }
         },
-        createReply: async (_, { threadId, content }, { prisma, pubsub }) => {
-            const newReply = await prisma.channel_message.create({
+        createReply: async (_, { threadId, content, channelId, serverId }, { prisma, pubsub, userInfo }) => {
+            try {
+                const mute = await prisma.mute.findFirst({
+                    where: {
+                        userId: userInfo.sub,
+                        AND: [
+                            { channel: { id: channelId } },
+                            { server: { slug: serverId } },
+                        ]
+                    }
+                });
+
+                if (mute) {
+                    const muteEnd = mute.muteEnd;
+
+                    if (!muteEnd || new Date() < new Date(muteEnd)) {
+                        throw new Error('Sorry, you are muted and cannot perform this action.');
+                    }
+                }
+
+                const newReply = await prisma.channel_message.create({
+                    data: {
+                        content,
+                        partOfThreadId: threadId,
+                    },
+                });
+
+                pubsub.publish('NEW_REPLY_IN_THREAD', { newReplyInThread: newReply, threadId });
+
+                return newReply;
+            } catch (error) {
+                console.error('Error creating reply message:', error);
+                throw new Error('Unable to send channel message');
+            }
+        },
+        assignRole: async (_, { userId, roleId, serverId }, context) => {
+            const params = {
+                userId,
+                roleId,
+                serverId,
+            };
+            const existingRole = await context.prisma.userToRoles.create({
+                data: params,
+                include: { role: true },
+            });
+            return existingRole.role;
+        },
+        assignBadge: async (_, { userId, badgeId }, context) => {
+            const params = { userId, badgeId }
+            const assignedBadge = await context.prisma.user_badges.create({
+                data: params,
+                include: { badge: true },
+            });
+            return assignedBadge.badge;
+        },
+        assignModeratorRole: async (parent, { userId, serverId }, { prisma, userInfo }) => {
+            // Check if the requesting user is an Admin of the server
+            const requesterId = userInfo.sub
+            const isAdmin = await prisma.userToRoles.findMany({
+                where: {
+                    AND: [
+                        {
+                            role: {
+                                name: 'Admin',
+                                serverId: parseInt(serverId),
+                            }
+                        },
+                        {
+                            userId: requesterId
+                        }
+                    ]
+                }
+            });
+
+            if (!isAdmin) throw new Error('Requesting user is not an Admin of the server');
+
+            // Check if the user is a member of the server
+            const isMember = await prisma.server.findFirst({
+                where: {
+                    id: parseInt(serverId),
+                    members: {
+                        some: {
+                            id: userId
+                        }
+                    }
+                }
+            });
+
+            if (!isMember) throw new Error('The user is not a member of the server');
+
+            // Check if user already has Moderator role
+            const isModerator = await prisma.userToRoles.findFirst({
+                where: {
+                    AND: [
+                        {
+                            role: {
+                                name: 'Moderator',
+                                serverId: parseInt(serverId),
+                            }
+                        },
+                        {
+                            userId: userId
+                        }
+                    ]
+                }
+            });
+
+            if (isModerator) throw new Error('User is already a moderator');
+
+            // Assign Moderator role to user
+            const role = await prisma.role.findFirst({
+                where: {
+                    AND: [
+                        {
+                            name: 'Moderator',
+                        },
+                        {
+                            serverId: parseInt(serverId),
+                        }
+                    ]
+                }
+            });
+
+            if (!role) throw new Error('Moderator role does not exist');
+
+
+            await prisma.userToRoles.create({
                 data: {
-                    content,
-                    partOfThreadId: threadId,
+                    userId: userId,
+                    roleId: role.id,
                 },
             });
 
-            pubsub.publish('NEW_REPLY_IN_THREAD', { newReplyInThread: newReply, threadId });
+            return role;
+        },
+        removeModeratorRole: async (parent, { userId, serverId }, { prisma, userInfo }) => {
+            const requesterId = userInfo.sub
 
-            return newReply;
+            // Check if requester is Admin of the server
+            const requesterIsAdmin = await prisma.userToRoles.findFirst({
+                where: {
+                    userId: requesterId,
+                    role: {
+                        name: 'Admin',
+                        serverId: parseInt(serverId),
+                    },
+                },
+            });
+
+            if (!requesterIsAdmin) {
+                throw new Error('You must be an Admin to remove a Moderator');
+            }
+
+            // Check if the user to remove Moderator role from is a member of the server
+            const userIsMember = await prisma.user.findFirst({
+                where: {
+                    id: userId,
+                    memberOf: {
+                        some: {
+                            id: parseInt(serverId),
+                        }
+                    },
+                },
+            });
+
+            if (!userIsMember) {
+                throw new Error('User is not a member of the server');
+            }
+
+            // Find and delete the Moderator role from the user
+            const moderatorRole = await prisma.userToRoles.deleteMany({
+                where: {
+                    userId: userId,
+                    role: {
+                        name: 'Moderator',
+                        serverId: parseInt(serverId),
+                    },
+                },
+            });
+
+            // Boolean indicating whether the deletion was successful
+            return moderatorRole.count > 0;
+        },
+        muteUser: async (_, { userId, serverId, channelId, muteDuration }, { prisma, userInfo }) => {
+
+            const requesterRoles = await prisma.userToRoles.findMany({
+                where: {
+                    userId: userInfo.sub,
+                    role: {
+                        serverId: parseInt(serverId),
+                    }
+                },
+                include: {
+                    role: true
+                }
+            });
+
+            const permitted = requesterRoles.some(userToRole => ["Admin", "Moderator"].includes(userToRole.role.name));
+
+            if (!permitted) throw new Error('You must be an Admin or a Moderator to mute a user');
+
+            const muteEnd = muteDuration === Number.MAX_VALUE ? null : new Date();
+            if (muteEnd) {
+                muteEnd.setSeconds(muteEnd.getSeconds() + muteDuration);
+            }
+
+            const mute = await prisma.mute.create({
+                data: {
+                    userId,
+                    serverId,
+                    channelId: channelId || null,
+                    muteEnd: muteEnd ? muteEnd.toISOString() : null,
+                },
+            });
+
+            return mute;
+        },
+        startCall: async (_, { serverId, channelId }, { prisma, userInfo }) => {
+
+            const channelName = createUniqueChannelName(serverId, channelId);
+            const token = createRtcToken(channelName, userInfo.sub)
+
+            return { channelName, token }
+        },
+        createAudioChannel: async (_, { name, serverId }, { prisma }) => {
+            try {
+                return await prisma.channel.create({
+                    data: {
+                        name,
+                        server: {
+                            connect: {
+                                id: parseInt(serverId)
+                            }
+                        },
+                        type: 'AUDIO'
+                    }
+                });
+            } catch (error) {
+                console.error('Error creating audio channel:', error);
+                throw new Error('Unable to create audio channel');
+            }
+        },
+        joinAudioChannel: async (_, { serverId, channelId }, { prisma, userInfo }) => {
+            const channelName = createUniqueChannelName(serverId, channelId);
+            const uid = userInfo.sub;
+            const token = createRtcToken(channelName, uid);
+
+            return { channelName, token, uid };
         },
     },
     Subscription: {
@@ -432,6 +832,40 @@ const resolvers = {
         },
         partOfThread: async ({ partOfThreadId }, _, { prisma }) => {
             return prisma.thread.findUnique({ where: { id: partOfThreadId } });
+        },
+    },
+    User: {
+        // roles: async (parent, args, { prisma }) => {
+        //     console.log('prisma is: ', prisma)
+        //     try {
+        //         const { serverId } = args
+        //         console.log('server id: ', serverId)
+        //         console.log('userId: ', parent.id)
+        //         const userRoles = await prisma.userToRoles.findMany({
+        //             where: {
+        //                 userId: parent.id,
+        //                 server_member: {
+        //                     every: {
+        //                         serverId: parseInt(serverId)
+        //                     }
+        //                 }
+        //             },
+        //             include: {
+        //                 role: true
+        //             }
+        //         })
+        //
+        //         return userRoles.map(userRole => userRole.role)
+        //     } catch (e) {
+        //         throw new GraphQLError('Error')
+        //     }
+        // },
+        badges: async (parent, args, { prisma }) => {
+            const badges_data = await prisma.user_badges.findMany({
+                where: { userId: parent.id },
+                include: { badge: true }
+            });
+            return badges_data.map((u2b) => u2b.badge);
         },
     },
 }
