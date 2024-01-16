@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
-const { RtcTokenBuilder, RtcRole } = require('agora-access-token');
+import pkg from 'agora-access-token';
+const { RtcTokenBuilder, RtcRole } = pkg;
 
 export const moderateMessage = async (message) => {
     const url = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
@@ -18,7 +19,7 @@ export const moderateMessage = async (message) => {
 }
 
 export const createUniqueChannelName = (serverId, channelId) => {
-    return `agora_channel_${serverId}_${channelId}`
+    return `mintalysis_channel_${serverId}_${channelId}`
 }
 
 const appId = process.env.AGORA_APP_ID;

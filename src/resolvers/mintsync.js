@@ -50,10 +50,20 @@ const resolvers = {
                 throw new Error('Unable to fetch servers');
             }
         },
+        getServer: async (_, { slug }, { prisma, userInfo }) => {
+            try {
+                return await prisma.server.findUnique({
+                    where: { slug }
+                })
+            } catch (error) {
+                console.error('Error fetching server:', error);
+                throw new Error('Unable to fetch servers');
+            }
+        },
         getServerChannels: async (_, { type, serverId }, { prisma }) => {
             try {
                 const channels = await prisma.server.findUnique({
-                    where: { slug: serverId },
+                    where: { id: parseInt(serverId) },
                 }).channels({
                     where: { type },
                     include: {
@@ -212,7 +222,6 @@ const resolvers = {
                     }
                 }
             });
-            console.log('members is: ', members[0].UserToRoles)
             return members;
         },
         getChannelMessages: async (_, { channelId, limit = 10, cursor }, { prisma }) => {
@@ -348,6 +357,7 @@ const resolvers = {
             }
         },
         createChannel: async (_, { name, serverId }, { prisma }) => {
+            console.log('create server id is: ', serverId)
             try {
                 return await prisma.channel.create({
                     data: {
@@ -784,10 +794,19 @@ const resolvers = {
                 throw new Error('Unable to create audio channel');
             }
         },
-        joinAudioChannel: async (_, { serverId, channelId }, { prisma, userInfo }) => {
+        joinAudioChannel: async (_, { serverId, channelId }, { prisma, pubsub, userInfo }) => {
             const channelName = createUniqueChannelName(serverId, channelId);
             const uid = userInfo.sub;
             const token = createRtcToken(channelName, uid);
+
+            // Publish event when a user joins an audio channel
+            pubsub.publish(`USER_JOINED_AUDIO_CHANNEL_${channelName}`, {
+                userJoinedAudioChannel: {
+                    channelId,
+                    userId: userInfo.sub,
+                    event: "JOINED"
+                }
+            });
 
             return { channelName, token, uid };
         },
@@ -811,6 +830,14 @@ const resolvers = {
             resolve: (payload) => {
                 return payload.newReplyInThread;
             },
+        },
+        userJoinedAudioChannel: {
+            subscribe: (_, { channelId }, { pubsub }) =>
+                pubsub.asyncIterator([`USER_JOINED_AUDIO_CHANNEL_${channelId}`]),
+        },
+        userLeftAudioChannel: {
+            subscribe: (_, { channelId }, { pubsub }) =>
+                pubsub.asyncIterator([`USER_LEFT_AUDIO_CHANNEL_${channelId}`]),
         },
     },
     Server: {

@@ -4,6 +4,7 @@ const typeDefs = gql`
     type Query {
         getUserServers(userId: ID!): [Server!]
         getServers(pagingOptions: pagingOptions, search: String): ServerConnection!
+        getServer(slug: String!) : Server!
         getServerChannels(type: String, serverId: ID!): [Channel!]
         getServerMembers(serverId: ID!): Server
         getAllServerMembers(serverId: ID!, limit: Int, offset: Int): ServerMembersConnection!
@@ -41,9 +42,17 @@ const typeDefs = gql`
         mintSyncMessageSent(channelId: ID!): ChannelMessage!
         directMessageSent(receiverId: ID!): DirectMessage!
         lastReadUpdated(userId: ID!): LastReadUpdate!
-        newReplyInThread(threadId: Int!): ChannelMessage! 
+        newReplyInThread(threadId: Int!): ChannelMessage!
+        userJoinedAudioChannel(channelId: ID!): AudioChannelEvent!
+        userLeftAudioChannel(channelId: ID!): AudioChannelEvent!
     }
 
+    type AudioChannelEvent {
+        channelId: ID!
+        userId: ID!
+        event: String! # Can be "JOINED" or "LEFT"
+    }
+    
     type JoinAudioChannelResponse {
         channelName: String!
         token: String!
@@ -102,7 +111,7 @@ const typeDefs = gql`
         server: Server!
         messages: [ChannelMessage!]
         latestMessageTimestamp: DateTime
-        channelType: ChannelType
+        type: ChannelType
     }
 
     type ChannelMessage {
