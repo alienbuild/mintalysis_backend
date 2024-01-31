@@ -50,10 +50,20 @@ const resolvers = {
                 throw new Error('Unable to fetch servers');
             }
         },
+        getServer: async (_, { slug }, { prisma, userInfo }) => {
+            try {
+                return await prisma.server.findUnique({
+                    where: { slug }
+                })
+            } catch (error) {
+                console.error('Error fetching server:', error);
+                throw new Error('Unable to fetch servers');
+            }
+        },
         getServerChannels: async (_, { type, serverId }, { prisma }) => {
             try {
                 const channels = await prisma.server.findUnique({
-                    where: { slug: serverId },
+                    where: { id: parseInt(serverId) },
                 }).channels({
                     where: { type },
                     include: {
@@ -212,7 +222,6 @@ const resolvers = {
                     }
                 }
             });
-            console.log('members is: ', members[0].UserToRoles)
             return members;
         },
         getChannelMessages: async (_, { channelId, limit = 10, cursor }, { prisma }) => {
@@ -269,6 +278,25 @@ const resolvers = {
             });
 
             return badgeData.map(item => item.badge);
+        },
+        getAudioChannelMembers: async (_, { channelId }, { prisma }) => {
+            try {
+                const channelMembers = await prisma.ChannelMember.findMany({
+                    where: { channelId: Number(channelId) },
+                    include: {
+                        user: true,
+                        role: true // Updated from channelRole to role
+                    }
+                });
+
+                return channelMembers.map(member => ({
+                    ...member.user,
+                    role: member.role || null // Updated from channelRole to role
+                }));
+            } catch (error) {
+                console.error('Error fetching audio channel members:', error);
+                throw new Error('Unable to fetch audio channel members');
+            }
         }
     },
     Mutation: {
@@ -348,6 +376,7 @@ const resolvers = {
             }
         },
         createChannel: async (_, { name, serverId }, { prisma }) => {
+            console.log('create server id is: ', serverId)
             try {
                 return await prisma.channel.create({
                     data: {
@@ -411,17 +440,22 @@ const resolvers = {
                 }
 
                 const channel = await prisma.channel.findUnique({
-                    where: { id: channelId },
+                    where: { id: Number(channelId) },
                 });
 
                 const slowModeDelay = channel.slowModeDelay;
+
+                const trueServerId = await prisma.server.findUnique({
+                    where: { slug: serverId },
+                    select: { id: true }
+                })
 
                 // Fetch user's roles on the server
                 const requesterRoles = await prisma.userToRoles.findMany({
                     where: {
                         userId: userInfo.sub,
                         role: {
-                            serverId: parseInt(serverId),
+                            serverId: trueServerId.id,
                         }
                     },
                     include: {
@@ -456,7 +490,7 @@ const resolvers = {
                     where: {
                         userId: userInfo.sub,
                         AND: [
-                            { channel: { id: channelId } },
+                            { channel: { id: Number(channelId) } },
                             { server: { slug: serverId } },
                         ]
                     }
@@ -784,13 +818,252 @@ const resolvers = {
                 throw new Error('Unable to create audio channel');
             }
         },
-        joinAudioChannel: async (_, { serverId, channelId }, { prisma, userInfo }) => {
+        joinAudioChannel: async (_, { serverId, channelId }, { prisma, pubsub, userInfo }) => {
             const channelName = createUniqueChannelName(serverId, channelId);
             const uid = userInfo.sub;
             const token = createRtcToken(channelName, uid);
 
+            // Fetch server details to check if the user is the admin
+            const server = await prisma.server.findUnique({
+                where: { slug: serverId },
+                select: { ownerId: true }
+            });
+
+            // Fetch user details
+            const user = await prisma.user.findUnique({
+                where: { id: userInfo.sub },
+                select: {
+                    username: true,
+                    avatar: true
+                }
+            });
+
+            // Fetch channel role separately
+            const channelRole = await prisma.channelRole.findFirst({
+                where: {
+                    userId: userInfo.sub,
+                    channelId: Number(channelId)
+                },
+                select: {
+                    role: true
+                }
+            });
+
+            let role;
+            if (server && server.ownerId === userInfo.sub) {
+                role = 'SPEAKER'; // Assign speaker role if user is the server admin
+            } else {
+                role = channelRole ? channelRole.role : 'LISTENER';
+            }
+
+            // Ensure the user is a member of the channel
+            await prisma.ChannelMember.upsert({
+                where: {
+                    userId_channelId: {
+                        userId: uid,
+                        channelId: Number(channelId),
+                    }
+                },
+                update: {},
+                create: {
+                    userId: uid,
+                    channelId: Number(channelId),
+                }
+            });
+
+            // Publish the event
+            await pubsub.publish(`USER_CHANGED_AUDIO_CHANNEL_${channelId}`, {
+                userChangedAudioChannel: {
+                    userId: uid,
+                    username: user.username,
+                    avatar: user.avatar,
+                    role: role,
+                    channelId,
+                    event: "JOINED"
+                }
+            });
+
             return { channelName, token, uid };
         },
+        leaveAudioChannel: async (_, { channelId }, { prisma, pubsub, userInfo }) => {
+
+            // Remove the user from the channel in the database
+            await prisma.ChannelMember.delete({
+                where: {
+                    userId_channelId: {
+                        userId: userInfo.sub,
+                        channelId: Number(channelId),
+                    }
+                }
+            }).catch(error => {
+                console.error('Error removing user from channel:', error);
+                throw new Error('Unable to remove user from channel');
+            });
+
+            // Publish the event that the user has left the channel
+            await pubsub.publish(`USER_CHANGED_AUDIO_CHANNEL_${channelId}`, {
+                userChangedAudioChannel: {
+                    userId: userInfo.sub,
+                    channelId,
+                    event: "LEFT"
+                }
+            });
+
+            // Any other cleanup or response handling
+            return { success: true };
+        },
+        assignChannelRole: async (_, { userId, channelId, serverId, role }, { prisma, userInfo }) => {
+
+            const requesterId = userInfo.sub
+            const isAdmin = await prisma.userToRoles.findMany({
+                where: {
+                    AND: [
+                        {
+                            role: {
+                                name: 'Admin',
+                                serverId: parseInt(serverId),
+                            }
+                        },
+                        {
+                            userId: requesterId
+                        }
+                    ]
+                }
+            });
+
+            if (!isAdmin) throw new Error('Requesting user is not an Admin of the server');
+
+            const MAX_SPEAKERS = 10
+
+            try {
+                if (role === 'SPEAKER') {
+                    const currentSpeakersCount = await prisma.channelRole.count({
+                        where: {
+                            channelId: channelId,
+                            role: 'SPEAKER'
+                        }
+                    });
+
+                    if (currentSpeakersCount >= MAX_SPEAKERS) {
+                        return {
+                            success: false,
+                            message: 'Maximum number of speakers reached',
+                            assignedRole: null
+                        };
+                    }
+                }
+
+                // Update the role in the database
+                const updatedRole = await prisma.channelRole.upsert({
+                    where: {
+                        userId_channelId: {
+                            userId: userId,
+                            channelId: channelId
+                        }
+                    },
+                    update: {
+                        role: role
+                    },
+                    create: {
+                        userId: userId,
+                        channelId: channelId,
+                        role: role
+                    }
+                });
+
+                return {
+                    success: true,
+                    message: 'Role assigned successfully',
+                    assignedRole: updatedRole.role
+                };
+            } catch (error) {
+                console.error('Error assigning channel role:', error);
+                return {
+                    success: false,
+                    message: 'Failed to assign role',
+                    assignedRole: null
+                };
+            }
+        },
+        requestToSpeak: async (_, { userId, channelId }, { prisma, pubsub }) => {
+            try {
+                const newRequest = await prisma.speak_request.create({
+                    data: {
+                        userId: userId,
+                        channelId: channelId,
+                        status: 'PENDING'
+                    }
+                });
+
+                pubsub.publish(`SPEAK_REQUEST_UPDATED_${channelId}`, {
+                    speakRequestUpdated: newRequest
+                });
+
+                return {
+                    success: true,
+                    message: 'Speak request submitted successfully',
+                    requestStatus: newRequest.status
+                };
+            } catch (error) {
+                console.error('Error creating speak request:', error);
+                return {
+                    success: false,
+                    message: 'Failed to submit speak request',
+                    requestStatus: 'PENDING'
+                };
+            }
+        },
+        handleSpeakRequest: async (_, { requestId, status }, { prisma, userInfo }) => {
+            try {
+                // Retrieve the ID of the requesting user
+                const requesterId = userInfo.sub;
+
+                // Fetch the channel ID from the speak request
+                const request = await prisma.speak_request.findUnique({
+                    where: { id: requestId },
+                    include: { channel: true }
+                });
+
+                if (!request) throw new Error('Speak request not found');
+
+                // Check if the user is an admin, moderator, host, or co-host in the channel
+                const userRole = await prisma.ChannelRole.findFirst({
+                    where: {
+                        AND: [
+                            { channelId: request.channelId },
+                            { userId: requesterId },
+                            { OR: [
+                                    { role: 'ADMIN' },
+                                    { role: 'MODERATOR' },
+                                    { role: 'HOST' },
+                                    { role: 'CO_HOST' }
+                                ]}
+                        ]
+                    }
+                });
+
+                if (!userRole) throw new Error('Unauthorized: Only admins, moderators, hosts, and co-hosts can handle speak requests');
+
+                // Proceed to update the speak request
+                const updatedRequest = await prisma.speak_request.update({
+                    where: { id: requestId },
+                    data: { status: status }
+                });
+
+                return {
+                    success: true,
+                    message: `Speak request ${status.toLowerCase()}`,
+                    requestStatus: updatedRequest.status
+                };
+            } catch (error) {
+                console.error('Error handling speak request:', error);
+                return {
+                    success: false,
+                    message: error.message || 'Failed to handle speak request',
+                    requestStatus: 'PENDING'
+                };
+            }
+        }
     },
     Subscription: {
         mintSyncMessageSent: {
@@ -812,6 +1085,23 @@ const resolvers = {
                 return payload.newReplyInThread;
             },
         },
+        // TODO: Remove instances of user joined/left and just user the user changed subscription
+        userJoinedAudioChannel: {
+            subscribe: (_, { channelId }, { pubsub }) =>
+                pubsub.asyncIterator([`USER_JOINED_AUDIO_CHANNEL_${channelId}`]),
+        },
+        userLeftAudioChannel: {
+            subscribe: (_, { channelId }, { pubsub }) =>
+                pubsub.asyncIterator([`USER_LEFT_AUDIO_CHANNEL_${channelId}`]),
+        },
+        userChangedAudioChannel: {
+            subscribe: (_, { channelId }, { pubsub }) =>
+                pubsub.asyncIterator([`USER_CHANGED_AUDIO_CHANNEL_${channelId}`])
+        },
+        speakRequestUpdated: {
+            subscribe: (_, { channelId }, { pubsub }) =>
+                pubsub.asyncIterator(`SPEAK_REQUEST_UPDATED_${channelId}`)
+        }
     },
     Server: {
         members: async (server, _, ___) => {

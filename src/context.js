@@ -1,7 +1,7 @@
 import DataLoader from 'dataloader';
 import {getUserFromToken} from "./utils/getUserFromToken.js";
 import {batchCollectibles} from "./loaders/collectibleLoader.js";
-import {prisma, pubsub, slack} from "./services.js";
+import {meili, prisma, pubsub, slack} from "./services.js";
 import {batchUsers} from "./loaders/userLoader.js";
 import {batchComics} from "./loaders/comicLoader.js";
 import {transferLoader} from "./loaders/transferLoader.js";
@@ -20,6 +20,7 @@ export const createContext = async ({ req }) => {
         prisma,
         pubsub,
         slack,
+        meili,
         loaders: {
             user: new DataLoader(keys => batchUsers(keys, prisma)),
             collectible: new DataLoader(keys => batchCollectibles(keys, prisma)),

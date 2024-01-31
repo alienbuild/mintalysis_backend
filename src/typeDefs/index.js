@@ -22,6 +22,7 @@ import feedbackTypeDefs from './feedback.js'
 import mintsyncTypeDefs from './mintsync.js'
 import triggerTypeDefs from './triggers.js'
 import newsletterTypeDefs from './newsletters.js'
+import searchTypeDefs from './search.js'
 
 const typeDefs = [
     scalarDefs,
@@ -47,7 +48,8 @@ const typeDefs = [
     feedbackTypeDefs,
     mintsyncTypeDefs,
     triggerTypeDefs,
-    newsletterTypeDefs
+    newsletterTypeDefs,
+    searchTypeDefs
 ]
 
 export default typeDefs
