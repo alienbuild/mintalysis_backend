@@ -5,14 +5,20 @@ const resolvers = {
     Query: {
         projects: async (_,{ id, name, active }, { prisma, userInfo }) => {
 
-            let whereParams = {}
-            if (id) whereParams = { ...whereParams, id}
-            if (name) whereParams = { ...whereParams, name}
-            if (active) whereParams = { ...whereParams, active: true }
-            if (id){ return [prisma.projects.findUnique({ where: whereParams })]
-            } else {
-                return prisma.projects.findMany({ where: whereParams, orderBy: { sort: 'asc' } })
+            try {
+                let whereParams = {}
+                if (id) whereParams = { ...whereParams, id}
+                if (name) whereParams = { ...whereParams, name}
+                if (active) whereParams = { ...whereParams, active: true }
+                if (id){ return [prisma.projects.findUnique({ where: whereParams })]
+                } else {
+                    return prisma.projects.findMany({ where: whereParams, orderBy: { sort: 'asc' } })
+                }
+            } catch (error) {
+                console.log('Error: ', error)
+                throw new GraphQLError('Unable to find projects.')
             }
+
         }
     },
     Mutation: {

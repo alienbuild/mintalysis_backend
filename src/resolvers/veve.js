@@ -132,64 +132,90 @@ const resolvers = {
             const include = { metrics: true, translations: { where: { language: lang } } };
             const orderBy = [{ drop_date: 'desc' }];
 
-            if (collectibleId) {
-                const collectibles = await prisma.veve_collectibles.findUnique({
-                    where: { collectible_id: collectibleId },
+            try {
+                if (collectibleId) {
+                    const collectibles = await prisma.veve_collectibles.findUnique({
+                        where: { collectible_id: collectibleId },
+                        include
+                    });
+                    return { edges: [collectibles] };
+                }
+
+                if (sortOptions?.sortBy) {
+                    const { sortBy, sortDirection = 'desc' } = sortOptions;
+                    orderBy.length = 0;
+                    switch (sortBy) {
+                        case 'coming_soon':
+                            where.drop_date = { gte: new Date() };
+                            break;
+                        case 'hottest':
+                            orderBy.push({ metrics: { one_day_change: 'desc' } });
+                            break;
+                        case 'coldest':
+                            orderBy.push({ metrics: { one_day_change: 'asc'} });
+                            where.floor_price = { gt: 0 };
+                            break;
+                        case 'one_day_change':
+                            orderBy.push({ metrics: { one_day_change: sortDirection } })
+                            break;
+                        case 'one_wk_change':
+                            orderBy.push({ metrics: { one_wk_change: sortDirection } })
+                            break;
+                        case 'one_mo_change':
+                            orderBy.push({ metrics: { one_mo_change: sortDirection } })
+                            break;
+                        case 'three_mo_change':
+                            orderBy.push({ metrics: { three_mo_change: sortDirection } })
+                            break;
+                        case 'six_mo_change':
+                            orderBy.push({ metrics: { six_mo_change: sortDirection } })
+                            break;
+                        case 'one_year_change':
+                            orderBy.push({ metrics: { one_year_change: sortDirection } })
+                            break;
+                        case 'all_time_change':
+                            orderBy.push({ metrics: { all_time_change: sortDirection } })
+                            break;
+                        case 'drop_date':
+                            orderBy.push({ drop_date: 'desc' });
+                            break;
+                        default:
+                            orderBy.push({ [sortBy]: sortDirection });
+                    }
+                }
+
+                if (after) where.collectible_id = { gt: decodeCursor(after) }
+                if (filterOptions?.underRRP) where.floor_price = { lt: await prisma.veve_collectibles.fields.store_price }
+
+                if (search) where.name = { contains: search }
+
+                const collectibles = await prisma.veve_collectibles.findMany({
+                    take: limit,
+                    skip: after ? 1 : 0,
+                    where,
+                    orderBy,
                     include
                 });
-                return { edges: [collectibles] };
+
+                // const valuations = await prisma.veve_wallets_valuations.findMany({
+                //     where: {
+                //         wallet_id: "123123swer"
+                //     },
+                //     include: {
+                //         wallet: true
+                //     }
+                // })
+
+                return {
+                    edges: collectibles,
+                    pageInfo: {
+                        endCursor: collectibles.length > 1 ? encodeCursor(collectibles.slice(-1)[0].collectible_id) : null,
+                    }
+                };
+            } catch (error) {
+                console.log('Error: ', error)
+                throw new GraphQLError(`Unable to find veve collectibles`)
             }
-
-            if (sortOptions?.sortBy) {
-                const { sortBy, sortDirection = 'desc' } = sortOptions;
-                orderBy.length = 0;
-                switch (sortBy) {
-                    case 'coming_soon':
-                        where.drop_date = { gte: new Date() };
-                        break;
-                    case 'hottest':
-                        orderBy.push({ one_day_change: 'desc' });
-                        break;
-                    case 'coldest':
-                        orderBy.push({ one_day_change: 'asc' });
-                        where.floor_price = { gt: 0 };
-                        break;
-                    case 'drop_date':
-                        orderBy.push({ drop_date: 'desc' });
-                        break;
-                    default:
-                        orderBy.push({ [sortBy]: sortDirection });
-                }
-            }
-
-            if (after) where.collectible_id = { gt: decodeCursor(after) }
-            if (filterOptions?.underRRP) where.floor_price = { lt: await prisma.veve_collectibles.fields.store_price }
-
-            if (search) where.name = { contains: search }
-
-            const collectibles = await prisma.veve_collectibles.findMany({
-                take: limit,
-                skip: after ? 1 : 0,
-                where,
-                orderBy,
-                include
-            });
-
-            const valuations = await prisma.veve_wallets_valuations.findMany({
-                where: {
-                    wallet_id: "123123swer"
-                },
-                include: {
-                    wallet: true
-                }
-            })
-
-            return {
-                edges: collectibles,
-                pageInfo: {
-                    endCursor: collectibles.length > 1 ? encodeCursor(collectibles.slice(-1)[0].collectible_id) : null,
-                }
-            };
         },
         veveComics: async (_, { uniqueCoverId, search, pagingOptions, after }, { prisma }) => {
 
@@ -242,7 +268,7 @@ const resolvers = {
 
             queryParams = { ...queryParams, where: { ...whereParams } }
 
-            const brands = await prisma.veve_brands.findMany(queryParams)
+            const brands = await prisma.brands.findMany(queryParams)
 
             return {
                 edges: brands,
@@ -267,7 +293,7 @@ const resolvers = {
 
             queryParams = { ...queryParams, where: { ...whereParams } }
 
-            const licensors = await prisma.veve_licensors.findMany(queryParams)
+            const licensors = await prisma.licensors.findMany(queryParams)
 
             return {
                 edges: licensors,
@@ -912,7 +938,7 @@ const resolvers = {
             }
         },
         brand: async ({ brand_id }, __ ,{ prisma }) => {
-            return await prisma.veve_brands.findUnique({
+            return await prisma.brands.findUnique({
                 where: {
                     brand_id
                 }

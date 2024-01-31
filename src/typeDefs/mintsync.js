@@ -14,6 +14,7 @@ const typeDefs = gql`
         getThread(id: ID!): [Thread!]!
         userRoles(userId: String!): [Role!]!
         userBadges(userId: String!): [Badge!]!
+        getAudioChannelMembers(channelId: ID!): [User]!
     }
 
     type Mutation {
@@ -36,6 +37,10 @@ const typeDefs = gql`
         startCall(serverId: ID!, channelId: ID!): StartCallResponse
         createAudioChannel(name: String!, serverId: ID!): Channel!
         joinAudioChannel(channelId: ID!, serverId: ID!): JoinAudioChannelResponse!
+        leaveAudioChannel(channelId: ID!): LeaveAudioChannelResponse!
+        assignChannelRole(userId: String!, channelId: ID!, serverId: ID!, role: ChannelRoleType!): ChannelRoleResponse!
+        requestToSpeak(userId: String!, channelId: Int!): SpeakRequestResponse!
+        handleSpeakRequest(requestId: Int!, status: SpeakRequestStatus!): SpeakRequestResponse!
     }
 
     type Subscription {
@@ -45,18 +50,72 @@ const typeDefs = gql`
         newReplyInThread(threadId: Int!): ChannelMessage!
         userJoinedAudioChannel(channelId: ID!): AudioChannelEvent!
         userLeftAudioChannel(channelId: ID!): AudioChannelEvent!
+        userChangedAudioChannel(channelId: ID!): AudioChannelEvent
+        speakRequestUpdated(channelId: Int!): SpeakRequestUpdate!
+    }
+
+    extend type User {
+        channelRole: ChannelRole
+    }
+
+    type ChannelRole {
+        id: ID!
+        userId: ID!
+        channelId: ID!
+        role: ChannelRoleType!
+        user: User!
+        channel: Channel!
+    }
+
+    type SpeakRequestResponse {
+        success: Boolean!
+        message: String
+        requestStatus: SpeakRequestStatus
+    }
+
+    type SpeakRequestUpdate {
+        requestId: Int!
+        userId: String!
+        status: SpeakRequestStatus!
+    }
+
+    enum SpeakRequestStatus {
+        PENDING
+        APPROVED
+        DENIED
+    }
+    
+    enum ChannelRoleType {
+        HOST
+        CO_HOST
+        SPEAKER
+        LISTENER
+    }
+
+    type ChannelRoleResponse {
+        success: Boolean!
+        message: String
+        assignedRole: ChannelRoleType
     }
 
     type AudioChannelEvent {
         channelId: ID!
         userId: ID!
-        event: String! # Can be "JOINED" or "LEFT"
+        username: String
+        avatar: String
+        event: String! 
+        role: ChannelRoleType
     }
     
     type JoinAudioChannelResponse {
         channelName: String!
         token: String!
         uid: ID!
+    }
+
+    type LeaveAudioChannelResponse {
+        success: Boolean!
+        message: String
     }
     
     type StartCallResponse {

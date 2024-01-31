@@ -32,6 +32,8 @@ const typeDefs = gql`
         veveCollectiblePrice(collectible_id: String): DateTime
         veveVaultImport: VeveVaultImportSubcriptionPayload
     }
+
+    
     
     type VerificationCode {
         code: Int!

@@ -22,6 +22,7 @@ import feedbackResolvers from './feedback.js'
 import mintsyncResolvers from './mintsync.js'
 import triggerResolvers from './triggers.js'
 import newsletterResolvers from './newsletters.js'
+import searchResolvers from './search.js'
 
 const resolvers = merge({},
     DateTime,
@@ -46,7 +47,8 @@ const resolvers = merge({},
     feedbackResolvers,
     mintsyncResolvers,
     triggerResolvers,
-    newsletterResolvers
+    newsletterResolvers,
+    searchResolvers
 )
 
 export default resolvers

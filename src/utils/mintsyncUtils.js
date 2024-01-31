@@ -1,22 +1,31 @@
 import fetch from 'node-fetch';
 import pkg from 'agora-access-token';
+import { google } from 'googleapis'
 const { RtcTokenBuilder, RtcRole } = pkg;
 
+const API_KEY = process.env.GOOGLE_PERSPECTIVE_KEY;
+const DISCOVERY_URL = 'https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1';
+
 export const moderateMessage = async (message) => {
-    const url = 'https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze';
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            comment: {text: message},
-            languages: ['en'],
-            requestedAttributes: {TOXICITY: {}},
-            key: process.env.GOOGLE_CLIENT_SECRET,
-        }),
+    const client = await google.discoverAPI(DISCOVERY_URL);
+    const analyzeRequest = {
+        comment: { text: message },
+        languages: ['en'],
+        requestedAttributes: { TOXICITY: {} },
+        doNotStore: true
+    };
+
+    return new Promise((resolve, reject) => {
+        client.comments.analyze({key: API_KEY, resource: analyzeRequest}, (err, response) => {
+            if (err) {
+                reject(err);
+            } else {
+                const { attributeScores } = response.data;
+                return resolve(attributeScores.TOXICITY.summaryScore.value);
+            }
+        });
     });
-    const {attributeScores} = await response.json();
-    return attributeScores.TOXICITY.summaryScore.value;
-}
+};
 
 export const createUniqueChannelName = (serverId, channelId) => {
     return `mintalysis_channel_${serverId}_${channelId}`

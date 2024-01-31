@@ -1,6 +1,6 @@
 export const batchBrands = async (brandIds, prisma) => {
     try {
-        const brands = await prisma.veve_brands.findMany({
+        const brands = await prisma.brands.findMany({
             where: {
                 brand_id: { in: brandIds },
             },
