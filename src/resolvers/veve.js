@@ -831,6 +831,24 @@ const resolvers = {
                         }
                     })
 
+                    const existingAssociation = await prisma.userToProjects.findUnique({
+                        where: {
+                            userId_collectionId: {
+                                userId: userInfo.sub,
+                                collectionId: "de2180a8-4e26-402a-aed1-a09a51e6e33d",
+                            },
+                        },
+                    });
+
+                    if (!existingAssociation) {
+                        await prisma.userToProjects.create({
+                            data: {
+                                userId: userInfo.sub,
+                                collectionId: "de2180a8-4e26-402a-aed1-a09a51e6e33d",
+                            },
+                        });
+                    }
+
                     await prisma.user.update({
                         where: {
                             id: userInfo.sub

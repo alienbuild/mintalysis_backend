@@ -2,6 +2,31 @@ import {GraphQLError} from "graphql"
 
 const resolvers = {
     Query: {
+        getRecentSearches: async (_, { __ }, { prisma }) => {
+            return await prisma.recent_search.findMany({
+                orderBy: { timestamp: 'desc' },
+            });
+        },
+        getPopularSearches: async (_, __, { prisma }) => {
+            const lastWeek = new Date(new Date().setDate(new Date().getDate() - 7));
+            const searches = await prisma.recent_search.groupBy({
+                by: ['search_term'],
+                _count: true,
+                where: {
+                    timestamp: {
+                        gte: lastWeek,
+                    },
+                },
+                orderBy: {
+                    _count: {
+                        searchTerm: 'desc',
+                    },
+                },
+                take: 10,
+            });
+
+            return searches.map(search => search.searchTerm);
+        },
         searchWriters: async (_, { query, limit = 10 }, { meili }) => {
             try {
                 const response = await meili.index('writers').search(query, {
@@ -62,24 +87,33 @@ const resolvers = {
                 throw new GraphQLError('Failed to search in MeiliSearch');
             }
         },
-        searchVeveCollectibles: async (_, { query, limit = 10 }, { meili }) => {
+        searchCollectibles: async (_, { query, limit = 10 }, { meili }) => {
             try {
-                const response = await meili.index('veve_collectibles').search(query, {
+                const response = await meili.index('collectibles').search(query, {
                     limit,
-                    attributesToRetrieve: ['collectible_id', 'name', 'rarity', 'edition_type', 'tags.name', 'image_thumbnail_url', 'project.motiff_url'],
-                    attributesToHighlight: ['name', 'tags.name']
+                    attributesToRetrieve: [
+                        'id', 'name', 'slug', 'rarity', 'edition_type',
+                        'tags', 'image', 'project_id', 'project_motiff_url',
+                        'comic_number', 'artists', 'characters', 'writers'
+                    ],
                 });
 
                 return {
                     totalHits: response.estimatedTotalHits,
                     hits: response.hits.map(hit => ({
-                        collectible_id: hit.collectible_id,
+                        // id: hit.id.split('_')[1],
+                        id: hit.id,
                         name: hit.name,
                         rarity: hit.rarity,
+                        slug: hit.slug,
                         edition_type: hit.edition_type,
-                        image_thumbnail_url: hit.image_thumbnail_url,
-                        motiff_url: hit.project.motiff_url,
-                        tags: hit.tags ? hit.tags.map(tag => tag.name).join(', ') : null
+                        image_thumbnail_url: hit.image,
+                        motiff_url: hit.project_motiff_url,
+                        tags: hit.tags,
+                        comic_number: hit.comic_number,
+                        artists: hit.artists,
+                        characters: hit.characters,
+                        writers: hit.writers,
                     })),
                 };
             } catch (error) {
@@ -87,7 +121,7 @@ const resolvers = {
                 throw new GraphQLError('Failed to search in MeiliSearch');
             }
         },
-        searchVeveBrands: async (_, { query, limit = 10 }, { meili }) => {
+        searchBrands: async (_, { query, limit = 10 }, { meili }) => {
             try {
                 const response = await meili.index('brands').search(query, {
                     limit,
@@ -103,6 +137,24 @@ const resolvers = {
             } catch (error) {
                 console.error('MeiliSearch failed:', error);
                 throw new GraphQLError('Failed to search in MeiliSearch');
+            }
+        },
+        searchLicensors: async (_, { query, limit = 10 }, { meili }) => {
+            try {
+                const response = await meili.index('licensors').search(query, {
+                    limit,
+                    attributesToRetrieve: ['licensor_id', 'name', 'square_image_thumbnail_url'],
+                    attributesToHighlight: ['name']
+                })
+
+                return response.hits.map(hit => ({
+                    series_id: hit.series_id,
+                    name: hit.name,
+                    square_image_thumbnail_url: hit.square_image_thumbnail_url
+                }))
+            } catch (error) {
+                console.log('Meilisearch series failed: ', error)
+                throw new GraphQLError('Failed to search in MeiliSearch')
             }
         },
         searchVeveSeries: async (_, { query, limit = 10 }, { meili }) => {
@@ -123,23 +175,15 @@ const resolvers = {
                 throw new GraphQLError('Failed to search in MeiliSearch')
             }
         },
-        searchVeveLicensors: async (_, { query, limit = 10 }, { meili }) => {
-            try {
-                const response = await meili.index('licensors').search(query, {
-                    limit,
-                    attributesToRetrieve: ['licensor_id', 'name', 'square_image_thumbnail_url'],
-                    attributesToHighlight: ['name']
-                })
-
-                return response.hits.map(hit => ({
-                    series_id: hit.series_id,
-                    name: hit.name,
-                    square_image_thumbnail_url: hit.square_image_thumbnail_url
-                }))
-            } catch (error) {
-                console.log('Meilisearch series failed: ', error)
-                throw new GraphQLError('Failed to search in MeiliSearch')
-            }
+    },
+    Mutation: {
+        createRecentSearch: async (_, { search_term }, { prisma, userInfo }) => {
+            return await prisma.recentSearch.create({
+                data: {
+                    user_id: userInfo.sub,
+                    search_term,
+                },
+            });
         },
     }
 }
