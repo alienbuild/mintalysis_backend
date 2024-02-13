@@ -23,6 +23,7 @@ import mintsyncResolvers from './mintsync.js'
 import triggerResolvers from './triggers.js'
 import newsletterResolvers from './newsletters.js'
 import searchResolvers from './search.js'
+import blockchainResolvers from './blockchain.js'
 
 const resolvers = merge({},
     DateTime,
@@ -48,7 +49,8 @@ const resolvers = merge({},
     mintsyncResolvers,
     triggerResolvers,
     newsletterResolvers,
-    searchResolvers
+    searchResolvers,
+    blockchainResolvers
 )
 
 export default resolvers
