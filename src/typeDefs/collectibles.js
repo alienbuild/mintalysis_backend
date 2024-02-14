@@ -3,6 +3,7 @@ import gql from "graphql-tag";
 const typeDefs = gql`
     
     type Query {
+        userCollectionsAndProjects: UserCollectionsAndProjects
         getCollection(id: ID!): UserCollection
         getCollections(page: Int, limit: Int): [UserCollection]
         getCollectible(id: ID!): PhysicalCollectible
@@ -15,6 +16,25 @@ const typeDefs = gql`
         addCollectible(name: String!, description: String, collectionId: ID!): PhysicalCollectible
         updateCollectible(id: ID!, name: String, description: String): PhysicalCollectible
         deleteCollectible(id: ID!): Boolean
+    }
+
+    type UserCollectionsAndProjects {
+        physicalCollections: [UserCollection]
+        digitalProjects: [DigitalProject]
+    }
+
+    type DigitalProject {
+        id: ID!
+        name: String
+        abbr: String
+        active: Boolean
+        icon: String
+        slug: String
+        sort: Int
+        tile: String
+        motiffUrl: String
+        valuation: Float
+        valuationWithFees: Float
     }
 
     type UserCollection {
