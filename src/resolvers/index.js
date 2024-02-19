@@ -24,6 +24,8 @@ import triggerResolvers from './triggers.js'
 import newsletterResolvers from './newsletters.js'
 import searchResolvers from './search.js'
 import blockchainResolvers from './blockchain.js'
+import collectibleResolvers from './collectibles.js'
+import currencyResolvers from './currencies.js'
 
 const resolvers = merge({},
     DateTime,
@@ -50,7 +52,9 @@ const resolvers = merge({},
     triggerResolvers,
     newsletterResolvers,
     searchResolvers,
-    blockchainResolvers
+    blockchainResolvers,
+    collectibleResolvers,
+    currencyResolvers
 )
 
 export default resolvers

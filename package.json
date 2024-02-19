@@ -54,6 +54,7 @@
     "remove.bg": "^1.3.0",
     "short-unique-id": "^4.4.4",
     "slugify": "^1.6.5",
+    "stripe": "^14.17.0",
     "tinify": "^1.7.1",
     "twit": "^2.2.11",
     "unique-names-generator": "^4.7.1",

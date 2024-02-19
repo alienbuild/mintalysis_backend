@@ -24,6 +24,8 @@ import triggerTypeDefs from './triggers.js'
 import newsletterTypeDefs from './newsletters.js'
 import searchTypeDefs from './search.js'
 import blockchainTypeDefs from './blockchain.js'
+import collectibleTypeDefs from './collectibles.js'
+import currencyTypeDefs from './currencies.js'
 
 const typeDefs = [
     scalarDefs,
@@ -51,7 +53,9 @@ const typeDefs = [
     triggerTypeDefs,
     newsletterTypeDefs,
     searchTypeDefs,
-    blockchainTypeDefs
+    blockchainTypeDefs,
+    collectibleTypeDefs,
+    currencyTypeDefs
 ]
 
 export default typeDefs

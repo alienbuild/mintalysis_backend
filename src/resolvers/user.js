@@ -1,26 +1,35 @@
-import * as cloudinary from "cloudinary"
+import Stripe from 'stripe';
 import {GraphQLError} from "graphql"
 import {decodeCursor, encodeCursor} from "../utils/index.js";
+import * as cloudinary from "cloudinary";
+
+cloudinary.v2.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
 
 const resolvers = {
     Query: {
-        me: async (_, __, {userInfo, prisma}) => {
+        me: async (_, __, { userInfo, prisma }) => {
             if (!userInfo) return null
-            return await prisma.User.findUnique({
-                where: {
-                    id: userInfo.sub
-                },
-                include: {
-                    projects: true,
-                    newsletter_subscriber: true,
-                    profile: {
-                        include: {
-                            veve_wallet: true
-                        }
+            try {
+                return await prisma.User.findUnique({
+                    where: {
+                        id: userInfo.sub
+                    },
+                    include: {
+                        projects: true,
+                        // newsletter_subscriber: true,
+                        profile: true
+                        // following: true, // TODO: Check why i need to uncomment this for it to work now?
                     }
-                    // following: true, // TODO: Check why i need to uncomment this for it to work now?
-                }
-            })
+                })
+            } catch (error) {
+                console.log('Unable to get user info: ', error)
+            }
         },
         getUser: async (_, { userId }, {prisma, userInfo}) => {
 
@@ -204,8 +213,6 @@ const resolvers = {
                     }
                 })
 
-                console.log('test is: ', test)
-
                 return test.communities
             } catch (e) {
                 console.log('nah: ', e)
@@ -258,6 +265,24 @@ const resolvers = {
             });
 
             return user === null
+        },
+        getUserPreferences: async (_, __, { userInfo, prisma }) => {
+            return prisma.user_preferences.findUnique({
+                where: {
+                    user_id: userInfo.sub
+                },
+            });
+        },
+        currentUserSubscription: async (_, __, { prisma, userInfo }) => {
+            if (!userInfo) {
+                throw new Error("Authentication required");
+            }
+            return await prisma.user.findUnique({
+                where: {id: userInfo.sub},
+            });
+        },
+        subscriptionPlans: async (_, __, { prisma }) => {
+            return await prisma.subscription_plan.findMany();
         },
     },
     Mutation: {
@@ -396,8 +421,214 @@ const resolvers = {
 
             console.log('update is: ', username)
             return true
-        }
-    },
+        },
+        updateUserPreferences: async (_, { preferences }, { userInfo, prisma }) => {
+            return prisma.user_preferences.upsert({
+                where: { user_id: userInfo.sub },
+                update: preferences,
+                create: {
+                    user_id: userInfo.sub,
+                    ...preferences,
+                },
+            });
+        },
+        logoutAllOtherSessions: async (_, __, { userInfo, prisma }) => {
+            await prisma.user.update({
+                where: { id: userInfo.sub },
+                data: { sessions_valid_after: new Date() },
+            });
+            return true;
+        },
+        deleteUserAccount: async (_, __, { prisma, userInfo }) => {
+            if (!userInfo.sub) throw new Error("Authentication required or you can only delete your own account.");
+
+            await prisma.user.update({
+                where: { id: userInfo.sub },
+                data: {
+                    is_deleted: true,
+                    deleted_at: new Date(),
+                    username: 'Deleted User',
+                },
+            });
+
+            return true;
+        },
+        updateUserDetails: async (_, { input }, { prisma, userInfo }) => {
+
+            const { username, avatar, first_name, last_name } = input
+
+            let userDataToUpdate = {};
+            if (username) {
+                userDataToUpdate.username = username;
+            }
+
+            let imageUrl = null;
+            if (avatar) {
+                const { createReadStream } = await avatar.file;
+
+                try {
+                    const result = await new Promise((resolve, reject) => {
+                        createReadStream().pipe(cloudinary.v2.uploader.upload_stream((error, result) => {
+                            if (error) {
+                                reject(error);
+                            }
+                            resolve(result);
+                        }));
+                    });
+
+                    imageUrl = result.secure_url;
+                    userDataToUpdate.avatar = imageUrl;
+                } catch (error) {
+                    console.error('Error uploading avatar to Cloudinary:', error);
+                    throw new Error('There was an issue uploading your avatar.');
+                }
+            }
+
+            if (Object.keys(userDataToUpdate).length > 0) {
+                await prisma.user.update({
+                    where: { id: userInfo.sub },
+                    data: userDataToUpdate,
+                });
+            }
+
+            let profileDataToUpdate = {};
+            if (first_name) {
+                profileDataToUpdate.first_name = first_name;
+            }
+            if (last_name) {
+                profileDataToUpdate.last_name = last_name;
+            }
+
+            const profileExists = await prisma.profile.findUnique({
+                where: { user_id: userInfo.sub },
+            });
+
+            if (profileExists && Object.keys(profileDataToUpdate).length > 0) {
+                await prisma.profile.update({
+                    where: { user_id: userInfo.sub },
+                    data: profileDataToUpdate,
+                });
+            } else if (!profileExists) {
+                await prisma.profile.create({
+                    data: { user_id: userInfo.sub, ...profileDataToUpdate },
+                });
+            }
+
+            return {
+                success: true,
+                message: 'User details updated successfully',
+            };
+
+        },
+        createSubscription: async (_, { stripeToken, priceId }, { prisma, stripe, userInfo }) => {
+            if (!userInfo) {
+                throw new Error("Authentication required");
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { id: userInfo.sub },
+            });
+
+            if (!user.stripe_customer_id) {
+                // Create a new Stripe customer
+                const customer = await stripe.customers.create({
+                    email: user.email,
+                    source: stripeToken,
+                });
+
+                // Save the customer ID in your database
+                await prisma.user.update({
+                    where: { id: userInfo.sub },
+                    data: { stripe_customer_id: customer.id },
+                });
+            }
+
+            // Create the subscription
+            const subscription = await stripe.subscriptions.create({
+                customer: user.stripe_customer_id,
+                items: [{ price: priceId }],
+            });
+
+            // Update the user record with subscription details
+            await prisma.user.update({
+                where: { id: userInfo.sub },
+                data: {
+                    stripe_subscription_id: subscription.id,
+                    subscription_status: subscription.status,
+                },
+            });
+
+            return {
+                success: true,
+                message: "Subscription created successfully",
+                user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
+            };
+        },
+        cancelSubscription: async (_, __, { prisma, stripe, userInfo }) => {
+            if (!userInfo) {
+                throw new Error("Authentication required");
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { id: userInfo.sub },
+            });
+
+            if (!user.stripe_subscription_id) {
+                throw new Error("No subscription found");
+            }
+
+            // Cancel the subscription
+            await stripe.subscriptions.del(user.stripe_subscription_id);
+
+            // Update the user's subscription status
+            await prisma.user.update({
+                where: { id: userInfo.sub },
+                data: { subscription_status: 'canceled' },
+            });
+
+            return {
+                success: true,
+                message: "Subscription canceled successfully",
+                user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
+            };
+        },
+        changeSubscriptionPlan: async (_, { newPriceId }, { prisma, stripe, userInfo }) => {
+            if (!userInfo) {
+                throw new Error("Authentication required");
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { id: userInfo.sub },
+            });
+
+            if (!user.stripe_subscription_id) {
+                throw new Error("No subscription found to update");
+            }
+
+            // Retrieve the current subscription
+            const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
+
+            // Update the subscription to the new plan
+            const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
+                items: [{
+                    id: subscription.items.data[0].id,
+                    price: newPriceId,
+                }],
+            });
+
+            // Update user's subscription status (optional)
+            await prisma.user.update({
+                where: { id: userInfo.sub },
+                data: { subscription_status: updatedSubscription.status },
+            });
+
+            return {
+                success: true,
+                message: "Subscription plan changed successfully",
+                user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
+            };
+        },
+},
     Subscription: {
         userStatusChanged: {
             subscribe: (_, __, { pubsub }) => pubsub.asyncIterator(['USER_STATUS_CHANGED'])
@@ -451,7 +682,7 @@ const resolvers = {
             }
 
         }
-    }
+    },
 }
 
 export default resolvers

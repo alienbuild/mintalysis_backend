@@ -467,8 +467,6 @@ const resolvers = {
                 }
             })
 
-            console.log('test is: ', test)
-
             return true
         },
         leaveCommunity: async (_, { community_id }, { userInfo, prisma }) => {
@@ -488,8 +486,6 @@ const resolvers = {
                     }
                 }
             })
-
-            console.log('test is: ', test)
 
             return true
         },
