@@ -12,6 +12,9 @@ const typeDefs = gql`
         getUserProjects(userId: ID!): Boolean
         getUserAccessibilityPreferences: UserAccessibilityPreferences
         checkUsername(username: String!): Boolean
+        getUserPreferences: UserPreferences
+        currentUserSubscription: User
+        subscriptionPlans: [SubscriptionPlan!]!
     }
     
     type Mutation {
@@ -21,10 +24,54 @@ const typeDefs = gql`
         followUser(userId: ID!) : Boolean
         unfollowUser(userId: ID!): Boolean
         saveUserAccessibilityPreferences(preferences: AccessibilityPreferencesInput!): Boolean
+        updateUserPreferences(preferences: PreferencesInput!): UserPreferences
+        logoutAllOtherSessions: Boolean
+        deleteUserAccount(userId: ID!): Boolean
+        updateUserDetails(input: UpdateUserDetailsInput!): UserUpdateResponse!
+        createSubscription(stripeToken: String!, priceId: String!): SubscriptionResponse!
+        cancelSubscription: SubscriptionResponse!
+        changeSubscriptionPlan(newPriceId: String!): SubscriptionResponse!
     }
     
     type Subscription {
         userStatusChanged: User!
+    }
+
+    type SubscriptionResponse {
+        success: Boolean!
+        message: String!
+        user: User
+    }
+
+    input UpdateUserDetailsInput {
+        avatar: Upload
+        username: String
+        first_name: String
+        last_name: String
+    }
+
+    type UserUpdateResponse {
+        success: Boolean!
+        message: String
+        user: User
+    }
+
+    input PreferencesInput {
+        displayCurrency: Currency
+        theme: Theme
+        enableNotifications: Boolean
+        language: Language
+        layoutPreference: Layout
+    }
+
+    type UserPreferences {
+        id: ID!
+        user_id: String!
+        display_currency: Currency!
+        theme: Theme!
+        enable_notifications: Boolean!
+        language: Language!
+        layout_preference: Layout!
     }
     
     type UserAccessibilityPreferences {
@@ -68,6 +115,8 @@ const typeDefs = gql`
         cover_image: String
         activated: Boolean
         stripe_customer_id: String
+        stripe_subscription_id: String
+        subscription_status: String
         profile: Profile
         role: String!
         newsletterSubscriber: NewsletterSubscriber
@@ -82,6 +131,14 @@ const typeDefs = gql`
         direct_messages_sent: [DirectMessage!]
         direct_messages_received: [DirectMessage!]
         _count: UserCommunityStats
+    }
+
+
+    type SubscriptionPlan {
+        id: ID!
+        stripe_price_id: String!
+        name: String!
+        description: String
     }
     
     type UserCommunityStats {
@@ -129,7 +186,36 @@ const typeDefs = gql`
         errorStatus: Boolean
         error: String
         token: String
-    } 
+    }
+
+    enum Currency {
+        USD
+        ETH
+        BTC
+        OMI
+    }
+
+    enum Theme {
+        LIGHT
+        DARK
+    }
+
+    enum Language {
+        EN
+        ES
+        DE
+        FR
+        CN
+        IN
+        IT
+        JP
+    }
+
+    enum Layout {
+        STANDARD
+        COMPACT
+        DENSE
+    }
 
 `
 

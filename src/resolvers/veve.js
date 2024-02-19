@@ -835,7 +835,7 @@ const resolvers = {
                         where: {
                             userId_collectionId: {
                                 userId: userInfo.sub,
-                                collectionId: "de2180a8-4e26-402a-aed1-a09a51e6e33d",
+                                project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d",
                             },
                         },
                     });
@@ -844,7 +844,7 @@ const resolvers = {
                         await prisma.userToProjects.create({
                             data: {
                                 userId: userInfo.sub,
-                                collectionId: "de2180a8-4e26-402a-aed1-a09a51e6e33d",
+                                project_id: "de2180a8-4e26-402a-aed1-a09a51e6e33d",
                             },
                         });
                     }
