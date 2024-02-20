@@ -1,4 +1,3 @@
-import Stripe from 'stripe';
 import {GraphQLError} from "graphql"
 import {decodeCursor, encodeCursor} from "../utils/index.js";
 import * as cloudinary from "cloudinary";
@@ -8,8 +7,6 @@ cloudinary.v2.config({
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
-const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
 
 const resolvers = {
     Query: {
@@ -273,17 +270,6 @@ const resolvers = {
                 },
             });
         },
-        currentUserSubscription: async (_, __, { prisma, userInfo }) => {
-            if (!userInfo) {
-                throw new Error("Authentication required");
-            }
-            return await prisma.user.findUnique({
-                where: {id: userInfo.sub},
-            });
-        },
-        subscriptionPlans: async (_, __, { prisma }) => {
-            return await prisma.subscription_plan.findMany();
-        },
     },
     Mutation: {
         avatarUpload: async (_, { file }, { userInfo, prisma }) => {
@@ -519,114 +505,6 @@ const resolvers = {
                 message: 'User details updated successfully',
             };
 
-        },
-        createSubscription: async (_, { stripeToken, priceId }, { prisma, stripe, userInfo }) => {
-            if (!userInfo) {
-                throw new Error("Authentication required");
-            }
-
-            const user = await prisma.user.findUnique({
-                where: { id: userInfo.sub },
-            });
-
-            if (!user.stripe_customer_id) {
-                // Create a new Stripe customer
-                const customer = await stripe.customers.create({
-                    email: user.email,
-                    source: stripeToken,
-                });
-
-                // Save the customer ID in your database
-                await prisma.user.update({
-                    where: { id: userInfo.sub },
-                    data: { stripe_customer_id: customer.id },
-                });
-            }
-
-            // Create the subscription
-            const subscription = await stripe.subscriptions.create({
-                customer: user.stripe_customer_id,
-                items: [{ price: priceId }],
-            });
-
-            // Update the user record with subscription details
-            await prisma.user.update({
-                where: { id: userInfo.sub },
-                data: {
-                    stripe_subscription_id: subscription.id,
-                    subscription_status: subscription.status,
-                },
-            });
-
-            return {
-                success: true,
-                message: "Subscription created successfully",
-                user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
-            };
-        },
-        cancelSubscription: async (_, __, { prisma, stripe, userInfo }) => {
-            if (!userInfo) {
-                throw new Error("Authentication required");
-            }
-
-            const user = await prisma.user.findUnique({
-                where: { id: userInfo.sub },
-            });
-
-            if (!user.stripe_subscription_id) {
-                throw new Error("No subscription found");
-            }
-
-            // Cancel the subscription
-            await stripe.subscriptions.del(user.stripe_subscription_id);
-
-            // Update the user's subscription status
-            await prisma.user.update({
-                where: { id: userInfo.sub },
-                data: { subscription_status: 'canceled' },
-            });
-
-            return {
-                success: true,
-                message: "Subscription canceled successfully",
-                user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
-            };
-        },
-        changeSubscriptionPlan: async (_, { newPriceId }, { prisma, stripe, userInfo }) => {
-            if (!userInfo) {
-                throw new Error("Authentication required");
-            }
-
-            const user = await prisma.user.findUnique({
-                where: { id: userInfo.sub },
-            });
-
-            if (!user.stripe_subscription_id) {
-                throw new Error("No subscription found to update");
-            }
-
-            // Retrieve the current subscription
-            const subscription = await stripe.subscriptions.retrieve(user.stripe_subscription_id);
-
-            // Update the subscription to the new plan
-            const updatedSubscription = await stripe.subscriptions.update(user.stripe_subscription_id, {
-                items: [{
-                    id: subscription.items.data[0].id,
-                    price: newPriceId,
-                }],
-            });
-
-            // Update user's subscription status (optional)
-            await prisma.user.update({
-                where: { id: userInfo.sub },
-                data: { subscription_status: updatedSubscription.status },
-            });
-
-            return {
-                success: true,
-                message: "Subscription plan changed successfully",
-                user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
-            };
         },
 },
     Subscription: {
