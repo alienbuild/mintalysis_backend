@@ -19,6 +19,8 @@ import {CONFIG} from "./config.js";
 import {lastSeenMiddleware} from "./middlewares.js";
 import {prisma, pubsub, slack} from "./services.js";
 import {createContext} from "./context.js";
+import bodyParser from "body-parser";
+import {validateStripeWebhook} from "./utils/stripe.js";
 
 const initializeMongoose = async () => {
     try {
@@ -111,6 +113,8 @@ const main = async () => {
             context: createContext
         })
     );
+
+    app.post("/webhooks/stripe", express.raw({ type: "application/json" }), validateStripeWebhook);
 
     await new Promise((resolve) =>
         httpServer.listen(CONFIG.PORT, () => {

@@ -13,8 +13,7 @@ const typeDefs = gql`
         getUserAccessibilityPreferences: UserAccessibilityPreferences
         checkUsername(username: String!): Boolean
         getUserPreferences: UserPreferences
-        currentUserSubscription: User
-        subscriptionPlans: [SubscriptionPlan!]!
+
     }
     
     type Mutation {
@@ -28,19 +27,11 @@ const typeDefs = gql`
         logoutAllOtherSessions: Boolean
         deleteUserAccount(userId: ID!): Boolean
         updateUserDetails(input: UpdateUserDetailsInput!): UserUpdateResponse!
-        createSubscription(stripeToken: String!, priceId: String!): SubscriptionResponse!
-        cancelSubscription: SubscriptionResponse!
-        changeSubscriptionPlan(newPriceId: String!): SubscriptionResponse!
+       
     }
     
     type Subscription {
         userStatusChanged: User!
-    }
-
-    type SubscriptionResponse {
-        success: Boolean!
-        message: String!
-        user: User
     }
 
     input UpdateUserDetailsInput {
@@ -114,9 +105,7 @@ const typeDefs = gql`
         updatedAt: DateTime
         cover_image: String
         activated: Boolean
-        stripe_customer_id: String
-        stripe_subscription_id: String
-        subscription_status: String
+        features: UserFeatures
         profile: Profile
         role: String!
         newsletterSubscriber: NewsletterSubscriber
@@ -133,12 +122,9 @@ const typeDefs = gql`
         _count: UserCommunityStats
     }
 
-
-    type SubscriptionPlan {
-        id: ID!
-        stripe_price_id: String!
-        name: String!
-        description: String
+    type UserFeatures {
+        canAccessPremiumContent: Boolean
+        canUseAdvancedFeatures: Boolean
     }
     
     type UserCommunityStats {

@@ -1,5 +1,6 @@
 import merge from 'lodash.merge'
 import * as DateTime from './DateTime.js'
+import * as Json from './JSON.js'
 import authResolvers from './auth.js'
 import userResolvers from './user.js'
 import projectResolvers from './projects.js'
@@ -26,9 +27,11 @@ import searchResolvers from './search.js'
 import blockchainResolvers from './blockchain.js'
 import collectibleResolvers from './collectibles.js'
 import currencyResolvers from './currencies.js'
+import stripeResolvers from './stripe.js'
 
 const resolvers = merge({},
     DateTime,
+    Json,
     authResolvers,
     userResolvers,
     projectResolvers,
@@ -54,7 +57,8 @@ const resolvers = merge({},
     searchResolvers,
     blockchainResolvers,
     collectibleResolvers,
-    currencyResolvers
+    currencyResolvers,
+    stripeResolvers
 )
 
 export default resolvers
