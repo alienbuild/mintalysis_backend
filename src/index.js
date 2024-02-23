@@ -19,8 +19,8 @@ import {CONFIG} from "./config.js";
 import {lastSeenMiddleware} from "./middlewares.js";
 import {prisma, pubsub, slack} from "./services.js";
 import {createContext} from "./context.js";
-import bodyParser from "body-parser";
-import {validateStripeWebhook} from "./utils/stripe.js";
+import {validateStripeWebhook} from "../webhooks/stripe.js";
+import {rewardfulWebHook} from "../webhooks/rewardful.js";
 
 const initializeMongoose = async () => {
     try {
@@ -115,6 +115,8 @@ const main = async () => {
     );
 
     app.post("/webhooks/stripe", express.raw({ type: "application/json" }), validateStripeWebhook);
+
+    app.post("/webhooks/rewardful", express.json(), rewardfulWebHook);
 
     await new Promise((resolve) =>
         httpServer.listen(CONFIG.PORT, () => {
