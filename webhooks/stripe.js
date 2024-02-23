@@ -1,28 +1,7 @@
-import stripe from 'stripe';
-import {prisma} from "../services.js";
+import stripe from "stripe";
+import {prisma} from "../src/services.js";
 
 const stripeInstance = stripe(process.env.STRIPE_TEST_SECRET_KEY);
-
-const priceIdToFeatures = {
-    'price_123': {
-        canAccessPremiumContent: true,
-        canUseAdvancedFeatures: false,
-        additionalFeature: false,
-    },
-    'price_456': {
-        canAccessPremiumContent: true,
-        canUseAdvancedFeatures: true,
-        additionalFeature: true,
-    },
-};
-
-export const getFeaturesForPriceId = (priceId) => {
-    return priceIdToFeatures[priceId] || {
-        canAccessPremiumContent: false,
-        canUseAdvancedFeatures: false,
-        additionalFeature: false,
-    };
-};
 
 export const validateStripeWebhook = async (req, res) => {
     const sig = req.headers['stripe-signature'];
@@ -71,6 +50,28 @@ export const validateStripeWebhook = async (req, res) => {
     }
 
     res.json({received: true});
+};
+
+
+const priceIdToFeatures = {
+    'price_123': {
+        canAccessPremiumContent: true,
+        canUseAdvancedFeatures: false,
+        additionalFeature: false,
+    },
+    'price_456': {
+        canAccessPremiumContent: true,
+        canUseAdvancedFeatures: true,
+        additionalFeature: true,
+    },
+};
+
+export const getFeaturesForPriceId = (priceId) => {
+    return priceIdToFeatures[priceId] || {
+        canAccessPremiumContent: false,
+        canUseAdvancedFeatures: false,
+        additionalFeature: false,
+    };
 };
 
 async function getUserIdByStripeCustomerId(stripeCustomerId) {
@@ -292,3 +293,4 @@ export const validatePriceId = async (priceId) => {
     });
     return priceRecord !== null;
 };
+

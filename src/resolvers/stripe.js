@@ -1,5 +1,6 @@
 import Stripe from "stripe";
-import {getFeaturesForPriceId, validatePriceId} from "../utils/stripe.js";
+import {GraphQLError} from "graphql";
+import {getFeaturesForPriceId, validatePriceId} from "../../webhooks/stripe.js";
 
 const stripe = new Stripe(process.env.STRIPE_TEST_SECRET_KEY);
 
@@ -20,6 +21,95 @@ const resolvers = {
             return await prisma.subscription_plan.findMany({
                 include: {
                     prices: true,
+                },
+            });
+        },
+        userHasFeatureAccess: async (_, { feature }, { prisma, userInfo }) => {
+            if (!userInfo) {
+                return {
+                    hasAccess: false,
+                    message: "User is not authenticated",
+                };
+            }
+
+            // Retrieve user's subscription plan
+            const userWithSubscription = await prisma.user.findUnique({
+                where: { id: userInfo.sub },
+                include: {
+                    subscription: {
+                        include: {
+                            subscription_plan: true,
+                        },
+                    },
+                },
+            });
+
+            if (!userWithSubscription || !userWithSubscription.subscription || !userWithSubscription.subscription.subscription_plan) {
+                return {
+                    hasAccess: false,
+                    message: "No subscription plan found",
+                };
+            }
+
+            const features = userWithSubscription.subscription.subscription_plan.features;
+            const hasAccess = features && features.includes(feature);
+
+            return {
+                hasAccess,
+                message: hasAccess ? "Access granted" : "Access denied",
+            };
+        },
+        fetchAccessRights: async (_, args, { prisma, userInfo }) => {
+            if (!userInfo) {
+                return {
+                    success: false,
+                    message: "Authentication required",
+                    rights: [],
+                };
+            }
+
+            const user = await prisma.user.findUnique({
+                where: { id: userInfo.sub },
+                include: {
+                    subscription: {
+                        include: {
+                            subscription_plan: true
+                        }
+                    }
+                }
+            });
+
+            if (!user || !user.subscription) {
+                return {
+                    success: true,
+                    message: "No subscription found",
+                    rights: [],
+                };
+            }
+
+            // Example to fetch rights based on subscription
+            // You'll need to adjust this based on how you store/manage access rights
+            const rights = [
+                { featureKey: "createServer", hasAccess: user.subscription.subscription_plan.includes("createServer") },
+                // Add more features as necessary
+            ];
+
+            return {
+                success: true,
+                message: "Access rights fetched successfully",
+                rights,
+            };
+        },
+        featureFlags: async (_, __, { prisma }) => {
+            return await prisma.feature_flag.findMany({
+                where: { enabled: true },
+            });
+        },
+        userFeatureUsage: async (_, { feature_flag_id }, { prisma, userInfo }) => {
+            return await prisma.userFeatureUsage.findFirst({
+                where: {
+                    userId: userInfo.sub,
+                    feature_flag_id: parseInt(feature_flag_id),
                 },
             });
         },
@@ -188,7 +278,72 @@ const resolvers = {
                 user: await prisma.user.findUnique({ where: { id: userInfo.sub } }),
             };
         },
-    }
+        verifyStripeSession: async (_, { sessionId }, { prisma, userInfo }) => {
+            if (!userInfo) throw new GraphQLError('Not authorised')
+            try {
+                const session = await stripe.checkout.sessions.retrieve(sessionId);
+                if (session.payment_status === 'paid') {
+                    // Verify the session and update the user's subscription status
+                    const user = await prisma.user.update({
+                        where: { stripe_customer_id: session.customer },
+                        data: { subscription_status: 'ACTIVE' },
+                    });
+                    return {
+                        success: true,
+                        message: 'Subscription verified and activated.',
+                        user,
+                    };
+                }
+                return {
+                    success: false,
+                    message: 'Subscription verification failed or payment not completed.',
+                    user: null,
+                };
+            } catch (error) {
+                console.error('Error verifying Stripe session:', error);
+                return {
+                    success: false,
+                    message: 'Internal server error during verification.',
+                    user: null,
+                };
+            }
+        },
+        updateUserFeatureUsage: async (_, { feature_flag_id, count }, { userInfo, prisma }) => {
+            const existingUsage = await prisma.user_feature_usage.findFirst({
+                where: {
+                    userId: userInfo.sub,
+                    feature_flag_id: parseInt(feature_flag_id),
+                },
+            });
+
+            const featureFlag = await prisma.feature_flag.findUnique({
+                where: { id: parseInt(feature_flag_id) },
+            });
+
+            if (existingUsage && featureFlag.usage_limit) {
+                if (existingUsage.usageCount + count > featureFlag.usage_limit) {
+                    throw new Error("Usage limit exceeded for the feature");
+                }
+            }
+
+            return await prisma.userFeatureUsage.upsert({
+                where: {
+                    userId_feature_flag_id: {
+                        userId: userInfo.sub,
+                        feature_flag_id: parseInt(feature_flag_id),
+                    },
+                },
+                update: {
+                    usageCount: existingUsage ? existingUsage.usageCount + count : count,
+                },
+                create: {
+                    userId: userInfo.sub,
+                    feature_flag_id: parseInt(feature_flag_id),
+                    usageCount: count,
+                },
+            });
+        },
+    },
 }
 
 export default resolvers
