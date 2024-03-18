@@ -89,10 +89,14 @@ const resolvers = {
 
             // Example to fetch rights based on subscription
             // You'll need to adjust this based on how you store/manage access rights
-            const rights = [
-                { featureKey: "createServer", hasAccess: user.subscription.subscription_plan.includes("createServer") },
-                // Add more features as necessary
-            ];
+            const rights = user.subscription && user.subscription.subscription_plan
+                ? [
+                    {
+                        featureKey: "createServer",
+                        hasAccess: user.subscription.subscription_plan.features.includes("createServer"),
+                    },
+                ]
+                : [];
 
             return {
                 success: true,

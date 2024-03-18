@@ -4,20 +4,58 @@ const typeDefs = gql`
     
     type Query {
         affiliates: [Affiliate!]!
-        affiliateReferrals(affiliateId: String!): [AffiliateReferral!]!
+        affiliateReferrals(affiliate_id: String!): [AffiliateReferral!]!
         myAffiliateAccount: Affiliate!
         myReferrals: [AffiliateReferral!]!
         affiliatePayouts: [Payout!]!
+        affiliateMetrics: AffiliateMetrics!
+        conversionDetails(affiliate_account_id: ID!): [ConversionDetail!]!
+        getAffiliateMonthlySummaries(affiliate_id: ID!): [AffiliateMonthlySummary!]!
     }
     
     type Mutation {
-        createAffiliateAccount: AffiliateAccountResponse!
-        updateAffiliate(rewardful_id: String!, email: String, first_name: String, last_name: String): AffiliateResponse!
+        createAffiliateAccount(first_name: String, last_name: String, paypal_email: String, promotional_channels: [String], is_customer_referrer: Boolean): AffiliateAccountResponse!
+        updateAffiliate(email: String, first_name: String, last_name: String): AffiliateResponse!
         trackAffiliateReferral(affiliate_id: String!, referral_code: String!, referred_user: String!): AffiliateReferralResponse!
         createAffiliateReferral(referral_code: String!, referred_user: String!): AffiliateReferralResponse!
         updateCommissionStatus(referral_id: Int!, status: String!): AffiliateReferralResponse!
-        updateAffiliateDetails(email: String, firstName: String, lastName: String): AffiliateResponse!
         createAffiliatePayout(affiliateAccountId: ID!, amount: Float!, payoutDate: DateTime!): PayoutResponse!
+        generateReferralLink(affiliate_id: ID!, code: String): ReferralLinkResponse!
+    }
+    
+    type AffiliateMonthlySummary {
+        month: String!
+        visitors: Int!
+        leads: Int!
+        conversions: Int!
+        sales: Float!
+        commissions: Float!
+        netRevenue: Float!
+    }
+    
+    type ReferralLinkResponse {
+        success: Boolean!
+        message: String!
+        link: ReferralLink!
+    }
+    
+    type ConversionDetail {
+        id: ID!
+        product: String!
+        amount: Float!
+        timestamp: DateTime!
+        customer_identifier: String
+        discount_applied: Float
+        location: String
+    }
+
+
+    type AffiliateMetrics {
+        totalReferrals: Int!
+        totalConversions: Int! 
+        clickThroughRate: Float!
+        totalEarnings: Float!
+        averageEarningsPerConversion: Float!
     }
 
     type PayoutResponse {
@@ -39,20 +77,23 @@ const typeDefs = gql`
     }
 
     type Affiliate {
-        id: ID!
-        user_id: String!
-        email: String!
+        id: ID
+        user_id: String
+        email: String
         first_name: String
         last_name: String
-        rewardful_id: String!
-        referrals: [AffiliateReferral!]!
-        createdAt: DateTime!
-        updatedAt: DateTime!
+        rewardful_id: String
+        affiliate_id: String
+        status: String
+        referrals: [AffiliateReferral]
+        links: [ReferralLink]
+        createdAt: DateTime
+        updatedAt: DateTime
     }
 
     type AffiliateReferral {
         id: ID!
-        affiliate_Id: String!
+        affiliate_id: String!
         referral_code: String!
         referred_user: String!
         commission_earned: Float!
@@ -63,7 +104,7 @@ const typeDefs = gql`
     type AffiliateAccountResponse {
         success: Boolean!
         message: String!
-        affiliate_Account: AffiliateAccount
+        affiliate_account: AffiliateAccount
     }
     
     type AffiliateAccount {
@@ -81,6 +122,9 @@ const typeDefs = gql`
         id: ID!
         affiliate_account_id: ID!
         link: String!
+        visitors: Float!
+        leads: Float!
+        conversions: Float!
     }
 
     type Conversion {
