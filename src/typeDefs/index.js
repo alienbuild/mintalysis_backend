@@ -27,6 +27,7 @@ import blockchainTypeDefs from './blockchain.js'
 import collectibleTypeDefs from './collectibles.js'
 import currencyTypeDefs from './currencies.js'
 import stripeTypeDefs from './stripe.js'
+import affiliateTypeDefs from './affiliates.js'
 
 const typeDefs = [
     scalarDefs,
@@ -57,7 +58,8 @@ const typeDefs = [
     blockchainTypeDefs,
     collectibleTypeDefs,
     currencyTypeDefs,
-    stripeTypeDefs
+    stripeTypeDefs,
+    affiliateTypeDefs
 ]
 
 export default typeDefs

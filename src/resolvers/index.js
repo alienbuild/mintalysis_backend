@@ -28,6 +28,7 @@ import blockchainResolvers from './blockchain.js'
 import collectibleResolvers from './collectibles.js'
 import currencyResolvers from './currencies.js'
 import stripeResolvers from './stripe.js'
+import affiliateResolvers from './affiliates.js'
 
 const resolvers = merge({},
     DateTime,
@@ -58,7 +59,8 @@ const resolvers = merge({},
     blockchainResolvers,
     collectibleResolvers,
     currencyResolvers,
-    stripeResolvers
+    stripeResolvers,
+    affiliateResolvers
 )
 
 export default resolvers

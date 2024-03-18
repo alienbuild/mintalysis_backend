@@ -27,6 +27,9 @@ export const rewardfulWebHook = async (req, res) => {
             case 'referral.updated':
                 await handleReferralUpdated(event.data);
                 break;
+            case 'affiliate_link.updated':
+                await handleAffiliateLinkUpdated(event.data);
+                break;
             default:
                 console.log(`Unhandled event type: ${event.type}`);
         }
@@ -54,6 +57,25 @@ function verifySignature(req, secret) {
     return crypto.timingSafeEqual(Buffer.from(receivedSignature, 'hex'), Buffer.from(expectedSignature, 'hex'));
 }
 
+async function handleAffiliateLinkUpdated(data) {
+    const { id, visitors, leads, conversions } = data;
+
+    try {
+        await prisma.rewardful_referral_link.update({
+            where: { id },
+            data: {
+                visitors,
+                leads,
+                conversions,
+            },
+        });
+        console.log(`Updated stats for affiliate link ID: ${id}`);
+    } catch (error) {
+        console.error(`Error updating stats for affiliate link ID: ${id}:`, error);
+        throw error;
+    }
+}
+
 async function handleReferralCreated(data) {
     await prisma.rewardful_affiliate_referral.create({
         data: {
@@ -68,11 +90,40 @@ async function handleReferralCreated(data) {
 }
 
 async function handleConversionCompleted(data) {
+
+    const referralLink = await prisma.rewardful_referral_link.findUnique({
+        where: { link: data.referral_link },
+    });
+
+    if (!referralLink) {
+        console.log('Referral link not found for conversion:', data);
+        return;
+    }
+
+    await prisma.rewardful_referral_link.update({
+        where: { id: referralLink.id },
+        data: { conversions: { increment: 1 } },
+    });
+
     await prisma.rewardful_affiliate_referral.updateMany({
         where: { referral_code: data.referral_code },
         data: { status: "Completed", commission_earned: data.commission_amount },
     });
-    console.log('Conversion completed successfully');
+
+    await prisma.rewardful_conversion.create({
+        data: {
+            affiliate_account_id: data.affiliate_account_id,
+            sale_amount: data.amount,
+            commission_amount: data.commission_amount,
+            createdAt: new Date(data.timestamp),
+            product: data.product,
+            customer_identifier: data.customer_identifier,
+            discount_applied: data.discount_applied,
+            location: data.location,
+        },
+    });
+
+    console.log('Conversion completed successfully for referral link:', referralLink.link);
 }
 
 async function handlePayoutUpdated(data) {
@@ -103,7 +154,6 @@ async function handleAffiliateCreated(data) {
         throw error;
     }
 }
-
 
 async function handlePayoutFailed(data) {
     try {
