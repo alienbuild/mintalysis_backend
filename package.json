@@ -9,7 +9,8 @@
   "type": "module",
   "scripts": {
     "start": "babel-node --trace-warnings src/index.js",
-    "dev": "nodemon --signal SIGINT --trace-warnings src/index.js",
+    "dev": "nodemon --signal SIGINT --exec \"babel-node --trace-warnings src/index.js\"",
+    "build": "babel src -d dist --presets @babel/preset-env",
     "merge-schemas": "node ./prisma/mergeSchemas.js",
     "generate": "node ./prisma/mergeSchemas.js && prisma generate",
     "migrate": "node ./prisma/mergeSchemas.js && prisma migrate dev"
@@ -21,8 +22,6 @@
     "@prisma/extension-accelerate": "^0.6.2",
     "@slack/bolt": "^3.13.2",
     "agora-access-token": "^2.0.4",
-    "babel-cli": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.1",
     "chatgpt": "^5.2.5",
@@ -62,6 +61,10 @@
     "ws": "^8.12.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.24.1",
+    "@babel/core": "^7.24.1",
+    "@babel/node": "^7.23.9",
+    "@babel/preset-env": "^7.24.1",
     "unique-username-generator": "^1.1.3"
   }
 }
