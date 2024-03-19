@@ -8,7 +8,8 @@ RUN npm install
 
 # If you're using Babel to compile, copy your source code and compile it
 COPY . .
-RUN npm run build  # Make sure to add a "build" script in package.json to compile your app
+
+RUN npx babel src -d dist --presets @babel/preset-env
 
 EXPOSE 8001
 
