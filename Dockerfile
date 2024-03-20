@@ -10,6 +10,8 @@ COPY . .
 
 RUN npx babel src -d dist --presets @babel/preset-env
 
+ENV NODE_ENV=production
+
 EXPOSE 8001
 
 CMD ["node", "dist/index.js"]
