@@ -24,7 +24,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            cd /home/***/public_html/***_backend/
+            cd /home/mintalysis/public_html/mintalysis_backend/
             # Stash any untracked files
             git stash push --include-untracked
             git pull
