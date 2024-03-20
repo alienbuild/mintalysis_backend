@@ -1,63 +1,70 @@
-import express from "express";
-import { createServer } from "http";
-import { ApolloServer } from "@apollo/server";
-import { WebSocketServer } from "ws";
-import { useServer } from "graphql-ws/lib/use/ws";
-import { makeExecutableSchema } from "@graphql-tools/schema";
-import mongoose from "mongoose";
-import cors from "cors";
-import pkg from 'body-parser';
-const { json } = pkg;
-import graphqlUploadExpress from "graphql-upload/graphqlUploadExpress.mjs";
-import userRoutes from './routes/userRoutes.js';
-import typeDefs from './typeDefs/index.js'
-import resolvers from "./resolvers/index.js"
-import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import {expressMiddleware} from "@apollo/server/express4";
-import {getUserFromToken} from "./utils/getUserFromToken.js";
-import {CONFIG} from "./config.js";
-import {lastSeenMiddleware} from "./middlewares.js";
-import {prisma, pubsub, slack} from "./services.js";
-import {createContext} from "./context.js";
-import {validateStripeWebhook} from "../webhooks/stripe.js";
-import {rewardfulWebHook} from "../webhooks/rewardful.js";
+(async () => {
+    const envPath = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
+    const dotenv = await import('dotenv');
+    dotenv.config({ path: envPath });
 
-const initializeMongoose = async () => {
-    try {
-        await mongoose.connect(CONFIG.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true });
-        console.log('Connected to MongoDB');
-    } catch (error) {
-        console.log('Error connecting to MongoDB', error);
-    }
-};
+    const express = (await import('express')).default;
+    const { createServer } = await import('http');
+    const { ApolloServer } = await import('@apollo/server');
+    const { WebSocketServer } = await import('ws');
+    const { useServer } = await import('graphql-ws/lib/use/ws');
+    const { makeExecutableSchema } = await import('@graphql-tools/schema');
+    const cors = (await import('cors')).default;
+    const bodyParser = (await import('body-parser')).default;
+    const graphqlUploadExpress = (await import('graphql-upload/graphqlUploadExpress.mjs')).default;
+    const { ApolloServerPluginDrainHttpServer } = await import('@apollo/server/plugin/drainHttpServer');
+    const { expressMiddleware } = await import('@apollo/server/express4');
 
-const main = async () => {
-    const schema = makeExecutableSchema({ typeDefs, resolvers });
+    const userRoutes = (await import('./routes/userRoutes.js')).default;
+    const typeDefs = (await import('./typeDefs/index.js')).default;
+    const resolvers = (await import('./resolvers/index.js')).default;
+    const { getUserFromToken } = await import('./utils/getUserFromToken.js');
+    const { CONFIG } = await import('./config.js');
+    const { lastSeenMiddleware } = await import('./middlewares.js');
+    const { prisma, pubsub, slack } = await import('./services.js');
+    const { createContext } = await import('./context.js');
+    const { validateStripeWebhook } = await import('../webhooks/stripe.js');
+    const { rewardfulWebHook } = await import('../webhooks/rewardful.js');
+    const mongoose = (await import('mongoose')).default;
 
-    const app = express();
+    console.log('Environment variables loaded, starting application...');
 
-    app.use(lastSeenMiddleware);
-    app.use(userRoutes);
-    app.use(cors(CONFIG.CORS_OPTIONS), json(), graphqlUploadExpress({ maxFileSize: 30000000, maxFiles: 20 }));
-
-    const httpServer = createServer(app);
-
-    const wsServer = new WebSocketServer({
-        server: httpServer,
-        path: "/graphql/subscriptions",
-    });
-
-    const getSubscriptionContext = async ( ctx ) => {
-        if (ctx.connectionParams && ctx.connectionParams.authorization) {
-            const { authorization } = ctx.connectionParams;
-            const userInfo = await getUserFromToken(authorization)
-            return { userInfo, prisma, pubsub, slack };
+    const initializeMongoose = async () => {
+        try {
+            await mongoose.connect(CONFIG.MONGO_DB, { useNewUrlParser: true, useUnifiedTopology: true });
+            console.log('Connected to MongoDB');
+        } catch (error) {
+            console.error('Error connecting to MongoDB:', error);
         }
-        return { userInfo: null, prisma, pubsub, slack };
     };
 
-    const serverCleanup = useServer(
-        {
+    const main = async () => {
+        console.log('Starting main application logic...');
+        await initializeMongoose();
+
+        const schema = makeExecutableSchema({ typeDefs, resolvers });
+        const app = express();
+
+        app.use(lastSeenMiddleware);
+        app.use(userRoutes);
+        app.use(cors(CONFIG.CORS_OPTIONS), bodyParser.json(), graphqlUploadExpress({ maxFileSize: 30000000, maxFiles: 20 }));
+
+        const httpServer = createServer(app);
+        const wsServer = new WebSocketServer({
+            server: httpServer,
+            path: "/graphql/subscriptions",
+        });
+
+        const getSubscriptionContext = async ( ctx ) => {
+            if (ctx.connectionParams && ctx.connectionParams.authorization) {
+                const { authorization } = ctx.connectionParams;
+                const userInfo = await getUserFromToken(authorization)
+                return { userInfo, prisma, pubsub, slack };
+            }
+            return { userInfo: null, prisma, pubsub, slack };
+        };
+
+        const serverCleanup = useServer({
             schema,
             onConnect: async (ctx) => {
                 const { userInfo } = await getSubscriptionContext(ctx);
@@ -69,14 +76,6 @@ const main = async () => {
                 }
                 return { userInfo };
             },
-            context: async (ctx) => {
-                return {
-                    ...ctx.connectionParams,
-                    prisma,
-                    pubsub,
-                    slack,
-                };
-            },
             onDisconnect: async (ctx) => {
                 const { userInfo } = await getSubscriptionContext(ctx);
                 if (userInfo && userInfo.id) {
@@ -86,15 +85,12 @@ const main = async () => {
                     });
                 }
             },
-        },
-        wsServer
-    );
+            context: async (ctx) => createContext()
+        }, wsServer);
 
-    const server = new ApolloServer({
-        schema,
-        plugins: [
-            ApolloServerPluginDrainHttpServer({ httpServer }),
-            {
+        const server = new ApolloServer({
+            schema,
+            plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), {
                 async serverWillStart() {
                     return {
                         async drainServer() {
@@ -102,31 +98,19 @@ const main = async () => {
                         },
                     };
                 },
-            },
-        ],
-    });
+            }],
+        });
 
-    await server.start();
+        await server.start();
+        app.use("/graphql", expressMiddleware(server, { context: createContext }));
 
-    app.use("/graphql",
-        expressMiddleware(server, {
-            context: createContext
-        })
-    );
+        app.post("/webhooks/stripe", express.raw({ type: "application/json" }), validateStripeWebhook);
+        app.post("/webhooks/rewardful", express.json(), rewardfulWebHook);
 
-    app.post("/webhooks/stripe", express.raw({ type: "application/json" }), validateStripeWebhook);
+        await new Promise(resolve => httpServer.listen(CONFIG.PORT, () => resolve()));
+        console.log(`Server is now running on http://localhost:${CONFIG.PORT}/graphql`);
 
-    app.post("/webhooks/rewardful", express.json(), rewardfulWebHook);
+    };
 
-    await new Promise((resolve) =>
-        httpServer.listen(CONFIG.PORT, () => {
-            resolve();
-        })
-    );
-
-    console.log(`Server is now running on http://localhost:${CONFIG.PORT}/graphql`);
-};
-
-initializeMongoose()
-    .then(main)
-    .catch((e) => console.log('Server failed to start.', e));
+    main().catch((e) => console.error('Error during application initialization:', e));
+})();
