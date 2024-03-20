@@ -2,18 +2,27 @@ FROM node:18.17.0
 
 WORKDIR /usr/src/app
 
-# Copying both package.json and yarn.lock to utilize Docker cache layers efficiently
-COPY package.json yarn.lock ./
+# Copy package.json and package-lock.json
+COPY package*.json ./
 
-# Installing all dependencies, including devDependencies
+# Install dependencies
 RUN npm install
 
-# Copying the rest of the application
+# Copy prisma schema
+COPY prisma ./prisma
+
+# Copy the rest of your application
 COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build your application if necessary
+RUN npx babel src -d dist --presets @babel/preset-env
 
 ENV NODE_ENV=production
 
 EXPOSE 8001
 
-# Using the yarn dev command directly
+# Use the nodemon command to run your application in development mode
 CMD ["yarn", "dev"]
