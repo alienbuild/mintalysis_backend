@@ -12,4 +12,5 @@ RUN npx babel src -d dist --presets @babel/preset-env
 
 EXPOSE 8001
 
-CMD ["node", "-r", "esm", "dist/index.js"]
+CMD ["node", "dist/index.js"]
+#CMD ["node", "-r", "esm", "dist/index.js"]
