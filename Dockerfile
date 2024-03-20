@@ -1,18 +1,19 @@
-FROM node:20
+FROM node:18.17.0
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+# Copying both package.json and yarn.lock to utilize Docker cache layers efficiently
+COPY package.json yarn.lock ./
 
+# Installing all dependencies, including devDependencies
 RUN npm install
 
+# Copying the rest of the application
 COPY . .
-
-RUN npx babel src -d dist --presets @babel/preset-env
 
 ENV NODE_ENV=production
 
 EXPOSE 8001
 
-CMD ["node", "dist/index.js"]
-#CMD ["node", "-r", "esm", "dist/index.js"]
+# Using the yarn dev command directly
+CMD ["yarn", "dev"]
