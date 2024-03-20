@@ -3,19 +3,29 @@ import fetch from 'node-fetch'
 const resolvers = {
     Query: {
         getEcologiStats: async (_, __, { prisma }) => {
-            const fetchTrees =  await fetch(`https://public.ecologi.com/users/mintalysis/trees`)
-            const trees = await fetchTrees.json()
 
-            const fetchCarbon = await fetch(`https://public.ecologi.com/users/mintalysis/carbon-offset`)
-            const carbon = await fetchCarbon.json()
+            try {
+                const fetchEcologiProfile = await fetch(`https://api.ecologi.com/users/mintalysis/profile`)
+                const ecologiProfile = await fetchEcologiProfile.json()
 
-            const userCount = await prisma.User.count()
+                const totalTrees = ecologiProfile.data.totalTrees
+                const totalCarbon = ecologiProfile.data.totalCarbonTonnes
+                const totalHabitatMetersRestored = ecologiProfile.data.totalHabitatMetersRestored
+                const totalCarbonRemovedTonnes = ecologiProfile.data.totalCarbonRemovedTonnes
 
-            return {
-                trees: trees.total,
-                carbon: carbon.total,
-                userCount: userCount
+                const userCount = await prisma.User.count()
+
+                return {
+                    trees: totalTrees,
+                    carbon: totalCarbon,
+                    habitat: totalHabitatMetersRestored,
+                    carbon_removed: totalCarbonRemovedTonnes,
+                    userCount: userCount
+                }
+            } catch (e) {
+                console.log('Failed to get ecologi stats: ', e)
             }
+
         }
     }
 }

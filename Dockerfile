@@ -6,7 +6,6 @@ COPY package*.json ./
 
 RUN npm install
 
-# If you're using Babel to compile, copy your source code and compile it
 COPY . .
 
 RUN npx babel src -d dist --presets @babel/preset-env
