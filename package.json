@@ -8,9 +8,9 @@
   "license": "ISC",
   "type": "module",
   "scripts": {
-    "start": "babel-node --trace-warnings src/index.js",
+    "start": "node dist/index.js",
     "dev": "nodemon --signal SIGINT --exec \"babel-node --trace-warnings src/index.js\"",
-    "build": "babel src -d dist --presets @babel/preset-env",
+    "build": "esbuild src/index.js --bundle --outfile=dist/index.js --platform=node --target=node14 --external:*.json --external:term.js --external:pty.js",
     "merge-schemas": "node ./prisma/mergeSchemas.js",
     "generate": "node ./prisma/mergeSchemas.js && prisma generate",
     "migrate": "node ./prisma/mergeSchemas.js && prisma migrate dev"
@@ -57,6 +57,7 @@
     "@babel/core": "^7.24.1",
     "@babel/node": "^7.23.9",
     "@babel/preset-env": "^7.24.1",
+    "esbuild": "^0.20.2",
     "unique-username-generator": "^1.1.3"
   }
 }
