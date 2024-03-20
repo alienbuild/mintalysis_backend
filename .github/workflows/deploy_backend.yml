@@ -4,38 +4,31 @@ on:
   push:
     branches:
       - main
-      - develop
-      - feature/*
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set Environment Variables for Production
-      if: github.ref == 'refs/heads/main'
-      run: |
-        echo "ENV_FILE=.env.production" >> $GITHUB_ENV
+      - name: Set Environment Variables for Production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "ENV_FILE=.env.production" >> $GITHUB_ENV
 
-    - name: Set Environment Variables for Staging
-      if: github.ref != 'refs/heads/main'
-      run: |
-        echo "ENV_FILE=.env.staging" >> $GITHUB_ENV
-
-    - name: Deploy to Server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        port: ${{ secrets.SERVER_PORT }}
-        script: |
-          cd /home/mintalysis/public_html/mintalysis_backend/
-          git pull
-          # Ensure the correct environment file is used for the deployment
-          cp $ENV_FILE .env
-          docker build -t mintalysis_backend:latest .
-          docker stop mintalysis_backend_container || true
-          docker rm mintalysis_backend_container || true
-          docker run --name mintalysis_backend_container -d -p 8001:8001 mintalysis_backend:latest
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            cd /home/mintalysis/public_html/mintalysis_backend/
+            git pull
+            # Ensure the correct environment file is used for the deployment
+            docker build -t mintalysis_backend:latest .
+            docker stop mintalysis_backend_container || true
+            docker rm mintalysis_backend_container || true
+            # Use the ENV_FILE environment variable to specify the path to the environment file
+            docker run --name mintalysis_backend_container --env-file $ENV_FILE -d -p 8001:8001 mintalysis_backend:latest
