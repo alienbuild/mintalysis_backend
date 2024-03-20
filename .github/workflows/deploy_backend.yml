@@ -2,15 +2,27 @@ name: Deploy Backend
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - develop
+      - feature/*
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v2
-    
+
+    - name: Set Environment Variables for Production
+      if: github.ref == 'refs/heads/main'
+      run: |
+        echo "ENV_FILE=.env.production" >> $GITHUB_ENV
+
+    - name: Set Environment Variables for Staging
+      if: github.ref != 'refs/heads/main'
+      run: |
+        echo "ENV_FILE=.env.staging" >> $GITHUB_ENV
+
     - name: Deploy to Server
       uses: appleboy/ssh-action@master
       with:
@@ -21,6 +33,8 @@ jobs:
         script: |
           cd /home/mintalysis/public_html/mintalysis_backend/
           git pull
+          # Ensure the correct environment file is used for the deployment
+          cp $ENV_FILE .env
           docker build -t mintalysis_backend:latest .
           docker stop mintalysis_backend_container || true
           docker rm mintalysis_backend_container || true
