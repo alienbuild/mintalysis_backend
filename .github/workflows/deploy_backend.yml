@@ -25,14 +25,10 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             cd /home/mintalysis/public_html/mintalysis_backend/
-            # Stash any untracked files
             git stash push --include-untracked
             git pull
-            # Restore the stashed files
             git stash pop
-            # Ensure the correct environment file is used for the deployment
             docker build -t mintalysis_backend:latest .
             docker stop mintalysis_backend_container || true
             docker rm mintalysis_backend_container || true
-            # Use the ENV_FILE environment variable to specify the path to the environment file
-            docker run --name mintalysis_backend_container --env-file $ENV_FILE -d -p 8001:8001 mintalysis_backend:latest
+            docker run --name mintalysis_backend_container --env-file ${ENV_FILE} -d -p 8001:8001 mintalysis_backend:latest
