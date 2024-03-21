@@ -8,21 +8,23 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy prisma schema
+# Copy prisma schema and the rest of your application
 COPY prisma ./prisma
-
-# Copy the rest of your application
 COPY . .
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build your application if necessary
+# Build your application
 RUN npx babel src -d dist --presets @babel/preset-env
+
+# Copy the startup script into the container and make it executable
+COPY startup.sh /usr/src/app/startup.sh
+RUN chmod +x /usr/src/app/startup.sh
 
 ENV NODE_ENV=production
 
 EXPOSE 8001
 
-# Use the nodemon command to run your application in development mode
-CMD ["yarn", "dev"]
+# Start the container with the startup script
+CMD ["/usr/src/app/startup.sh"]
