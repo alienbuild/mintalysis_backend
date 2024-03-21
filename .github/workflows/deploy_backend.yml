@@ -32,3 +32,5 @@ jobs:
             docker stop mintalysis_backend_container || true
             docker rm mintalysis_backend_container || true
             docker run --name mintalysis_backend_container --env-file /home/mintalysis/public_html/mintalysis_backend/.env.production -d -p 8001:8001 mintalysis_backend:latest
+            docker exec mintalysis_backend_container printenv
+
