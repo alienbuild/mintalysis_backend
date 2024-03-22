@@ -31,5 +31,9 @@ jobs:
             docker build -t mintalysis_backend:latest .
             docker stop mintalysis_backend_container || true
             docker rm mintalysis_backend_container || true
+            OLD_IMAGE_ID=$(docker images -q mintalysis_backend:latest)
             docker run --name mintalysis_backend_container -d -p 8001:8001 mintalysis_backend:latest
+            if [ ! -z "$OLD_IMAGE_ID" ]; then
+              docker rmi $OLD_IMAGE_ID || true
+            fi
 
