@@ -36,6 +36,4 @@ jobs:
             if [ ! -z "$OLD_IMAGE_ID" ]; then
               docker rmi $OLD_IMAGE_ID || true
             fi
-
-            - name: Clean up Docker Build Cache
-            run: docker builder prune -af
+            docker builder prune -af
