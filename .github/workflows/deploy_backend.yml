@@ -37,3 +37,5 @@ jobs:
               docker rmi $OLD_IMAGE_ID || true
             fi
 
+            - name: Clean up Docker Build Cache
+            run: docker builder prune -af
