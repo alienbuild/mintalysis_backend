@@ -1,6 +1,4 @@
 export const immutableWebHook = async (req,res) => {
-    console.log('Received Immutable Webhook:', req.body);
-
     const { Type, Message } = req.body;
     if (Type === 'Notification') {
         let eventData;
@@ -41,25 +39,25 @@ export const immutableWebHook = async (req,res) => {
 }
 
 const handleOrderCreated = (data) => {
-    console.log('Handling NFT Order Created Event: ', data)
+    console.log('[EVENT][NFT ORDER CREATED]: ', JSON.stringify(data, null, 2))
 }
 
 const handleNftUpdated = (data) => {
-    console.log('Handling NFT Updated Event: ', data)
+    console.log('[EVENT][NFT UPDATED EVENT]: ', JSON.stringify(data, null, 2))
 }
 
 const handleNftCreated = (data) => {
-    console.log('Handling NFT Created Event: ', data)
+    console.log('[EVENT][NFT CREATED EVENT]: ', JSON.stringify(data, null, 2))
 }
 
 function handleTransferCreated(data) {
-    console.log('Handling Transfer Created Event:', data);
+    console.log('[EVENT][TRANSFER CREATED EVENT]:', JSON.stringify(data, null, 2));
 }
 
 function handleTransferUpdated(data) {
-    console.log('Handling Transfer Updated Event:', data);
+    console.log('[EVENT][TRANSFER UPDATED EVENT]:', JSON.stringify(data, null, 2));
 }
 
 function handleNewListing(data) {
-    console.log('Handling New Listing Event:', data);
+    console.log('[EVENT][NEW LISTING EVENT]:', JSON.stringify(data, null, 2));
 }
