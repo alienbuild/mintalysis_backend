@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import {immutableWebHook} from "../webhooks/immutable.js";
 
 const envPath = process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
 dotenv.config({ path: envPath });
@@ -108,6 +109,7 @@ dotenv.config({ path: envPath });
 
         app.post("/webhooks/stripe", express.raw({ type: "application/json" }), validateStripeWebhook);
         app.post("/webhooks/rewardful", express.json(), rewardfulWebHook);
+        app.post("/webhooks/immutable", express.json(), immutableWebHook);
 
         await new Promise(resolve => httpServer.listen(CONFIG.PORT, () => resolve()));
         console.log(`Server is now running on http://localhost:${CONFIG.PORT}/graphql`);
