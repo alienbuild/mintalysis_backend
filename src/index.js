@@ -48,6 +48,11 @@ dotenv.config({ path: envPath });
         const schema = makeExecutableSchema({ typeDefs, resolvers });
         const app = express();
 
+        app.use((req, res, next) => {
+            console.log(`Incoming request: ${req.method} ${req.path}`);
+            console.log(`Body: `, req.body);
+            next();
+        });
         app.use(lastSeenMiddleware);
         app.use(userRoutes);
         app.use(cors(CONFIG.CORS_OPTIONS), bodyParser.json(), graphqlUploadExpress({ maxFileSize: 30000000, maxFiles: 20 }));
@@ -109,7 +114,12 @@ dotenv.config({ path: envPath });
 
         app.post("/webhooks/stripe", express.raw({ type: "application/json" }), validateStripeWebhook);
         app.post("/webhooks/rewardful", express.json(), rewardfulWebHook);
-        app.post("/webhooks/immutable", express.json(), immutableWebHook);
+        // app.post("/webhooks/immutable", express.json(), immutableWebHook);
+
+        app.post("/webhooks/immutable", express.json(), (req, res) => {
+            console.log('Simple Test:', req.body);
+            res.status(200).send('Test Received');
+        });
 
         await new Promise(resolve => httpServer.listen(CONFIG.PORT, () => resolve()));
         console.log(`Server is now running on http://localhost:${CONFIG.PORT}/graphql`);
