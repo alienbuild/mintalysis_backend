@@ -1,3 +1,5 @@
+import {prisma} from "../src/services.js";
+
 export const immutableWebHook = async (req,res) => {
     const { Type, Message } = req.body;
     if (Type === 'Notification') {

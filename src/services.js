@@ -15,10 +15,12 @@ export const prisma = new PrismaClient().$extends(withAccelerate())
 export const pubsub = new PubSub();
 
 // Initialize Slack
-export const slack = new Slack.App({
-    signingSecret: process.env.SLACK_SIGNING_SECRET,
-    token: process.env.SLACK_BOT_TOKEN
-});
+// export const slack = new Slack.App({
+//     signingSecret: "process.env.SLACK_SIGNING_SECRET",
+//     token: process.env.SLACK_BOT_TOKEN
+// });
+
+export const slack = {}
 
 // Initialize MeiliSearch
 export const meili = new MeiliSearch({

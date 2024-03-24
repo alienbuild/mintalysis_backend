@@ -48,11 +48,6 @@ dotenv.config({ path: envPath });
         const schema = makeExecutableSchema({ typeDefs, resolvers });
         const app = express();
 
-        app.use((req, res, next) => {
-            console.log(`Incoming request: ${req.method} ${req.path}`);
-            console.log(`Body: `, req.body);
-            next();
-        });
         app.use(lastSeenMiddleware);
         app.use(userRoutes);
         app.use(cors(CONFIG.CORS_OPTIONS), bodyParser.json(), graphqlUploadExpress({ maxFileSize: 30000000, maxFiles: 20 }));
