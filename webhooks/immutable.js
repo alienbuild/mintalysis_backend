@@ -12,24 +12,19 @@ export const immutableWebHook = async (req,res) => {
         const { event_name } = eventData;
         switch (event_name) {
             case 'imtbl_x_nft_created':
+                // NOT SEEN THIS EVENT USED YET PERSONALLY
                 handleNftCreated(eventData)
                 break
             case 'imtbl_x_nft_updated':
                 handleNftUpdated(eventData)
                 break
             case 'imtbl_x_order_accepted':
+                // NOT SEEN THIS EVENT USED YET PERSONALLY
                 handleOrderCreated(eventData)
                 break
             case 'imtbl_x_transfer_created':
                 handleTransferCreated(eventData);
                 break;
-            case 'imtbl_x_transfer_updated':
-                handleTransferUpdated(eventData);
-                break;
-            case 'imtbl_x_new_listing':
-                handleNewListing(eventData);
-                break;
-            // Add more cases as needed for other event types
             default:
                 console.warn('Unhandled event type:', event_name);
         }
@@ -39,6 +34,7 @@ export const immutableWebHook = async (req,res) => {
 }
 
 const handleOrderCreated = (data) => {
+    // NOT SEEN THIS EVENT USED YET PERSONALLY
     console.log('[EVENT][NFT ORDER CREATED]: ', JSON.stringify(data, null, 2))
 }
 
@@ -47,17 +43,10 @@ const handleNftUpdated = (data) => {
 }
 
 const handleNftCreated = (data) => {
+    // NOT SEEN THIS EVENT USED YET PERSONALLY
     console.log('[EVENT][NFT CREATED EVENT]: ', JSON.stringify(data, null, 2))
 }
 
-function handleTransferCreated(data) {
+const handleTransferCreated = (data) => {
     console.log('[EVENT][TRANSFER CREATED EVENT]:', JSON.stringify(data, null, 2));
-}
-
-function handleTransferUpdated(data) {
-    console.log('[EVENT][TRANSFER UPDATED EVENT]:', JSON.stringify(data, null, 2));
-}
-
-function handleNewListing(data) {
-    console.log('[EVENT][NEW LISTING EVENT]:', JSON.stringify(data, null, 2));
 }
