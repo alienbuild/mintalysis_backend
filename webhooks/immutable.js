@@ -12,27 +12,30 @@ export const immutableWebHook = async (req, res) => {
         }
 
         const { event_name } = eventData;
-        try {
-            switch (event_name) {
-                case 'imtbl_x_nft_created':
-                    await handleNftCreated(eventData);
-                    break;
-                case 'imtbl_x_nft_updated':
-                    // await handleNftUpdated(eventData);
-                    break;
-                case 'imtbl_x_order_accepted':
-                    // await handleOrderCreated(eventData);
-                    break;
-                case 'imtbl_x_transfer_created':
-                    await handleTransferCreated(eventData);
-                    break;
-                default:
-                    console.warn('Unhandled event type:', event_name);
+        if (eventData.data.token.data.token_address === "0xa7aefead2f25972d80516628417ac46b3f2604af") {
+            try {
+                switch (event_name) {
+                    case 'imtbl_x_nft_created':
+                        await handleNftCreated(eventData);
+                        break;
+
+                    case 'imtbl_x_nft_updated':
+                        // await handleNftUpdated(eventData);
+                        break;
+                    case 'imtbl_x_order_accepted':
+                        // await handleOrderCreated(eventData);
+                        break;
+                    case 'imtbl_x_transfer_created':
+                        await handleTransferCreated(eventData);
+                        break;
+                    default:
+                        console.warn('Unhandled event type:', event_name);
+                }
+                res.status(200).send('Event processed');
+            } catch (error) {
+                console.error('Error handling event:', error);
+                res.status(500).send('Internal Server Error');
             }
-            res.status(200).send('Event processed');
-        } catch (error) {
-            console.error('Error handling event:', error);
-            res.status(500).send('Internal Server Error');
         }
     } else {
         res.status(400).send('Invalid event type');
