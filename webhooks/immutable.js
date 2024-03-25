@@ -7,46 +7,58 @@ const eventHandlers = {
     'imtbl_x_transfer_created': handleTransferCreated,
 };
 
+import { eventHandlers } from './eventHandlers'; // Ensure this is correctly imported
+
+// Handler for Immutable webhook notifications
 export const immutableWebHook = async (req, res) => {
     const { Type, Message } = req.body;
 
-    if (Type === 'Notification') {
-        let eventData;
+    // Early return for non-notification types
+    if (Type !== 'Notification') {
+        return res.status(400).send('Expected a Notification type');
+    }
+
+    // Attempt to parse the JSON message
+    let eventData;
+    try {
+        eventData = JSON.parse(Message);
+    } catch (error) {
+        console.error('Error parsing event message:', error);
+        return res.status(400).send('Bad Request: Invalid JSON');
+    }
+
+    // Validate the structure of eventData
+    if (!eventData || !eventData.data) {
+        console.error('Invalid eventData structure:', eventData);
+        return res.status(400).send('Invalid event data');
+    }
+    console.log('Incoming eventData:', JSON.stringify(eventData, null, 2));
+
+    // Check if the token address matches the expected value
+    const expectedTokenAddress = "0xa7aefead2f25972d80516628417ac46b3f2604af";
+    // transfer and mint structures
+    const tokenAddress = eventData.data.token?.data?.token_address || eventData.data.token_address;
+    if (tokenAddress !== expectedTokenAddress) {
+        return res.status(200).send('Event token address does not match the expected value.');
+    }
+
+    // Process the event based on its name
+    const { event_name } = eventData;
+    const handler = eventHandlers[event_name];
+    if (handler) {
         try {
-            eventData = JSON.parse(Message);
+            await handler(eventData);
+            res.status(200).send('Event processed');
         } catch (error) {
-            console.error('Error parsing event message:', error);
-            return res.status(400).send('Bad Request: Invalid JSON');
+            console.error('Error handling event:', error);
+            res.status(500).send('Internal Server Error');
         }
-        if (!eventData || !eventData.data || !eventData.data.token || !eventData.data.token.data) {
-            console.error('Invalid eventData structure:', eventData);
-            return res.status(400).send('Invalid event data');
-        }
-        console.log('Incoming eventData:', JSON.stringify(eventData, null, 2));
-
-        const tokenAddress = eventData?.data?.token?.data?.token_address ?? null;
-        if (tokenAddress === "0xa7aefead2f25972d80516628417ac46b3f2604af") {
-        // if (!isValidTokenAddress(eventData)) { does not match the expected value.');
-        // }
-
-            const { event_name } = eventData;
-            const handler = eventHandlers[event_name];
-
-            if (handler) {
-                try {
-                    await handler(eventData);
-                    res.status(200).send('Event processed');
-                } catch (error) {
-                    console.error('Error handling event:', error);
-                    res.status(500).send('Internal Server Error');
-                }
-            } else {
-                console.warn('Unhandled event type:', event_name);
-                res.status(200).send('Unhandled event type');
-            }
-        }   
+    } else {
+        console.warn('Unhandled event type:', event_name);
+        res.status(200).send('Unhandled event type');
     }
 };
+
 
 
 // const isValidTokenAddress = (eventData) => {
