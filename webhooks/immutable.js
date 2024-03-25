@@ -86,6 +86,9 @@ const handleNftCreated = async (eventData) => {
             token_id: BigInt(token_id)
         };
         console.log("transferData: ", transferData);
+        console.log("prisma: ", prisma);
+        // Check if the `transfers` model is accessible
+        console.log(prisma.transfers);
         await prisma.transfers.create({
             data: transferData,
         });
