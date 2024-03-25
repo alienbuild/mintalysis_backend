@@ -138,6 +138,7 @@ model artists {
   image          String?
   createdAt      DateTime               @default(now())
   updatedAt      DateTime?              @updatedAt
+  comics         comics[]               @relation("artistsTocomics")
   veve_comics    veve_comics[]          @relation("artistsToveve_comics")
   translations   artists_translations[]
   artists_grails artists_grails[]
@@ -159,6 +160,8 @@ model artists_translations {
   @@id([language, artist_id])
   @@index([language])
 }
+
+// TODO: Link noteable artist comics to comics instead of veve_comics
 
 model artists_grails {
   id              Int          @id @default(autoincrement())
@@ -351,6 +354,7 @@ model characters {
   image             String?
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime?                 @updatedAt
+  comics            comics[]                  @relation("charactersTocomics")
   veve_comics       veve_comics[]             @relation("charactersToveve_comics")
   translations      characters_translations[]
   characters_grails characters_grails[]
@@ -373,6 +377,7 @@ model characters_translations {
   @@index([language])
 }
 
+// TODO: Link noteable character comics to comics instead of veve_comics
 model characters_grails {
   id              Int          @id @default(autoincrement())
   title           String
@@ -425,6 +430,61 @@ model physical_collectible {
   storage_location        String?
 
   collection user_collection @relation(fields: [collection_id], references: [id])
+}
+
+model comics {
+  id                        String                @id @default(uuid())
+  name                      String
+  description               String?               @db.Text
+  publisher_id              String?
+  series_id                 String?
+  comic_number              Int?
+  page_count                Int?
+  start_year                Int?
+  image_direction           String?
+  image_full_resolution_url String?
+  image_high_resolution_url String?
+  image_low_resolution_url  String?
+  image_med_resolution_url  String?
+  image_thumbnail           String?
+  minimum_age               Int?
+  slug                      String?               @unique
+  artists                   artists[]             @relation("artistsTocomics")
+  characters                characters[]          @relation("charactersTocomics")
+  writers                   writers[]             @relation("comicsTowriters")
+  translations              comics_translations[]
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  publisher                 publishers?           @relation(fields: [publisher_id], references: [id])
+  series                    comic_series?         @relation(fields: [series_id], references: [id])
+}
+
+model comics_translations {
+  id                     String
+  name                   String?
+  description            String?  @db.Text
+  seo_description        String?  @db.Text
+  seo_keywords           String?  @db.Text
+  seo_title              String?  @db.Text
+  og_title               String?  @db.Text
+  og_description         String?  @db.Text
+  rarity_formatted       String?
+  edition_type_formatted String?
+  language               Language
+  comic                  comics   @relation(fields: [id], references: [id])
+
+  @@id([language, id])
+  @@index([language])
+}
+
+model comic_series {
+  id           String      @id @default(uuid())
+  name         String?
+  description  String?     @db.Text
+  slug         String?     @unique
+  publisher_id String?
+  publisher    publishers? @relation(fields: [publisher_id], references: [id])
+  comics       comics[]
 }
 
 //// schemas/community.prisma
@@ -1486,31 +1546,32 @@ model veve_collectibles_listings {
 
 model veve_comics {
   unique_cover_id             String                     @id
-  name                        String
+  name                        String // TODO: DELETE
   rarity                      String?
-  description                 String?                    @db.Text
+  description                 String?                    @db.Text // TODO: DELETE
   comic_series_id             String?
   drop_date                   DateTime?
   store_price                 Decimal?                   @db.Decimal(10, 2)
-  publisher_id                String?
+  publisher_id                String? // TODO: DELETE ?
   market_fee                  Decimal?                   @db.Decimal(10, 3)
   createdAt                   DateTime                   @default(now())
   updatedAt                   DateTime
-  comic_number                Int?
+  comic_number                Int? // TODO: DELETE
   drop_method                 String?
   is_free                     Boolean?                   @default(false)
   is_unlimited                Boolean?                   @default(false)
-  page_count                  Int?
-  start_year                  Int?
+  page_count                  Int? // TODO: DELETE
+  start_year                  Int? // TODO: DELETE
   total_available             Int?
   total_issued                Int?
-  image_direction             String?
-  image_full_resolution_url   String?
-  image_high_resolution_url   String?
-  image_low_resolution_url    String?
-  image_med_resolution_url    String?
-  image_thumbnail             String?
-  minimum_age                 Int?
+  total_store_allocation      Int?
+  image_direction             String? // TODO: DELETE
+  image_full_resolution_url   String? // TODO: DELETE
+  image_high_resolution_url   String? // TODO: DELETE
+  image_low_resolution_url    String? // TODO: DELETE
+  image_med_resolution_url    String? // TODO: DELETE
+  image_thumbnail             String? // TODO: DELETE
+  minimum_age                 Int? // TODO: DELETE
   slug                        String?                    @unique
   comic_id                    String?
   unique_holders              BigInt?
@@ -1526,9 +1587,9 @@ model veve_comics {
   mintalysis_note             String?
   translations                veve_comics_translations[]
   veve_watchlist              veve_watchlist[]
-  artists                     artists[]                  @relation("artistsToveve_comics")
-  characters                  characters[]               @relation("charactersToveve_comics")
-  writers                     writers[]                  @relation("veve_comicsTowriters")
+  artists                     artists[]                  @relation("artistsToveve_comics") // TODO: DELETE
+  characters                  characters[]               @relation("charactersToveve_comics") // TODO: DELETE
+  writers                     writers[]                  @relation("veve_comicsTowriters") // TODO: DELETE
   veveTokenComics             veveTokenComic[]
   project_id                  String?
   project                     projects?                  @relation(fields: [project_id], references: [id])
@@ -1582,6 +1643,7 @@ model veve_comics_metrics {
   comic              veve_comics @relation(fields: [unique_cover_id], references: [unique_cover_id])
 }
 
+// TODO: Tags should be to comics not veve_comics
 model veve_comic_tags {
   tag_id          Int         @id @default(autoincrement())
   name            String
@@ -2181,6 +2243,16 @@ model UserToProjects {
   @@id([userId, project_id])
 }
 
+model publishers {
+  id              String         @id
+  name            String?
+  description     String?        @db.Text
+  slug            String?        @unique
+  veve_market_fee Decimal?       @db.Decimal(10, 3)
+  comics          comics[]
+  comic_series    comic_series[]
+}
+
 model recent_search {
   id          Int      @id @default(autoincrement())
   user_id     String
@@ -2589,24 +2661,21 @@ model tmp_veve_mints {
 }
 
 model transfers {
-  id        BigInt?
+  id        BigInt  @id
   from_user String? @db.Text
   to_user   String? @db.Text
   timestamp String? @db.Text
   token_id  BigInt?
 
   @@index([token_id], map: "token_id")
-  @@ignore
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 model mints {
-  id        BigInt?
+  id        BigInt  @id
   user      String? @db.Text
   timestamp String? @db.Text
   token_id  BigInt?
-
-  @@ignore
 }
 
 model temp_wallet_token_ownership {
@@ -2764,6 +2833,7 @@ model writers {
   image          String?
   createdAt      DateTime               @default(now())
   updatedAt      DateTime?              @updatedAt
+  comics         comics[]               @relation("comicsTowriters")
   veve_comics    veve_comics[]          @relation("veve_comicsTowriters")
   translations   writers_translations[]
   writers_grails writers_grails[]
