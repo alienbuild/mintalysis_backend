@@ -42,11 +42,54 @@ const handleNftUpdated = (data) => {
     console.log('[EVENT][NFT UPDATED EVENT]: ', JSON.stringify(data, null, 2))
 }
 
-const handleNftCreated = (data) => {
-    // NOT SEEN THIS EVENT USED YET PERSONALLY
-    console.log('[EVENT][NFT CREATED EVENT]: ', JSON.stringify(data, null, 2))
-}
-
-const handleTransferCreated = (data) => {
-    console.log('[EVENT][TRANSFER CREATED EVENT]:', JSON.stringify(data, null, 2));
-}
+const handleNftCreated = async (eventData) => {
+    // Prepare mint data from events
+    const mintsData = eventData.map(event => {
+      const { transaction_id, user, timestamp } = event.data;
+      const token_id = event.data.token.data.token_id;
+  
+      return {
+        id: BigInt(transaction_id),
+        user: user, 
+        timestamp: timestamp,
+        token_id: BigInt(token_id),
+      };
+    });
+  
+    try {
+      const result = await prisma.mints.createMany({
+        data: mintsData,
+        skipDuplicates: true,
+      });
+  
+      console.log(`${result.count} mints inserted.`);
+    } catch (error) {
+      console.error('Error inserting mint data:', error);
+    }
+  };
+  
+  const handleTransferCreated = async (eventData) => {
+    const transfersData = eventData.map(event => {
+      const { transaction_id, user, receiver, timestamp } = event.data;
+      const token_id = event.data.token.data.token_id;
+  
+      return {
+        id: BigInt(transaction_id),
+        from_user: user,
+        to_user: receiver,
+        timestamp: timestamp, 
+        token_id: BigInt(token_id),
+      };
+    });
+  
+    try {
+      const result = await prisma.transfers.createMany({
+        data: transfersData,
+        skipDuplicates: true,
+      });
+  
+      console.log(`${result.count} transfers inserted.`);
+    } catch (error) {
+      console.error('Error inserting transfer data:', error);
+    }
+  };
