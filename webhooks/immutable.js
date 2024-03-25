@@ -1,5 +1,12 @@
 import {prisma} from "../src/services.js";
 
+const eventHandlers = {
+    'imtbl_x_nft_created': handleNftCreated,
+    // 'imtbl_x_nft_updated': handleNftUpdated,
+    // 'imtbl_x_order_accepted': handleOrderCreated,
+    'imtbl_x_transfer_created': handleTransferCreated,
+};
+
 export const immutableWebHook = async (req, res) => {
     const { Type, Message } = req.body;
 
@@ -11,39 +18,40 @@ export const immutableWebHook = async (req, res) => {
             console.error('Error parsing event message:', error);
             return res.status(400).send('Bad Request: Invalid JSON');
         }
-
-        if (!isValidTokenAddress(eventData)) {
-            return res.status(200).send('Event token address does not match the expected value.');
+        if (!eventData || !eventData.data || !eventData.data.token || !eventData.data.token.data) {
+            console.error('Invalid eventData structure:', eventData);
+            return res.status(400).send('Invalid event data');
         }
+        console.log('Incoming eventData:', JSON.stringify(eventData, null, 2));
 
-        const { event_name } = eventData;
-        const handler = eventHandlers[event_name];
+        const tokenAddress = eventData?.data?.token?.data?.token_address ?? null;
+        if (tokenAddress === "0xa7aefead2f25972d80516628417ac46b3f2604af") {
+        // if (!isValidTokenAddress(eventData)) { does not match the expected value.');
+        // }
 
-        if (handler) {
-            try {
-                await handler(eventData);
-                res.status(200).send('Event processed');
-            } catch (error) {
-                console.error('Error handling event:', error);
-                res.status(500).send('Internal Server Error');
+            const { event_name } = eventData;
+            const handler = eventHandlers[event_name];
+
+            if (handler) {
+                try {
+                    await handler(eventData);
+                    res.status(200).send('Event processed');
+                } catch (error) {
+                    console.error('Error handling event:', error);
+                    res.status(500).send('Internal Server Error');
+                }
+            } else {
+                console.warn('Unhandled event type:', event_name);
+                res.status(200).send('Unhandled event type');
             }
-        } else {
-            console.warn('Unhandled event type:', event_name);
-            res.status(200).send('Unhandled event type');
-        }
+        }   
     }
 };
 
-const eventHandlers = {
-    'imtbl_x_nft_created': handleNftCreated,
-    // 'imtbl_x_nft_updated': handleNftUpdated,
-    // 'imtbl_x_order_accepted': handleOrderCreated,
-    'imtbl_x_transfer_created': handleTransferCreated,
-};
 
-const isValidTokenAddress = (eventData) => {
-    return eventData.data.token.data.token_address === "0xa7aefead2f25972d80516628417ac46b3f2604af";
-};
+// const isValidTokenAddress = (eventData) => {
+//     return eventData.data.token.data.token_address === "0xa7aefead2f25972d80516628417ac46b3f2604af";
+// };
 // const handleOrderCreated = (data) => {
 //     // NOT SEEN THIS EVENT USED YET PERSONALLY
 //     console.log('[EVENT][NFT ORDER CREATED]: ', JSON.stringify(data, null, 2))
