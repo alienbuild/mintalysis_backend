@@ -53,7 +53,7 @@ const isValidTokenAddress = (eventData) => {
 //     console.log('[EVENT][NFT UPDATED EVENT]: ', JSON.stringify(data, null, 2))
 // }
 
-const handleNftCreated = async (eventData) => {
+async function handleNftCreated(eventData) {
     console.log("eventData: ", eventData);
     try {
             const { transaction_id, user, timestamp } = eventData.data;
@@ -76,7 +76,7 @@ const handleNftCreated = async (eventData) => {
     } 
 };
 
-  const handleTransferCreated = async (eventData) => {
+async function handleTransferCreated(eventData) {
     console.log("eventData: ", eventData);
     try {
         const { transaction_id, user, receiver, timestamp } = eventData.data;
