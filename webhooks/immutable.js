@@ -43,53 +43,48 @@ const handleNftUpdated = (data) => {
 }
 
 const handleNftCreated = async (eventData) => {
-    // Prepare mint data from events
-    const mintsData = eventData.map(event => {
-      const { transaction_id, user, timestamp } = event.data;
-      const token_id = event.data.token.data.token_id;
-  
-      return {
-        id: BigInt(transaction_id),
-        user: user, 
-        timestamp: timestamp,
-        token_id: BigInt(token_id),
-      };
-    });
-  
     try {
-      const result = await prisma.mints.createMany({
-        data: mintsData,
-        skipDuplicates: true,
-      });
-  
-      console.log(`${result.count} mints inserted.`);
+            const { transaction_id, user, timestamp } = eventData.data;
+            const token_id = eventData.data.token.data.token_id;
+
+            const mintData = {
+                id: BigInt(transaction_id), 
+                user: user,
+                timestamp: timestamp, 
+                token_id: BigInt(token_id)
+            };
+                
+        await prisma.mints.create({
+            data: mintData,
+        });
+
     } catch (error) {
-      console.error('Error inserting mint data:', error);
+        console.error('Error inserting mint data:', error);
+    } finally {
+        await prisma.$disconnect();
     }
-  };
-  
+};
+
   const handleTransferCreated = async (eventData) => {
-    const transfersData = eventData.map(event => {
-      const { transaction_id, user, receiver, timestamp } = event.data;
-      const token_id = event.data.token.data.token_id;
-  
-      return {
-        id: BigInt(transaction_id),
-        from_user: user,
-        to_user: receiver,
-        timestamp: timestamp, 
-        token_id: BigInt(token_id),
-      };
-    });
-  
     try {
-      const result = await prisma.transfers.createMany({
-        data: transfersData,
-        skipDuplicates: true,
-      });
-  
-      console.log(`${result.count} transfers inserted.`);
+        const { transaction_id, user, receiver, timestamp } = eventData.data;
+        const token_id = eventData.data.token.data.token_id;
+
+        const transferData = {
+            id: BigInt(transaction_id),
+            from_user: user,
+            to_user: receiver,
+            timestamp: timestamp,
+            token_id: BigInt(token_id)
+        };
+
+        await prisma.transfers.create({
+            data: transferData,
+        });
+
     } catch (error) {
-      console.error('Error inserting transfer data:', error);
+        console.error('Error inserting transfer data:', error);
+    } finally {
+        await prisma.$disconnect();
     }
-  };
+};
