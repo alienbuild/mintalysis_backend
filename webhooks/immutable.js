@@ -60,10 +60,10 @@ async function handleNftCreated(eventData) {
             const token_id = eventData.data.token.data.token_id;
 
             const mintData = {
-                id: transaction_id, 
+                id: BigInt(transaction_id), 
                 user: user,
                 timestamp: timestamp,
-                token_id: token_id
+                token_id: BigInt(token_id)
             };
         console.log("mintData: ", mintData);
 
@@ -83,11 +83,11 @@ async function handleTransferCreated(eventData) {
         const token_id = eventData.data.token.data.token_id;
 
         const transferData = {
-            id: transaction_id,
+            id: BigInt(transaction_id),
             from_user: user,
             to_user: receiver,
             timestamp: timestamp,
-            token_id: token_id
+            token_id: BigInt(token_id)
         };
         console.log("transferData: ", transferData);
         await prisma.transfers.create({
