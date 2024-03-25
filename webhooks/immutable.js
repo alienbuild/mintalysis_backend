@@ -1,5 +1,5 @@
-// import {prisma} from "../src/services.js";
-import { PrismaClient } from "@prisma/client";
+import {prisma} from "../src/services.js";
+
 export const prisma = new PrismaClient();
 
 export const immutableWebHook = async (req, res) => {
