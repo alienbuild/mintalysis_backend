@@ -7,18 +7,14 @@ const eventHandlers = {
     'imtbl_x_transfer_created': handleTransferCreated,
 };
 
-import { eventHandlers } from './eventHandlers'; // Ensure this is correctly imported
 
-// Handler for Immutable webhook notifications
 export const immutableWebHook = async (req, res) => {
     const { Type, Message } = req.body;
 
-    // Early return for non-notification types
     if (Type !== 'Notification') {
         return res.status(400).send('Expected a Notification type');
     }
 
-    // Attempt to parse the JSON message
     let eventData;
     try {
         eventData = JSON.parse(Message);
@@ -27,22 +23,19 @@ export const immutableWebHook = async (req, res) => {
         return res.status(400).send('Bad Request: Invalid JSON');
     }
 
-    // Validate the structure of eventData
     if (!eventData || !eventData.data) {
         console.error('Invalid eventData structure:', eventData);
         return res.status(400).send('Invalid event data');
     }
-    console.log('Incoming eventData:', JSON.stringify(eventData, null, 2));
 
-    // Check if the token address matches the expected value
     const expectedTokenAddress = "0xa7aefead2f25972d80516628417ac46b3f2604af";
     // transfer and mint structures
     const tokenAddress = eventData.data.token?.data?.token_address || eventData.data.token_address;
     if (tokenAddress !== expectedTokenAddress) {
+
         return res.status(200).send('Event token address does not match the expected value.');
     }
-
-    // Process the event based on its name
+    console.log('Incoming eventData:', JSON.stringify(eventData, null, 2));
     const { event_name } = eventData;
     const handler = eventHandlers[event_name];
     if (handler) {
@@ -59,11 +52,6 @@ export const immutableWebHook = async (req, res) => {
     }
 };
 
-
-
-// const isValidTokenAddress = (eventData) => {
-//     return eventData.data.token.data.token_address === "0xa7aefead2f25972d80516628417ac46b3f2604af";
-// };
 // const handleOrderCreated = (data) => {
 //     // NOT SEEN THIS EVENT USED YET PERSONALLY
 //     console.log('[EVENT][NFT ORDER CREATED]: ', JSON.stringify(data, null, 2))
