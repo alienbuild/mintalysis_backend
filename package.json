@@ -18,7 +18,7 @@
   "dependencies": {
     "@apollo/server": "^4.3.0",
     "@graphql-tools/schema": "^9.0.5",
-    "@prisma/client": "^5.8.1",
+    "@prisma/client": "^5.11.0",
     "@prisma/extension-accelerate": "^0.6.2",
     "@slack/bolt": "^3.13.2",
     "agora-access-token": "^2.0.4",
@@ -46,7 +46,7 @@
     "nodemailer": "^6.9.1",
     "nodemon": "^2.0.20",
     "pm2": "^5.3.0",
-    "prisma": "^5.8.1",
+    "prisma": "^5.11.0",
     "slugify": "^1.6.5",
     "stripe": "^14.17.0",
     "validator": "^13.7.0",
