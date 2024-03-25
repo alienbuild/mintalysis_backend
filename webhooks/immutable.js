@@ -1,6 +1,6 @@
 import {prisma} from "../src/services.js";
 
-export const immutableWebHook = async (req,res) => {
+export const immutableWebHook = async (req, res) => {
     const { Type, Message } = req.body;
     if (Type === 'Notification') {
         let eventData;
@@ -12,37 +12,42 @@ export const immutableWebHook = async (req,res) => {
         }
 
         const { event_name } = eventData;
-        switch (event_name) {
-            case 'imtbl_x_nft_created':
-                // NOT SEEN THIS EVENT USED YET PERSONALLY
-                handleNftCreated(eventData)
-                break
-            case 'imtbl_x_nft_updated':
-                handleNftUpdated(eventData)
-                break
-            case 'imtbl_x_order_accepted':
-                // NOT SEEN THIS EVENT USED YET PERSONALLY
-                handleOrderCreated(eventData)
-                break
-            case 'imtbl_x_transfer_created':
-                handleTransferCreated(eventData);
-                break;
-            default:
-                console.warn('Unhandled event type:', event_name);
+        try {
+            switch (event_name) {
+                case 'imtbl_x_nft_created':
+                    await handleNftCreated(eventData);
+                    break;
+                case 'imtbl_x_nft_updated':
+                    // await handleNftUpdated(eventData);
+                    break;
+                case 'imtbl_x_order_accepted':
+                    // await handleOrderCreated(eventData);
+                    break;
+                case 'imtbl_x_transfer_created':
+                    await handleTransferCreated(eventData);
+                    break;
+                default:
+                    console.warn('Unhandled event type:', event_name);
+            }
+            res.status(200).send('Event processed');
+        } catch (error) {
+            console.error('Error handling event:', error);
+            res.status(500).send('Internal Server Error');
         }
+    } else {
+        res.status(400).send('Invalid event type');
     }
+};
 
-    res.status(200).send('Event processed');
-}
 
-const handleOrderCreated = (data) => {
-    // NOT SEEN THIS EVENT USED YET PERSONALLY
-    console.log('[EVENT][NFT ORDER CREATED]: ', JSON.stringify(data, null, 2))
-}
+// const handleOrderCreated = (data) => {
+//     // NOT SEEN THIS EVENT USED YET PERSONALLY
+//     console.log('[EVENT][NFT ORDER CREATED]: ', JSON.stringify(data, null, 2))
+// }
 
-const handleNftUpdated = (data) => {
-    console.log('[EVENT][NFT UPDATED EVENT]: ', JSON.stringify(data, null, 2))
-}
+// const handleNftUpdated = (data) => {
+//     console.log('[EVENT][NFT UPDATED EVENT]: ', JSON.stringify(data, null, 2))
+// }
 
 const handleNftCreated = async (eventData) => {
     try {
@@ -62,9 +67,7 @@ const handleNftCreated = async (eventData) => {
 
     } catch (error) {
         console.error('Error inserting mint data:', error);
-    } finally {
-        await prisma.$disconnect();
-    }
+    } 
 };
 
   const handleTransferCreated = async (eventData) => {
@@ -86,7 +89,5 @@ const handleNftCreated = async (eventData) => {
 
     } catch (error) {
         console.error('Error inserting transfer data:', error);
-    } finally {
-        await prisma.$disconnect();
-    }
+    } 
 };
