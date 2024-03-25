@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "67.225.248.251",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "Mintalysis",
+            "database": "mintalysis",
+            "username": "ecomiwik_vevefox",
+            "password": "dMw*Ml01q{M3",
+            "connectionTimeout": 120
+        }
+    ]
+}
