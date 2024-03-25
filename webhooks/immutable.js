@@ -64,13 +64,13 @@ export const immutableWebHook = async (req, res) => {
 async function handleNftCreated(eventData) {
     console.log("eventData: ", eventData);
     try {
-            const { transaction_id, user, timestamp } = eventData.data;
-            const token_id = eventData.data.token.data.token_id;
+            const { user, created_at } = eventData.data;
+            const token_id = eventData.data.token_id;
 
             const mintData = {
-                id: BigInt(transaction_id), 
+                // id: BigInt(transaction_id), Does not exist in the event data
                 user: user,
-                timestamp: timestamp,
+                timestamp: created_at,
                 token_id: BigInt(token_id)
             };
         console.log("mintData: ", mintData);
