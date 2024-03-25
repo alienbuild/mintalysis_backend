@@ -50,6 +50,7 @@ export const immutableWebHook = async (req, res) => {
 // }
 
 const handleNftCreated = async (eventData) => {
+    console.log("eventData: ", eventData);
     try {
             const { transaction_id, user, timestamp } = eventData.data;
             const token_id = eventData.data.token.data.token_id;
@@ -60,7 +61,8 @@ const handleNftCreated = async (eventData) => {
                 timestamp: timestamp, 
                 token_id: BigInt(token_id)
             };
-                
+        console.log("mintData: ", mintData);
+
         await prisma.mints.create({
             data: mintData,
         });
@@ -71,6 +73,7 @@ const handleNftCreated = async (eventData) => {
 };
 
   const handleTransferCreated = async (eventData) => {
+    console.log("eventData: ", eventData);
     try {
         const { transaction_id, user, receiver, timestamp } = eventData.data;
         const token_id = eventData.data.token.data.token_id;
@@ -82,7 +85,7 @@ const handleNftCreated = async (eventData) => {
             timestamp: timestamp,
             token_id: BigInt(token_id)
         };
-
+        console.log("transferData: ", transferData);
         await prisma.transfers.create({
             data: transferData,
         });
