@@ -15,7 +15,7 @@ export const immutableWebHook = async (req, res) => {
         try {
             switch (event_name) {
                 case 'imtbl_x_nft_created':
-                    await handleNftCreated(eventData);
+                    // await handleNftCreated(eventData);
                     break;
                 case 'imtbl_x_nft_updated':
                     // await handleNftUpdated(eventData);
@@ -24,7 +24,7 @@ export const immutableWebHook = async (req, res) => {
                     // await handleOrderCreated(eventData);
                     break;
                 case 'imtbl_x_transfer_created':
-                    await handleTransferCreated(eventData);
+                    // await handleTransferCreated(eventData);
                     break;
                 default:
                     console.warn('Unhandled event type:', event_name);
@@ -56,10 +56,10 @@ const handleNftCreated = async (eventData) => {
             const token_id = eventData.data.token.data.token_id;
 
             const mintData = {
-                id: BigInt(transaction_id), 
+                id: transaction_id, 
                 user: user,
-                timestamp: timestamp, 
-                token_id: BigInt(token_id)
+                timestamp: timestamp,
+                token_id: token_id
             };
         console.log("mintData: ", mintData);
 
@@ -79,16 +79,13 @@ const handleNftCreated = async (eventData) => {
         const token_id = eventData.data.token.data.token_id;
 
         const transferData = {
-            id: BigInt(transaction_id),
+            id: transaction_id,
             from_user: user,
             to_user: receiver,
             timestamp: timestamp,
-            token_id: BigInt(token_id)
+            token_id: token_id
         };
         console.log("transferData: ", transferData);
-        console.log("prisma: ", prisma);
-        // Check if the `transfers` model is accessible
-        console.log(prisma.transfers);
         await prisma.transfers.create({
             data: transferData,
         });
