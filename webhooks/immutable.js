@@ -1,5 +1,7 @@
 import {prisma} from "../src/services.js";
 
+export const prisma = new PrismaClient();
+
 export const immutableWebHook = async (req, res) => {
     const { Type, Message } = req.body;
     if (Type === 'Notification') {
@@ -15,7 +17,7 @@ export const immutableWebHook = async (req, res) => {
         try {
             switch (event_name) {
                 case 'imtbl_x_nft_created':
-                    // await handleNftCreated(eventData);
+                    await handleNftCreated(eventData);
                     break;
                 case 'imtbl_x_nft_updated':
                     // await handleNftUpdated(eventData);
@@ -24,7 +26,7 @@ export const immutableWebHook = async (req, res) => {
                     // await handleOrderCreated(eventData);
                     break;
                 case 'imtbl_x_transfer_created':
-                    // await handleTransferCreated(eventData);
+                    await handleTransferCreated(eventData);
                     break;
                 default:
                     console.warn('Unhandled event type:', event_name);
