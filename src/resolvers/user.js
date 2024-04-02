@@ -270,6 +270,56 @@ const resolvers = {
                 },
             });
         },
+        getUserValuation: async (_, __, { userInfo, prisma }) => {
+            console.log('GETTING USER VALUATION')
+            if (!userInfo) throw new GraphQLError('Not authorised')
+            try {
+
+                // Get user projects
+
+                const userToProjects = await prisma.userToProjects.findMany({
+                    where: { userId: userInfo.sub },
+                    select: {
+                        project: {
+                            select: {
+                                id: true,
+                                name: true,
+                                abbr: true
+                            }
+                        }
+                    }
+                });
+
+                const projects = userToProjects.map(up => up.project);
+
+                console.log('userProjects is: ', userToProjects)
+                console.log('projects is: ', projects)
+
+                // For each project the user has then get the token/quantities/floor price
+
+                // const VeveWallet = await prisma.veve_wallets.findUnique({
+                //     where:{
+                //         userId: userInfo.sub
+                //     }
+                // })
+
+                // if (!userWallet) throw new GraphQLError('User must be linked to a wallet to proceed')
+                //
+                // const test = await prisma.veve_wallet_metrics.findMany({
+                //     where: {
+                //         wallet_id: ""
+                //     }
+                // })
+
+                return {
+                    valuation: 0
+                }
+
+            } catch (error) {
+                console.log('[ERROR] Failed to get user valuation: ', error)
+                throw new GraphQLError('Unable to get user valuation')
+            }
+        },
     },
     Mutation: {
         avatarUpload: async (_, { file }, { userInfo, prisma }) => {

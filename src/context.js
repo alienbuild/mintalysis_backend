@@ -8,10 +8,22 @@ import {transferLoader} from "./loaders/transferLoader.js";
 import {batchWalletsByUserId} from "./loaders/walletLoader.js";
 import {batchBrands} from "./loaders/brandsLoader.js";
 
-export const createContext = async ({ req }) => {
-    const ipAddress = req.header('x-forwarded-for') || req.socket.remoteAddress
-    const userAgent = req.headers["user-agent"]
-    const userInfo = await getUserFromToken(req.headers.authorization)
+export const createContext = async ({ req } = {}) => {
+
+    let ipAddress = '';
+    let userAgent = '';
+    let token = '';
+
+    if (req) { // Only attempt to read from `req` if it exists
+        ipAddress = req.header('x-forwarded-for') || req.socket.remoteAddress;
+        userAgent = req.headers["user-agent"];
+        token = req.headers.authorization;
+    }
+
+
+    // const userInfo = await getUserFromToken(req.headers.authorization)
+
+    const userInfo = await getUserFromToken(token)
 
     return {
         ipAddress,

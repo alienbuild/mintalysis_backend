@@ -13,6 +13,7 @@ const typeDefs = gql`
         getUserAccessibilityPreferences: UserAccessibilityPreferences
         checkUsername(username: String!): Boolean
         getUserPreferences: UserPreferences
+        getUserValuation: UserValuation
 
     }
     
@@ -41,18 +42,22 @@ const typeDefs = gql`
         last_name: String
     }
 
-    type UserUpdateResponse {
-        success: Boolean!
-        message: String
-        user: User
-    }
-
     input PreferencesInput {
         displayCurrency: Currency
         theme: Theme
         enableNotifications: Boolean
         language: Language
         layoutPreference: Layout
+    }
+
+    type UserValuation {
+        valuation: Int
+    }
+    
+    type UserUpdateResponse {
+        success: Boolean!
+        message: String
+        user: User
     }
 
     type UserPreferences {

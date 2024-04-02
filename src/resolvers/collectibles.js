@@ -4,28 +4,35 @@ import {GraphQLError} from "graphql";
 const resolvers = {
     Query: {
         userCollectionsAndProjects: async (_, __, { prisma, userInfo }) => {
+
             if (!userInfo) throw new GraphQLError('Not authorised.')
-            const physicalCollections = await prisma.userCollection.findMany({
-                where: { userId: userInfo.sub },
-            });
 
-            const userProjects = await prisma.userToProjects.findMany({
-                where: { userId: userInfo.sub },
-                include: {
-                    project: true,
-                },
-            });
+            try {
+                const physicalCollections = await prisma.userCollection.findMany({
+                    where: { userId: userInfo.sub },
+                });
 
-            const digitalProjects = userProjects.map(({ project, valuation, valuation_with_fees }) => ({
-                ...project,
-                valuation: valuation ? parseFloat(valuation) : null,
-                valuationWithFees: valuation_with_fees ? parseFloat(valuation_with_fees) : null,
-            }));
+                const userProjects = await prisma.userToProjects.findMany({
+                    where: { userId: userInfo.sub },
+                    include: {
+                        project: true,
+                    },
+                });
 
-            return {
-                physicalCollections,
-                digitalProjects,
-            };
+                const digitalProjects = userProjects.map(({ project, valuation, valuation_with_fees }) => ({
+                    ...project,
+                    valuation: valuation ? parseFloat(valuation) : null,
+                    valuationWithFees: valuation_with_fees ? parseFloat(valuation_with_fees) : null,
+                }));
+
+                return {
+                    physicalCollections,
+                    digitalProjects,
+                };
+            } catch (error) {
+                throw new GraphQLError('Unable to fetch user collections and projects.')
+            }
+
         },
         getCollection: (_, { id }, { prisma }) => {
             return prisma.user_collection.findUnique({

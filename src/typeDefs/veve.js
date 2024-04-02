@@ -19,6 +19,7 @@ const typeDefs = gql`
         getUserTokens: Boolean
         tokens(token_id: ID, editionNumber: Int, type: String, userId: String, search: String, limit: Int, after: String, collectible_id: String, unique_cover_id: String, kraken: Boolean) : TokensConnection
         getVeveVerificationCode(collectibleId: String!, edition: Int!): VerificationCode!
+        getVeveLeaderboard(board: String, collectibleId: String): [VeveLeaderboard]
     }
     
     type Mutation {
@@ -33,7 +34,10 @@ const typeDefs = gql`
         veveVaultImport: VeveVaultImportSubcriptionPayload
     }
 
-    
+    type VeveLeaderboard {
+        total_tokens: Int!
+        wallet_id: String!
+    }
     
     type VerificationCode {
         code: Int!

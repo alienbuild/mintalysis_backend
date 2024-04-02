@@ -763,6 +763,23 @@ const resolvers = {
             }
 
         },
+        getVeveLeaderboard: async (_, { board, collectibleId }, { userInfo, prisma }) => {
+            try {
+                return await prisma.veve_wallet_metrics.findMany({
+                    take: 100,
+                    orderBy: {
+                        total_tokens: 'desc'
+                    },
+                    select: {
+                        wallet_id: true,
+                        total_tokens: true
+                    }
+                })
+            } catch (error) {
+                console.log('[ERROR] Unable to fetch leaderboard ', error)
+                throw new GraphQLError('Unable to fetch leaderboards')
+            }
+        },
     },
     Mutation: {
         veveRequestVerify: async (_, __, { userInfo, prisma }) => {
